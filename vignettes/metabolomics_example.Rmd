@@ -1,0 +1,176 @@
+---
+title: "Metabolomics Example"
+author: "Sean Hackett"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Metabolomics Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  width = 80
+)
+
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+## One time configuration
+
+- run configure_google_access() interactively
+- add db_password and GITHUB_PAT to .Renviron
+
+## Pre-processing
+
+```{r imports, message = FALSE, warning = FALSE}
+library(authutils)
+library(calicomics)
+library(dplyr)
+
+# this will configure access to googledrive and googlesheets (initially run interactively, the browser may open so you can generate a code to put in the Rstudio console)
+authutils::configure_google_access()
+# connect to standards and systematic databases
+standard_databases <- configure_db_access()
+```
+
+# Workflows
+
+## Simple - one method, no sample sheet
+
+```{r inputs_single, message = FALSE, fig.height = 15, fig.width = 10}
+mzroll_db_path <- authutils::get_clamr_assets("X0083-M001A.mzrollDB")
+# For your data, directly add the path, like this:
+# mzroll_db_path <- "<your-path>/peakDetector.mzrollDB"
+
+# read and format data
+mzroll_list <- process_mzroll(mzroll_db_path,
+                              standard_databases = standard_databases,
+                              method_tag = "M001A",
+                              only_identified = TRUE)
+
+mzroll_list$samples <- mzroll_list$samples %>%
+  dplyr::mutate(sampleName = calicomics::remove_constant_name(name))
+
+plot_heatmap(mzroll_list, sample.var = "sampleName", feature.var = "peak_label", change_threshold = 5)
+```
+
+## Sinister - multiple methods, Googlesheets sample sheet & multiple outputs
+
+### Setup mzroll_list
+
+```{r sample_sheets, message = FALSE}
+# read sample meta-data
+sample_sheet_list <- import_sample_sheet(pattern = "X0106")
+```
+
+```{r inputs_multi, message = FALSE, warning = FALSE}
+# download example mzrolls from Google Drive
+mzroll_db_dir_path  <- authutils::get_clamr_assets("X0106_mzrollDBs.zip")
+# paths to /tmp folder are saved in calicomics
+mzroll_paths <- calicomics::X0106_paths
+
+mzroll_list <- process_mzroll_multi(mzroll_paths,
+                                    standard_databases = standard_databases,
+                                    sample_sheet_list,
+                                    only_identified = TRUE)
+```
+
+### Processing
+
+- filter to peakgroups of interest
+
+```{r filter}
+mzroll_list <- mzroll_list %>%
+  calicomics::filter_peakgroups_quo(quo(searchTableName %in% c("clamDB", "Bookmarks")))
+```
+
+- floor data (if desired) and/or subtract blanks
+
+```{r}
+mzroll_list <- floor_peaks(mzroll_list, 12)
+```
+
+- aggregating across multiple methods
+- interpretting experimental design from sample sheet
+- sample_sheet_list
+
+### Exploratory Analysis
+
+```{r exploratory_analysis, fig.height = 15, fig.width = 10}
+plot_heatmap(mzroll_list, sample.var = "sampleId", feature.var = "groupId", change_threshold = 5, plot_type = "grob")
+```
+
+### Statistical Analysis
+
+- Using sample sheet to look for interesting metabolite variation
+
+#### Regression
+
+```{r regression, fig.height = 10, fig.width = 10}
+# generating regression_significance requires installation of the suggested package qvalue, which can be installed by executing the command:
+#
+# > install.packages("remotes)
+# > remotes::install_bioc("qvalue")
+mzroll_list$samples <- mzroll_list$samples %>%
+  dplyr::mutate(treatment = factor(treatment, levels = c("vehicle", "4916")),
+                age = factor(age, levels = c("young", "old")))
+
+regression_significance <- diffex_mzroll(mzroll_list, value.var = "centered_log2_abundance", test_model = "age * treatment", null_model = NULL) 
+
+volcano_plot(regression_significance, max_p_trans = 10, FDR_cutoff = 0.1)
+
+pvalue_histograms(regression_significance)
+```
+
+#### ANOVA
+
+```{r anova, fig.height = 10, fig.width = 10, warning = FALSE}
+anova_significance <- diffex_mzroll(mzroll_list, value.var = "centered_log2_abundance", test_model = "age * treatment", null_model = "age + treatment")
+
+pvalue_histograms(anova_significance)
+```
+
+### Summary of Results
+
+```{r barplots, fig.height = 10, fig.width = 10}
+regression_significance %>%
+  arrange(qvalue) %>%
+  slice(1:6) %>%
+  {.$groupId} %>%
+  plot_barplot(mzroll_list = mzroll_list)
+```
+
+#### Pathway Enrichments
+
+For each term in the regression/ANOVA analysis, find pathways which are enriched among elevated or depleted metabolites. Currently only KEGG pathways are supported.
+
+```{r pathway_enrichments}
+enriched_pathways <- pathway_enrichments(mzroll_list,
+                    significance = regression_significance %>%
+                      dplyr::filter(term != "(Intercept)"),
+                    standard_databases,
+                    test_absolute_effects = FALSE)
+
+# generate a table of top enrichments
+
+enriched_pathway_table <- enriched_pathways$enrichment_table %>%
+  dplyr::arrange(padj)
+
+enriched_pathway_table %>%
+  dplyr::select(term, pathway, pval, padj) %>%
+  DT::datatable()
+
+# see a high-level summary of significant pathways for a given term
+
+plot(enriched_pathways$enrichment_plots$`ageold:treatment4916`)
+
+# see specific pathway enrichments
+
+plot(enriched_pathway_table$enrichment_plot[[1]]) + ggtitle("Bile secretion metabolites decreased in old treated animals")
+```
+
+
