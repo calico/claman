@@ -2,6 +2,8 @@
 
 *Calico Lipidomics and Metabolomics Analysis*
 
+![Romic Logo](https://github.com/calico/romic/blob/master/assets/logo/clam_logo-01.png)
+
 # Overview
 
 Claman provides methods for analyzing mzroll metabolomics/lipidomics datasets generated using [MAVEN](https://github.com/eugenemel/maven).
