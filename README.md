@@ -2,7 +2,7 @@
 
 *Calico Lipidomics and Metabolomics Analysis*
 
-![Romic Logo](https://github.com/calico/romic/blob/master/assets/logo/clam_logo-01.png)
+![CLaM Logo](https://github.com/calico/claman/blob/master/assets/logo/clam_logo-01.png)
 
 # Overview
 
