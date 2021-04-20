@@ -25,6 +25,7 @@
 #' @examples
 #' library(dplyr)
 #'
+#' mzroll_db_path = nplug_mzroll()
 #' authutils::get_clamr_assets("X0083-M001A.mzrollDB") %>%
 #'   process_mzroll(
 #'     standard_databases = NULL,
@@ -32,9 +33,17 @@
 #'     only_identified = TRUE,
 #'     validate = FALSE
 #'   )
-process_mzroll <- function(mzroll_db_path, standard_databases = NULL,
-                           sample_sheet_list = NULL, method_tag = "",
-                           only_identified = TRUE, validate = FALSE) {
+process_mzroll <- function(
+  mzroll_db_path,
+  standard_databases = NULL,
+  sample_sheet_list = NULL, 
+  method_tag = "",
+  only_identified = TRUE,
+  validate = FALSE
+  ) {
+  
+  checkmate::assertFileExists(mzroll_db_path)
+  
   stopifnot(any(class(sample_sheet_list) %in% c("NULL", "list")))
   if ("list" %in% class(sample_sheet_list)) {
     stopifnot(all(
@@ -46,87 +55,14 @@ process_mzroll <- function(mzroll_db_path, standard_databases = NULL,
   checkmate::assertLogical(validate, len = 1)
 
   mzroll_db_con <- authutils::create_sqlite_con(mzroll_db_path)
-
-  # to do check validity of all sql connections
-
-  peakgroup_positions <- dplyr::tbl(mzroll_db_con, "peaks") %>%
-    dplyr::collect() %>%
-    dplyr::group_by(groupId) %>%
-    dplyr::summarize(
-      mz = sum(peakMz * peakAreaTop) / sum(peakAreaTop),
-      rt = sum(rt * peakAreaTop) / sum(peakAreaTop)
-    )
-
-  peakgroups <- dplyr::tbl(mzroll_db_con, "peakgroups") %>%
-    dplyr::collect() %>%
-    dplyr::select(-compoundId) %>%
-    tidyr::separate(compoundName,
-      into = c("compoundName", "smiles"),
-      sep = ": ", extra = "drop", fill = "right"
-    ) %>%
-    dplyr::left_join(peakgroup_positions, by = "groupId")
-
-  # Issue 300: case where displayName is not NA and compoundName is NA will
-  # currently be treated as NA. Unlikely to occur, to avoid set
-  # validate = FALSE
-  if (validate) {
-    peakgroups <- peakgroups %>%
-      dplyr::mutate(
-        compoundName = dplyr::case_when(
-          is.na(compoundName) ~ NA_character_,
-          searchTableName == "Bookmarks" &
-            !stringr::str_detect(string = label, pattern = "b") ~ compoundName,
-          # backwards compatibility
-          searchTableName == "rumsDB" &
-            stringr::str_detect(string = label, pattern = "g") ~ compoundName,
-          searchTableName == "clamDB" &
-            stringr::str_detect(string = label, pattern = "g") ~ compoundName,
-          # directly added EICs
-          searchTableName == "EICs" ~ compoundName,
-          TRUE ~ NA_character_
-        ),
-        is_unknown = ifelse(is.na(compoundName), TRUE, FALSE)
-      )
-  }
-
-  if (only_identified) {
-
-    # Issue 300: case of displayName != NA and compoundName == NA filtered
-    # out here. Only a problem for annotations added to peakdetector IDs
-    # instead of clamdb IDs (or clamDB IDs analyzed in MAVEN not using
-    # correct msp library)
-    #
-    # TODO: revisit if this comes up
-
-    peakgroups <- peakgroups %>%
-      dplyr::filter(!is.na(compoundName))
-  } else {
-    unknown_groups <- peakgroups %>%
-      dplyr::filter(is.na(compoundName)) %>%
-      {
-        .$groupId
-      }
-
-    # label unknowns based on m/z and rt
-
-    unknown_names <- peakgroups %>%
-      dplyr::filter(groupId %in% unknown_groups) %>%
-      dplyr::mutate(new_compoundName = as.character(glue::glue(
-        "unk {round(mz, 3)} @ {round(rt,1)}"
-      ))) %>%
-      dplyr::select(groupId, new_compoundName)
-
-    peakgroups <- peakgroups %>%
-      dplyr::left_join(unknown_names, by = "groupId") %>%
-      dplyr::mutate(
-        is_unknown = ifelse(is.na(compoundName), TRUE, FALSE),
-        compoundName = dplyr::case_when(
-          !is.na(new_compoundName) ~ new_compoundName,
-          TRUE ~ compoundName
-        )
-      ) %>%
-      dplyr::select(-new_compoundName)
-  }
+  
+  # add peakgroup m/z and rt
+  peakgroups <- process_mzroll_load_peakgroups(mzroll_db_con)
+  # if validate is true, use peakgroup labels to rename unknowns
+  peakgroups <- process_mzroll_validate_peakgroups(peakgroups, validate)
+  # if only_identified is true, only named compounds are retained, if false
+  #   unknowns are labeled by m/z and rt
+  peakgroups <- process_mzroll_identify_peakgroups(peakgroups, only_identified)
 
   # add standard and systematic standard data if available
 
@@ -182,16 +118,6 @@ process_mzroll <- function(mzroll_db_path, standard_databases = NULL,
     annotated_peakgroups <- peakgroup_compound_pathways
   } else {
     annotated_peakgroups <- peakgroups
-  }
-
-  # Issue 300: prefer manually overridden compound name
-  if ("displayName" %in% colnames(annotated_peakgroups)) {
-    annotated_peakgroups <- annotated_peakgroups %>%
-      dplyr::mutate(compoundName = ifelse(
-        is.na(displayName),
-        compoundName,
-        displayName
-      ))
   }
 
   # reduce to smaller number of peakgroups features
@@ -317,6 +243,131 @@ process_mzroll <- function(mzroll_db_path, standard_databases = NULL,
   ))
 
   return(mzroll_list)
+}
+
+#' Process MzRoll - Load Peakgroups
+#' 
+#' Load peakgroups table and add mz and rt variables to peakgroups based on
+#'   peak-level data.
+#' 
+#' @param mzroll_db_con an SQLite connection to an mzrollDB database
+#' 
+#' @return a table of peakgroups
+process_mzroll_load_peakgroups <- function(mzroll_db_con){
+  
+  peakgroup_positions <- dplyr::tbl(mzroll_db_con, "peaks") %>%
+    dplyr::collect() %>%
+    dplyr::group_by(groupId) %>%
+    dplyr::summarize(
+      mz = sum(peakMz * peakAreaTop) / sum(peakAreaTop),
+      rt = sum(rt * peakAreaTop) / sum(peakAreaTop)
+    )
+  
+  peakgroups <- dplyr::tbl(mzroll_db_con, "peakgroups") %>%
+    dplyr::collect() %>%
+    dplyr::select(-compoundId) %>%
+    # peel off smiles if they are present
+    tidyr::separate(
+      compoundName,
+      into = c("compoundName", "smiles"),
+      sep = ": ", extra = "drop", fill = "right"
+    ) %>%
+    dplyr::left_join(peakgroup_positions, by = "groupId")
+  
+  # if provided, prefer display name over compoundName
+  if ("displayName" %in% colnames(peakgroups)) {
+    peakgroups <- peakgroups %>%
+      dplyr::mutate(compoundName = ifelse(
+        is.na(displayName),
+        compoundName,
+        displayName
+      ))
+  }
+  
+  return(peakgroups)
+}
+
+#' Process MzRoll - Validate Peakgroups
+#' 
+#' If validate is True then remove unvalidated compoundNames (based on
+#'   peakgroup labels) and identify all unvalidated compounds with an
+#'   "is_unknown" variable.
+#'   
+#' @param peakgroups a table of distinct ions with characteristic m/z and rt
+#' @inheritParams process_mzroll
+#'
+#' @return a table of peakgroups
+process_mzroll_validate_peakgroups <- function(peakgroups, validate){
+  
+  checkmate::assertDataFrame(peakgroups)
+  checkmate::assertLogical(validate, len = 1)
+  
+  if (validate) {
+    peakgroups <- peakgroups %>%
+      dplyr::mutate(
+        compoundName = dplyr::case_when(
+          is.na(compoundName) ~ NA_character_,
+          searchTableName == "Bookmarks" &
+            !stringr::str_detect(string = label, pattern = "b") ~ compoundName,
+          # backwards compatibility
+          searchTableName == "rumsDB" &
+            stringr::str_detect(string = label, pattern = "g") ~ compoundName,
+          searchTableName == "clamDB" &
+            stringr::str_detect(string = label, pattern = "g") ~ compoundName,
+          # directly added EICs
+          searchTableName == "EICs" ~ compoundName,
+          TRUE ~ NA_character_
+        ),
+        is_unknown = ifelse(is.na(compoundName), TRUE, FALSE)
+      )
+  }
+  
+  return(peakgroups)
+  
+}
+
+#' Process MzRoll - Identify Peakgroups
+#' 
+#' Either remove unidentified peakgroups or name unknowns using m/z and rt.
+#' 
+#' @inheritParams process_mzroll_validate_peakgroups
+#' @inheritParams process_mzroll
+#' 
+#' @return a table of peakgroups
+process_mzroll_identify_peakgroups <- function(peakgroups, only_identified){
+  
+  checkmate::assertDataFrame(peakgroups)
+  
+  if (only_identified) {
+    peakgroups <- peakgroups %>%
+      dplyr::filter(!is.na(compoundName))
+  } else {
+    unknown_groups <- peakgroups %>%
+      dplyr::filter(is.na(compoundName)) %>%
+      {.$groupId}
+    
+    # label unknowns based on m/z and rt
+    
+    unknown_names <- peakgroups %>%
+      dplyr::filter(groupId %in% unknown_groups) %>%
+      dplyr::mutate(new_compoundName = as.character(glue::glue(
+        "unk {round(mz, 3)} @ {round(rt,1)}"
+      ))) %>%
+      dplyr::select(groupId, new_compoundName)
+    
+    peakgroups <- peakgroups %>%
+      dplyr::left_join(unknown_names, by = "groupId") %>%
+      dplyr::mutate(
+        is_unknown = ifelse(is.na(compoundName), TRUE, FALSE),
+        compoundName = dplyr::case_when(
+          !is.na(new_compoundName) ~ new_compoundName,
+          TRUE ~ compoundName
+        )
+      ) %>%
+      dplyr::select(-new_compoundName)
+  }
+  
+  return(peakgroups)
 }
 
 #' Augment Samples with Samplesheet

@@ -46,6 +46,7 @@ Process mzRoll
 \examples{
 library(dplyr)
 
+mzroll_db_path = nplug_mzroll()
 authutils::get_clamr_assets("X0083-M001A.mzrollDB") \%>\%
   process_mzroll(
     standard_databases = NULL,

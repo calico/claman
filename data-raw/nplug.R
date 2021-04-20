@@ -47,7 +47,11 @@ abundances <- nplug_raw %>%
   
 peakgroups <- abundances %>%
   dplyr::distinct(name) %>%
-  dplyr::mutate(groupId = 1:n())
+  dplyr::mutate(
+    groupId = 1:n(),
+    # indicate that the peakgroup has been validated
+    tagString = "g"
+  )
 
 peaks <- abundances %>%
   dplyr::inner_join(peakgroups, by = "name") %>%
