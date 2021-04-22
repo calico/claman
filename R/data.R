@@ -48,6 +48,11 @@ nplug_mzroll <- function() {
 #'   }
 #'   \item{exp_ref}{experimental or reference condition}
 #'   \item{extraction}{filter- or pellet-based extraction}
+#'   \item{condition}{Integer value for each unique condition. Here, that is
+#'     a unique values of (month, limitation, DR, and extraction) for
+#'     experimental samples, and unique values of (month and extraction) for
+#'     reference samples.}
+#'   \item{reference}{Condition number that this sample should be compared to.}
 #'   }
 #' 
 "nplug_samples"

@@ -5,7 +5,7 @@
 \alias{nplug_samples}
 \title{NPLUG samples}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 136 rows and 7 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 136 rows and 9 columns.
 }
 \usage{
 nplug_samples
@@ -29,6 +29,11 @@ A table of meta-data for all NPLUG samples with variables:
   }
   \item{exp_ref}{experimental or reference condition}
   \item{extraction}{filter- or pellet-based extraction}
+  \item{condition}{Integer value for each unique condition. Here, that is
+    a unique values of (month, limitation, DR, and extraction) for
+    experimental samples, and unique values of (month and extraction) for
+    reference samples.}
+  \item{reference}{filter- or pellet-based extraction}
   }
 }
 \keyword{datasets}

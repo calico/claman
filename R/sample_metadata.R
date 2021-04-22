@@ -1,67 +1,14 @@
-#' Read Samples Table
+#' Add Samples Table
+#'
+#' Add a table of sample metadata to an existing mzroll_list
 #'
 #' @param samples_tbl Table of sample metadata
-read_samples_tbl <- function(samples_tbl) {
+add_samples_tbl <- function(mzroll_list, samples_tbl) {
   
-  # require a few standard fields in the Metabolomics User Sample List
-  required_sample_vars <- c(
-    "tube label",
-    "sample description",
-    "condition #",
-    "reference condition #",
-    "MS ID string",
-    "MS ID string alternative"
-  )
-  missing_required_vars <- setdiff(
-    required_sample_list_vars,
-    colnames(sample_list)
-  )
   
-  if (length(missing_required_vars) != 0) {
-    stop(
-      "\"Metabolomics User Sample List\" is missing required variables: ",
-      paste(missing_required_vars, collapse = ", ")
-    )
-  }
-
-  # check for tube label uniqueness
-
-  duplicated_tube_labels <- sample_list %>%
-    dplyr::count(`tube label`) %>%
-    dplyr::filter(n > 1)
-
-  if (nrow(duplicated_tube_labels) != 0) {
-    stop(
-      nrow(duplicated_tube_labels),
-      " tube labels were not unique, duplicated labels: ",
-      paste(duplicated_tube_labels$`tube label`, collapse = ", ")
-    )
-  }
-
-  # check for uniqueness of every MS ID string and alternatives
-
-  duplicated_id_strings <- sample_list %>%
-    dplyr::select(`MS ID string`, `MS ID string alternative`) %>%
-    tidyr::gather("ID string column", "ID string entry") %>%
-    dplyr::filter(!is.na(`ID string entry`)) %>%
-    dplyr::count(`ID string entry`) %>%
-    dplyr::filter(n > 1)
-
-  if (nrow(duplicated_id_strings) != 0) {
-    stop(
-      nrow(duplicated_id_strings),
-      " MS ID strings were not unique: ",
-      paste(duplicated_id_strings$`ID string entry`, collapse = ", ")
-    )
-  }
-
-  # check that all reference conditions exist
-
-  if (
-    !all(sample_list$`reference condition #` %in% sample_list$`condition #`)
-  ) {
-    stop("some reference condition #s not found as condition #s")
-  }
+  
+  
+  samples_tbl
 
   sample_list
 }

@@ -1,280 +1,97 @@
-#' \code{claman} package
-#'
-#' Claman (Calico Lipidomics And Metabolomics ANalysis) can read .mzrollDB
-#' files created using MAVEN or Quahog into an mzroll_list. These lists
-#' can then be modified through normalization, signal flooring, and filtering.
-#' Differential abundance analysis of metabolites can then be performed along
-#' with a variety of visualizations.
-#'
-#' @docType package
-#' @name calicomics
-#' @importFrom dplyr %>%
-#' @import ggplot2
-NULL
-
-## quiets concerns of R CMD check re: the .'s that appear in pipelines
-utils::globalVariables(c(
-  ".",
-  ":=",
-  ".center",
-  ".group_center",
-  ".loess_fit",
-  ".loess_shift",
-  ".reference",
-  ".reference_diff",
-  "abund_mean",
-  "abund_se",
-  "abundance",
-  "anova_signif",
-  "centered_log2_abundance",
-  "char",
-  "compoundId",
-  "compoundName",
-  "databaseId",
-  "datetime",
-  "diff_to_median",
-  "displayName",
-  "double_1",
-  "double_2",
-  "double_3",
-  "double_4",
-  "enrichment_plot",
-  "ES",
-  "FA1",
-  "FA2",
-  "FA3",
-  "FA4",
-  "fdr_summary",
-  "field",
-  "filename",
-  "focus_pathway",
-  "fgsea_results",
-  "groupData",
-  "groupId",
-  "gsea_results",
-  "gsea_table_grob",
-  "id",
-  "ID string entry",
-  "lm_fits",
-  "is_discovery",
-  "is_focus_pathway",
-  "is_tracking_sheet",
-  "is_unknown",
-  "label",
-  "leadingEdge",
-  "lipidClass",
-  "log2_abundance",
-  "median",
-  "median_abund",
-  "method_tag",
-  "MS ID string",
-  "MS ID string alternative",
-  "mz_delta",
-  "mz_median",
-  "mzmax",
-  "mzmax_adj",
-  "mzmin",
-  "mzmin_adj",
-  "mzroll_db_path",
-  "n",
-  "n_entries",
-  "n_unique_records",
-  "name",
-  "name_tibble",
-  "NES",
-  "new_compoundName",
-  "newSampleId",
-  "nMoreExtreme",
-  "num_sn_chains",
-  "OH_1",
-  "OH_2",
-  "OH_3",
-  "OH_4",
-  "old_sampleId",
-  "ordered_groupId",
-  "ordered_sampleId",
-  "one_peak_data",
-  "p.value",
-  "p.value.trans",
-  "padj",
-  "pathway",
-  "pathway_entries",
-  "pathwayId",
-  "pathwayName",
-  "peak_label",
-  "peakAreaTop",
-  "peakMz",
-  "peakId",
-  "plasmalogen_type",
-  "position",
-  "processed_mzroll",
-  "pval",
-  "qvalue",
-  "r_position",
-  "rt",
-  "rt_delta",
-  "rt_median",
-  "rtmax",
-  "rtmax_adj",
-  "rtmin",
-  "rtmin_adj",
-  "sampleId",
-  "sample description",
-  "samples",
-  "scaling_factor",
-  "single_1",
-  "single_2",
-  "single_3",
-  "single_4",
-  "size",
-  "sn1",
-  "sn2",
-  "sn3",
-  "sn4",
-  "sn_chains",
-  "statistic",
-  "sumComposition",
-  "systematicCompoundId",
-  "term",
-  "term_data",
-  "total_double",
-  "total_OH",
-  "total_single",
-  "tube",
-  "tube label",
-  "variable",
-  "weights"
-))
-
-#' Configure Database Access
-#'
-#' Setup and test connection to Calico databases
-#'
-#' @param standards_db type of standards database to connect to:
-#' \itemize{
-#'   \item{standard: just standards}
-#'   \item{extended: standards, external libraries and predicted spectra}
-#'   }
-#'
-#' @return a list containing connections to the standards and systematic
-#'   compounds database
-#'
-#' @export
-configure_db_access <- function(standards_db = "standard") {
-
-  # load metabolite MySQL db password
-  db_password <- Sys.getenv("metabolite_db")
-  if (db_password == "") {
-    warning("metabolite_db password missing from .Renviron
-              please add it. i.e., metabolite_db=xxxxx")
-  }
-
-  standard_dbs <- tibble::tribble(
-    ~name, ~db_name,
-    "standard", "mass_spec_standards",
-    "extended", "mass_spec_standards_extended"
-  )
-
-  if (any(class(standards_db) != "character") || length(standards_db) != 1) {
-    stop("\"standards_db\" must be a length 1 character vector
-           valid entries are: ", paste(standard_dbs$name, collapse = ", "))
-  }
-
-  if (!(standards_db %in% standard_dbs$name)) {
-    stop(
-      standards_db,
-      " is not a valid entry for \"standards_db\" valid entries are: ",
-      paste(standard_dbs$name, collapse = ", ")
-    )
-  }
-  standard_db_name <- standard_dbs$db_name[standard_dbs$name == standards_db]
-
-  # connect to metabolite MySQL databases
-  # (this is behind the firewall)
-  mass_spec_standards_con <- DBI::dbConnect(
-    RMySQL::MySQL(),
-    user = "admin",
-    password = db_password,
-    dbname = standard_db_name,
-    host = "104.196.252.153"
-  )
-
-  systematic_compounds_con <- DBI::dbConnect(
-    RMySQL::MySQL(),
-    user = "admin",
-    password = db_password,
-    dbname = "systematic_compounds",
-    host = "104.196.252.153"
-  )
-
-  # present connections
-  list(
-    mass_spec_standards_con = mass_spec_standards_con,
-    systematic_compounds_con = systematic_compounds_con
-  )
-}
-
 #' Test Mzroll List
 #'
 #' @param mzroll_list output of \link{process_mzroll} or
 #'   \link{process_mzroll_multi}
 #'
 #' \itemize{
-#'   \item{peakgroups: one row per unique analyte (defined by a
+#'   \item{features: one row per unique analyte (defined by a
 #'     unique groupId)},
 #'   \item{samples: one row per unique sample (defined by a unique sampleId)},
-#'   \item{peaks: one row per peak (samples x peakgroups)}
+#'   \item{measurements: one row per peak (samples x peakgroups)}
 #'   }
 #'
-test_mzroll_list <- function(mzroll_list) {
-  if (!("list" %in% class(mzroll_list))) {
-    stop("\"mzroll_list\" must be a list")
+#' @inheritParams romic:::check_triple_omic
+#'
+test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
+  
+  checkmate::assertClass(mzroll_list, "tomic")
+  checkmate::assertClass(mzroll_list, "mzroll")
+  
+  # check that mzroll_list is a valid tomic
+  
+  romic:::check_triple_omic(mzroll_list, fast_check)
+
+  # check for claman-specific conventions
+  
+  if (mzroll_list$design$feature_pk != "groupId") {
+    stop(glue::glue(
+      "The mzroll feature primary key was {mzroll_list$design$feature_pk}
+        this value must be \"groupId\""))
   }
-
-  required_tables <- c("peakgroups", "samples", "peaks")
-  provided_tables <- names(mzroll_list)
-
-  missing_required_tables <- setdiff(required_tables, provided_tables)
-
-  if (length(missing_required_tables) != 0) {
-    stop(
-      "missing required tables: ",
-      paste(missing_required_tables, collapse = ", "),
-      "; generate mzroll_list with \"process_mzroll\""
+  
+  if (mzroll_list$design$sample_pk != "sampleId") {
+    stop(glue::glue(
+      "The mzroll feature primary key was {mzroll_list$design$sample_pk}
+        this value must be \"sampleId\""))
+  }
+  
+  # check for required variables
+  
+  check_required_variables(
+    mzroll_list,
+    "features", 
+    c(
+      "groupId",
+      "compoundName",
+      "smiles",
+      "adductName",
+      "tagString",
+      "mz",
+      "rt",
+      "compoundDB",
+      "searchTableName",
+      "label"
+      )
     )
-  }
-  extra_provided_tables <- setdiff(provided_tables, required_tables)
-  if (length(missing_required_tables) != 0) {
-    warning(
-      "extra tables present in mzroll_list: ",
-      paste(extra_provided_tables, collapse = ", ")
-    )
-  }
-
-  # this overlaps with some functions in clamr/clamdb - might want to pull
-  # them out as general utils
-  required_fields <- tibble::tribble(
-    ~tbl, ~variable,
-    "peaks", "groupId",
-    "peaks", "sampleId",
-    "peakgroups", "groupId",
-    "samples", "sampleId"
+  
+  check_required_variables(
+    mzroll_list,
+    "measurements", 
+    c("peakId", "groupId", "sampleId", "log2_abundance")
   )
-
-  included_variables <- tibble::tibble(tbl = names(mzroll_list)) %>%
-    dplyr::mutate(variable = purrr::map(mzroll_list, colnames)) %>%
-    tidyr::unnest(variable)
-
-  absent_required_fields <- required_fields %>%
-    dplyr::anti_join(included_variables, by = c("tbl", "variable")) %>%
-    dplyr::mutate(message = glue::glue(
-      "required variable missing from {tbl}: {variable}"
-    ))
-
-  if (nrow(absent_required_fields) != 0) {
-    stop(paste(absent_required_fields$message, collapse = "\n"))
-  }
+  
+  check_required_variables(
+    mzroll_list,
+    "samples", 
+    c("sampleId", "name", "filename")
+  )
+  
+  return(invisible(0))
+  
 }
+
+check_required_variables <- function(mzroll_list, table, required_variables) {
+  
+  checkmate::assertClass(mzroll_list, "tomic")
+  checkmate::assertClass(mzroll_list, "mzroll")
+  checkmate::assertChoice(table, c("features", "samples", "measurements"))
+  checkmate::assertCharacter(required_variables)
+
+  missing_measurements <- setdiff(
+    required_variables,
+    mzroll_list$design[[table]]$variable
+    )
+  
+  if (length(missing_measurements) != 0) {
+    stop(glue::glue(
+      "required variable(s) {paste(missing_measurements, collapse = ', ')}
+        missing from {table}
+      "))
+  }
+  
+  return (invisible(0))
+}
+
 
 #' Paths for X0106 examples
 #'

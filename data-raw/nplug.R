@@ -38,6 +38,38 @@ nplug_samples <- nplug_raw %>%
     "PO4",
     limitation))
 
+# use DR when finding distinct experimental conditions
+distinct_exp_conditions <- nplug_samples %>%
+  filter(exp_ref == "exp") %>%
+  distinct(month, limitation, DR, extraction) %>%
+  mutate(condition = 1:n())
+
+# ignore DR when finding distinct reference conditions
+distinct_ref_conditions <- nplug_samples %>%
+  filter(exp_ref == "ref") %>%
+  distinct(month, extraction) %>%
+  mutate(condition = max(distinct_exp_conditions$condition) + 1:n())
+
+nplug_samples <- bind_rows(
+  nplug_samples %>%
+    filter(exp_ref == "exp") %>%
+    left_join(
+      distinct_exp_conditions,
+      by = c("month", "limitation", "DR", "extraction")
+    ),
+  nplug_samples %>%
+    filter(exp_ref == "ref") %>%
+    left_join(
+      distinct_ref_conditions,
+      by = c("month", "extraction")
+    )
+) %>%
+  left_join(
+    distinct_ref_conditions %>%
+      rename(reference = condition),
+    by = c("month", "extraction")
+  )
+
 usethis::use_data(nplug_samples, overwrite = TRUE)
 
 # create mzroll file

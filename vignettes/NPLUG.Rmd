@@ -77,10 +77,9 @@ read_samples_tbl(nplug_samples)
 
 # stitch together
 # define unique conditions
-distinct_conditions <- nplug_samples %>%
-  distinct(month, )
-  
 
+
+    
 
 
 
