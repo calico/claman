@@ -48,12 +48,13 @@ plot_heatmap <- function(mzroll_list,
                          cluster_dim = "both",
                          change_threshold = 3,
                          plot_type = "plotly") {
-  test_mzroll_list(mzroll_list)
-
+  
   checkmate::assertString(feature.var)
   checkmate::assertString(sample.var)
   checkmate::assertString(value.var)
 
+  romic::plot_heatmap(mzroll_list, value.var = "centered_log2_abundance")
+  
   stopifnot(feature.var %in% colnames(mzroll_list$peakgroups))
   stopifnot(sample.var %in% colnames(mzroll_list$samples))
   stopifnot(value.var %in% colnames(mzroll_list$peaks))

@@ -25,13 +25,18 @@ nplug_samples <- nplug_raw %>%
     month = Month,
     replicate = Which,
     DR = Gr,
+    limitation = Nutr,
     exp_ref = `Exp/Ref`,
     extraction = Method
   ) %>%
   dplyr::mutate(
     month = month.abb[month],
     replicate = toupper(replicate)
-  )
+  ) %>%
+  dplyr::mutate(limitation = ifelse(
+    limitation %in% c("R", "R2", "R3"),
+    "PO4",
+    limitation))
 
 usethis::use_data(nplug_samples, overwrite = TRUE)
 

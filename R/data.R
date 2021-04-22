@@ -26,3 +26,28 @@ nplug_mzroll <- function() {
 
   return(path)
 }
+
+
+#' NPLUG samples
+#' 
+#' A table of meta-data for all NPLUG samples with variables:
+#' \describe{
+#'   \item{sample_name}{unique descriptor of each sample}
+#'   \item{month}{month of sample generation}
+#'   \item{replicate}{culture replicate}
+#'   \item{DR}{dilution rate of culture - this is proportional to cells'
+#'   growth rate}
+#'   \item{limitation}{nutrient limiting growth
+#'     \itemize{
+#'       \item{GLU - carbon}
+#'       \item{LEU - leucine (in a Leu4 auxotroph)}
+#'       \item{NH4 - nitrogen}
+#'       \item{PO4 - phosphorous}
+#'       \item{URA - uracil (in a Ura2 auxotroph)}
+#'     }
+#'   }
+#'   \item{exp_ref}{experimental or reference condition}
+#'   \item{extraction}{filter- or pellet-based extraction}
+#'   }
+#' 
+"nplug_samples"

@@ -55,13 +55,32 @@ util_pretty_khead(mzroll_list$samples, caption = "Samples table")
 util_pretty_khead(mzroll_list$measurements, caption = "Measurements table")
 ```
 
+Having loaded the dataset, we can take a quick look at the data using a heatmap.
+
+```{r preliminary_heatmap}
+romic::plot_heatmap(
+  mzroll_list,
+  feature.var = "compoundName",
+  value.var = "centered_log2_abundance",
+  sample.var = "name",
+  change_threshold = 5
+  )
+```
+
 ## Add sample meta-data
 
-```{r}
+```{r read_sample_metadata}
+util_pretty_khead(nplug_samples)
 
-# add samples
+
+read_samples_tbl(nplug_samples)
 
 # stitch together
+# define unique conditions
+distinct_conditions <- nplug_samples %>%
+  distinct(month, )
+  
+
 
 
 

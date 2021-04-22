@@ -4,7 +4,7 @@
 read_samples_tbl <- function(samples_tbl) {
   
   # require a few standard fields in the Metabolomics User Sample List
-  required_sample_list_vars <- c(
+  required_sample_vars <- c(
     "tube label",
     "sample description",
     "condition #",
@@ -66,33 +66,6 @@ read_samples_tbl <- function(samples_tbl) {
   sample_list
 }
 
-#' Import Sample List
-#'
-#' Find, read and process a sample meta sheet from googlesheets
-#'
-#' @inheritParams find_tracking_sheet
-#'
-#' @examples
-#' \dontrun{
-#' import_sample_sheet(pattern = "X0083")
-#' }
-#'
-#' @export
-import_sample_sheet <- function(pattern) {
-  tracking_sheet_id <- find_tracking_sheet(pattern = pattern)
-
-  sample_list <- googlesheets4::read_sheet(
-    tracking_sheet_id,
-    sheet = "Metabolomics User Sample List"
-  )
-  
-  sample_sheet <- read_sample_list(tracking_sheet_id)
-
-  list(
-    tracking_sheet_id = tracking_sheet_id,
-    sample_sheet = sample_sheet
-  )
-}
 
 #' Remove Constant Name
 #'
