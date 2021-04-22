@@ -60,9 +60,9 @@ Having loaded the dataset, we can take a quick look at the data using a heatmap.
 ```{r preliminary_heatmap}
 romic::plot_heatmap(
   mzroll_list,
-  feature.var = "compoundName",
-  value.var = "centered_log2_abundance",
-  sample.var = "name",
+  feature_var = "compoundName",
+  sample_var = "name",
+  value_var = "centered_log2_abundance",
   change_threshold = 5
   )
 ```
@@ -70,19 +70,11 @@ romic::plot_heatmap(
 ## Add sample meta-data
 
 ```{r read_sample_metadata}
-util_pretty_khead(nplug_samples)
+util_pretty_khead(nplug_samples, caption = "sample meta-data table")
 
+mzroll_list_augmented <- add_samples_tbl(mzroll_list, nplug_samples, "sample_name")
 
-read_samples_tbl(nplug_samples)
-
-# stitch together
-# define unique conditions
-
-
-    
-
-
-
+util_pretty_khead(mzroll_list_augmented$samples, caption = "updated mzroll samples table")
 ```
 
 ## Add compounds meta-data

@@ -33,7 +33,7 @@ A table of meta-data for all NPLUG samples with variables:
     a unique values of (month, limitation, DR, and extraction) for
     experimental samples, and unique values of (month and extraction) for
     reference samples.}
-  \item{reference}{filter- or pellet-based extraction}
+  \item{reference}{Condition number that this sample should be compared to.}
   }
 }
 \keyword{datasets}

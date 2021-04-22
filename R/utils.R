@@ -1,4 +1,4 @@
-#' Test Mzroll List
+#' Test MzRoll List
 #'
 #' @param mzroll_list output of \link{process_mzroll} or
 #'   \link{process_mzroll_multi}
@@ -65,6 +65,24 @@ test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
     "samples", 
     c("sampleId", "name", "filename")
   )
+  
+  # check for invalid variables
+  
+  unnamed_samples <- mzroll_list$samples %>% dplyr::filter(is.na(name))
+  if (nrow(unnamed_samples) > 0){
+    stop(glue::glue(
+      "{nrow(unnamed_samples)} samples were unnamed. All samples must be named"
+      ))
+  }
+  
+  duplicated_names <- mzroll_list$samples %>%
+    dplyr::group_by(name) %>%
+    dplyr::filter(dplyr::n() > 1) %>%
+    dplyr::distinct(name)
+  
+  if (nrow(duplicated_names) > 0){
+    stop(glue::glue("{nrow(duplicated_names)} sample names were duplicated"))
+  }
   
   return(invisible(0))
   

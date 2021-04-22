@@ -132,7 +132,6 @@ process_mzroll <- function(
       sampleId = as.character(sampleId)
     )
     
-
   debugr::dwatch(
     msg = "Summarized samples. [calicomics<import_mzroll.R>::process_mzroll]\n"
   )
@@ -161,6 +160,8 @@ process_mzroll <- function(
     "number of samples in mzroll_list$samples: {nrow(mzroll_list$samples)}"
     ))
 
+  test_mzroll_list(mzroll_list)
+  
   return(mzroll_list)
 }
 
@@ -287,117 +288,6 @@ process_mzroll_identify_peakgroups <- function(peakgroups, only_identified){
   }
   
   return(peakgroups)
-}
-
-#' Augment Samples with Samplesheet
-#'
-#' @param samples samples table generated within \link{process_mzroll}.
-#' @inheritParams process_mzroll
-#'
-#' @return samples with added metadata from sample_sheet_list
-augment_samples_with_samplesheet <- function(samples, sample_sheet_list) {
-  ms_id_strings <- sample_sheet_list$sample_sheet %>%
-    dplyr::select(`tube label`, `MS ID string`, `MS ID string alternative`) %>%
-    dplyr::mutate(
-      `MS ID string` = as.character(`MS ID string`),
-      `MS ID string alternative` = as.character(`MS ID string alternative`)
-    ) %>%
-    tidyr::gather("ID string column", "ID string entry", -`tube label`) %>%
-    dplyr::filter(!is.na(`ID string entry`))
-
-  # check for sample duplication
-  duplicated_samples <- samples %>%
-    dplyr::count(name) %>%
-    dplyr::filter(n > 1)
-
-  if (nrow(duplicated_samples) != 0) {
-    stop(nrow(duplicated_samples), " samples were duplicated likely due to
-    https://github.com/calico/mass_spec/issues/348, please patch your dataset
-    with calicomics::issue_348_patch(mzroll_db_path)")
-  }
-
-  #' Issue 297: This block was adjusted, and ultimately reverted
-  #'   Make sure there are only 1-1 substring matches between samples im
-  #'   dataset and sample sheet
-  #'
-  #' e. g. if samples are named "C_200_B.mzML" and "C_2.mzML", "C_2"
-  #'   as an MS ID string will match to both samples.
-  #' To avoid this problem in this case, the MS ID string could be
-  #'   "C_2." or "C_2.mzML" instead of "C_2".
-  #'
-  sample_ms_id_string_matches <- samples %>%
-    tidyr::crossing(ms_id_strings) %>%
-    dplyr::filter(stringr::str_detect(name, `ID string entry`))
-
-  sample_multimatch <- sample_ms_id_string_matches %>%
-    dplyr::count(name) %>%
-    dplyr::filter(n > 1)
-
-  if (nrow(sample_multimatch) != 0) {
-    multimatch_details <- sample_ms_id_string_matches %>%
-      dplyr::semi_join(sample_multimatch, by = "name") %>%
-      dplyr::arrange(name) %>%
-      dplyr::mutate(out_string = glue::glue(
-        "name: {name}, match_tube: {`tube label`}, id string column: {`ID string column`}, id string entry: {`ID string entry`}"
-      )) %>%
-      {
-        paste(.$out_string, collapse = "\n")
-      }
-
-    stop(
-      nrow(sample_multimatch),
-      " experimental samples matched multiple MS ID strings: ",
-      paste(sample_multimatch$name, collapse = ", "),
-      "\nDetails:\n",
-      multimatch_details
-    )
-  }
-
-  condition_multimatch <- sample_ms_id_string_matches %>%
-    dplyr::count(`tube label`) %>%
-    dplyr::filter(n > 1)
-
-  if (nrow(condition_multimatch) != 0) {
-    multimatch_details <- sample_ms_id_string_matches %>%
-      dplyr::semi_join(condition_multimatch, by = "tube label") %>%
-      dplyr::arrange(`tube label`) %>%
-      dplyr::mutate(out_string = glue::glue(
-        "tube: {`tube label`}, name_match: {name}, id string column: {`ID string column`}, id string entry: {`ID string entry`}"
-      )) %>%
-      {
-        paste(.$out_string, collapse = "\n")
-      }
-
-    stop(
-      nrow(sample_multimatch),
-      " tubes matched multiple experimental samples: ",
-      paste(condition_multimatch$`tube label`, collapse = ", "),
-      "\nDetails:\n",
-      multimatch_details
-    )
-  }
-
-  # add sample fields for mathcing ID strings
-
-  matched_augmented_samples <- samples %>%
-    dplyr::inner_join(sample_ms_id_string_matches %>%
-      dplyr::select(sampleId, `tube label`) %>%
-      dplyr::left_join(sample_sheet_list$sample_sheet, by = "tube label"),
-    by = "sampleId"
-    )
-
-  unmatched_samples <- samples %>%
-    dplyr::anti_join(sample_ms_id_string_matches, by = "sampleId")
-
-  if (nrow(unmatched_samples) != 0) {
-    warning(
-      nrow(unmatched_samples),
-      " experimental samples were not matched to MS ID strings. Their measurements will be discarded.:\n  ",
-      paste(unmatched_samples$name, collapse = "\n  ")
-    )
-  }
-
-  matched_augmented_samples
 }
 
 #' Process mzroll multi
