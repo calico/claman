@@ -42,7 +42,6 @@ Suggests:
     plotly,
     qvalue,
     rmarkdown,
-    RMySQL,
     testthat
 Encoding: UTF-8
 LazyData: true

@@ -20,10 +20,7 @@
 #' @export
 #'
 #' @examples
-#' library(dplyr)
-#'
-#' mzroll_db_path = nplug_mzroll()
-#' process_mzroll(mzroll_db_path)
+#' process_mzroll(nplug_mzroll())
 process_mzroll <- function(
   mzroll_db_path,
   only_identified = TRUE,
@@ -36,7 +33,8 @@ process_mzroll <- function(
   checkmate::assertLogical(validate, len = 1)
   checkmate::assertString(method_tag)
   
-  mzroll_db_con <- authutils::create_sqlite_con(mzroll_db_path)
+  # connect to SQLite .mzrollDB database
+  mzroll_db_con <- create_sqlite_con(mzroll_db_path)
   
   # add peakgroup m/z and rt
   peakgroups <- process_mzroll_load_peakgroups(mzroll_db_con)
@@ -87,7 +85,8 @@ process_mzroll <- function(
       )) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(method_tag = method_tag) %>%
-      dplyr::arrange(groupId)
+      dplyr::arrange(groupId) %>%
+      dplyr::mutate(groupId = factor(groupId, levels = groupId))
   }
 
   debugr::dwatch(
@@ -96,6 +95,20 @@ process_mzroll <- function(
 
   # summarize distinct peaks and samples
 
+  samples <- dplyr::tbl(
+    mzroll_db_con,
+    dbplyr::sql("SELECT sampleId, name, filename FROM samples")
+    ) %>%
+    dplyr::collect() %>%
+    dplyr::arrange(sampleId) %>%
+    dplyr::mutate(
+      sampleId = factor(sampleId, levels = sampleId)
+    )
+  
+  debugr::dwatch(
+    msg = "Summarized samples. [calicomics<import_mzroll.R>::process_mzroll]\n"
+  )
+  
   peaks <- dplyr::tbl(
     mzroll_db_con,
     dbplyr::sql("SELECT peakId, groupId, sampleId, peakAreaTop FROM peaks")
@@ -115,25 +128,19 @@ process_mzroll <- function(
       centered_log2_abundance
     ) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(sampleId = as.character(sampleId)) %>%
+    dplyr::mutate(
+      groupId = factor(
+        groupId,
+        levels = levels(reduced_peakgroups$groupId)
+        ),
+      sampleId = factor(
+        sampleId,
+        levels = levels(samples$sampleId)
+        )) %>%
     dplyr::arrange(peakId)
 
   debugr::dwatch(
     msg = "Summarized peaks. [calicomics<import_mzroll.R>::process_mzroll]\n"
-  )
-
-  samples <- dplyr::tbl(
-    mzroll_db_con,
-    dbplyr::sql("SELECT sampleId, name, filename FROM samples")
-  ) %>%
-    dplyr::collect() %>%
-    dplyr::arrange(sampleId) %>%
-    dplyr::mutate(
-      sampleId = as.character(sampleId)
-    )
-    
-  debugr::dwatch(
-    msg = "Summarized samples. [calicomics<import_mzroll.R>::process_mzroll]\n"
   )
 
   # disconnect for sql-lite
@@ -165,6 +172,25 @@ process_mzroll <- function(
   return(mzroll_list)
 }
 
+#' Create SQLite Connection
+create_sqlite_con <- function(sqlite_path) {
+  
+  checkmate::assertFileExists(sqlite_path)
+  
+  if ("authutils" %in% installed.packages()) {
+    sqlite_con <- authutils::create_sqlite_con(sqlite_path)
+  } else {
+    sqlit_con <- DBI::dbConnect(
+      RSQLite::SQLite(),
+      sqlite_path,
+      synchronous = NULL
+      )
+  }
+  
+  return(sqlite_con)
+}
+  
+  
 #' Process MzRoll - Load Peakgroups
 #' 
 #' Load peakgroups table and add mz and rt variables to peakgroups based on
@@ -300,6 +326,7 @@ process_mzroll_identify_peakgroups <- function(peakgroups, only_identified){
 #'   \item{mzroll_db_path: path to a mzrollDB file}
 #'   }
 #' @inheritParams process_mzroll
+#' @inheritParams add_samples_tbl
 #'
 #' @return an mzroll_list containing three tibbles:
 #' \itemize{
@@ -308,37 +335,59 @@ process_mzroll_identify_peakgroups <- function(peakgroups, only_identified){
 #'   \item{samples: one row per unique sample (defined by a unique sampleId)},
 #'   \item{peaks: one row per peak (samples x peakgroups)}
 #'   }
-#'
+#' 
+#' @examples 
+#' mzroll_paths <- tibble::tribble(
+#'   ~method_tag, ~mzroll_db_path,
+#'   "method1", nplug_mzroll(),
+#'   "method2", nplug_mzroll()   
+#'   )
+#' 
+#' process_mzroll_multi(mzroll_paths, nplug_samples, "sample_name")
+#' 
 #' @export
 process_mzroll_multi <- function(
   mzroll_paths,
-  standard_databases,
-  sample_sheet_list,
+  samples_tbl,
+  id_strings,
   only_identified = TRUE,
-  validate = FALSE
+  validate = FALSE,
+  exact = TRUE
   ) {
-  checkmate::assertDataFrame(mzroll_paths)
+  
+  checkmate::assertDataFrame(mzroll_paths, min.rows = 2)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
     stop("mzroll_paths must contain two columns: method_tag & mnzroll_db_path")
   }
   stopifnot(length(mzroll_paths$method_tag) == length(unique(mzroll_paths$method_tag)))
 
-  checkmate::assertClass(sample_sheet_list, "list")
-  stopifnot(names(sample_sheet_list) == c("tracking_sheet_id", "sample_sheet"))
-
-  # call process_mzroll once per dataset
+  checkmate::assertDataFrame(samples_tbl)
+  checkmate::assertLogical(only_identified, len = 1)
+  checkmate::assertLogical(validate, len = 1)
+  
   mzroll_list_nest <- mzroll_paths %>%
-    dplyr::mutate(processed_mzroll = purrr::map2(
-      mzroll_db_path,
-      method_tag,
-      process_mzroll,
-      standard_databases = standard_databases,
-      sample_sheet_list = sample_sheet_list,
-      only_identified = only_identified,
-      validate = validate
-    ))
-
-  aggregate_mzroll_list <- aggregate_mzroll_nest(mzroll_list_nest)
+    dplyr::mutate(
+      # read each dataset
+      mzroll_list = purrr::map2(
+        mzroll_db_path,
+        method_tag,
+        process_mzroll,
+        only_identified = only_identified,
+        validate = validate
+        ),
+      # add sample meta-data
+      mzroll_list = purrr::map(
+        mzroll_list,
+        add_samples_tbl,
+        samples_tbl = samples_tbl,
+        id_strings = id_strings,
+        exact = exact
+        ))
+  
+  aggregate_mzroll_list <- aggregate_mzroll_nest(
+    mzroll_list_nest,
+    samples_tbl
+    )
 
   mzroll_multi_qc(aggregate_mzroll_list)
 
@@ -351,25 +400,35 @@ process_mzroll_multi <- function(
 #'
 #' @param mzroll_list_nest a nested list of mzroll_lists produced from
 #'   \link{process_mzroll}.
+#' @inheritParams add_samples_tbl
 #'
 #' @return a single mzroll_list
-aggregate_mzroll_nest <- function(mzroll_list_nest) {
+aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
 
-  # identify samples with shared "tube label"
+  checkmate::assertDataFrame(mzroll_list_nest)
+  # check that all mzroll lists have the same design
+  
+  designs <- purrr::map(mzroll_list_nest$mzroll_list, function(x) {x$design})
+  if (length(unique(designs)) > 1) {
+    stop("mzroll_lists have different designs and cannot be aggregated")
+  }
+  
+  # identify samples with shared "samples_tbl_row"
 
   mzroll_list_all_samples <- mzroll_list_nest %>%
-    dplyr::mutate(samples = purrr::map(processed_mzroll, function(x) {
+    dplyr::mutate(samples = purrr::map(mzroll_list, function(x) {
       x$samples
     })) %>%
-    dplyr::select(-method_tag, -processed_mzroll) %>%
+    dplyr::select(-method_tag, -mzroll_list) %>%
     tidyr::unnest(samples)
 
   consensus_samples <- mzroll_list_all_samples %>%
-    dplyr::mutate(sampleId = `tube label`) %>%
-    dplyr::select(-method_tag, -mzroll_db_path, -name, -filename) %>%
+    dplyr::mutate(sampleId = samples_tbl_row) %>%
+    dplyr::select(sampleId, samples_tbl_row, !!!rlang::syms(colnames(samples_tbl))) %>%
     dplyr::group_by(sampleId) %>%
     dplyr::slice(1) %>%
-    dplyr::ungroup()
+    dplyr::ungroup() %>%
+    dplyr::mutate(sampleId = factor(sampleId, levels = sampleId))
 
   # iterate through mzrollDB
 
@@ -379,75 +438,92 @@ aggregate_mzroll_nest <- function(mzroll_list_nest) {
   mzroll_indecies <- 1:nrow(mzroll_list_nest)
 
   # samples defined upfront as the union of samples from the sample sheet
-  # that are observed "tube label" will be the new sampleId
+  # that are observed "samples_tbl_row" will be the new sampleId
   updated_mzroll_list <- list(
-    peakgroups = NULL,
+    features = NULL,
     samples = consensus_samples,
-    peaks = NULL
+    measurements = NULL
   )
 
   # peaks and peakgroups are updated to unique values across each method
-  # and sampleId is updated to "tube label"
+  # and sampleId is updated to "samples_tbl_row"
 
   for (a_mzroll_index in mzroll_indecies) {
-    one_mzroll_list <- mzroll_list_nest$processed_mzroll[[a_mzroll_index]]
-    stopifnot(
-      all(c("peakgroups", "samples", "peaks") %in% names(one_mzroll_list))
-    )
-
+    
+    one_mzroll_list <- mzroll_list_nest$mzroll_list[[a_mzroll_index]]
+    checkmate::assertClass(one_mzroll_list, "tomic")
+    checkmate::assertClass(one_mzroll_list, "mzroll")
+    
     # update groupid and peakId to new unique values
+    # temporarily convert from factors -> integers so they can be added
+    
+    one_mzroll_list[["features"]]$groupId <-
+      as.integer(one_mzroll_list[["features"]]$groupId) + max_groupId
+    one_mzroll_list[["measurements"]]$peakId <-
+      as.integer(one_mzroll_list[["measurements"]]$peakId) + max_peakId
+    one_mzroll_list[["measurements"]]$groupId <-
+      as.integer(one_mzroll_list[["measurements"]]$groupId) + max_groupId
 
-    one_mzroll_list$peakgroups$groupId <-
-      one_mzroll_list$peakgroups$groupId + max_groupId
-    one_mzroll_list$peaks$peakId <-
-      one_mzroll_list$peaks$peakId + max_peakId
-    one_mzroll_list$peaks$groupId <-
-      one_mzroll_list$peaks$groupId + max_groupId
-
-    # find sample updates sampleId -> tube label
+    # find sample updates sampleId -> samples_tbl_row
 
     sampleId_lookup <- one_mzroll_list$samples %>%
-      dplyr::select(oldSampleId = sampleId, newSampleId = `tube label`)
+      dplyr::select(oldSampleId = sampleId, newSampleId = samples_tbl_row)
 
-    one_mzroll_list$peaks <- one_mzroll_list$peaks %>%
+    one_mzroll_list$measurements <- one_mzroll_list$measurements %>%
       dplyr::left_join(sampleId_lookup, by = c("sampleId" = "oldSampleId")) %>%
-      dplyr::select(
-        peakId,
-        groupId,
-        sampleId = newSampleId,
-        log2_abundance,
-        centered_log2_abundance
-      )
-
-    updated_mzroll_list$peaks <- dplyr::bind_rows(
-      updated_mzroll_list$peaks,
-      one_mzroll_list$peaks
+      dplyr::select(-sampleId) %>%
+      dplyr::rename(sampleId = newSampleId) %>%
+      dplyr::mutate(sampleId = factor(
+        sampleId,
+        levels = levels(consensus_samples$sampleId)
+        )) %>%
+      dplyr::select(!!!rlang::syms(colnames(one_mzroll_list$measurements)))
+      
+    updated_mzroll_list$measurements <- dplyr::bind_rows(
+      updated_mzroll_list$measurements,
+      one_mzroll_list$measurements
     )
-    updated_mzroll_list$peakgroups <- dplyr::bind_rows(
-      updated_mzroll_list$peakgroups,
-      one_mzroll_list$peakgroups
+    updated_mzroll_list$features <- dplyr::bind_rows(
+      updated_mzroll_list$features,
+      one_mzroll_list$features
     )
 
-    max_peakId <- max(one_mzroll_list$peaks$peakId)
-    max_groupId <- max(one_mzroll_list$peakgroups$groupId)
+    max_peakId <- max(one_mzroll_list[["measurements"]]$peakId)
+    max_groupId <- max(one_mzroll_list[["features"]]$groupId)
   }
 
-  updated_mzroll_list
+  # overwrite one of the original mzrolls to update the romic schema
+  
+  one_mzroll_list$features <- updated_mzroll_list$features %>%
+    dplyr::mutate(groupId = factor(groupId, levels = groupId))
+  one_mzroll_list$measurements <- updated_mzroll_list$measurements %>%
+    dplyr::mutate(
+      groupId = factor(
+        groupId,
+        levels = levels(one_mzroll_list$features$groupId)
+        ),
+      peakId = factor(peakId, levels = peakId)
+      )
+  # update values and schema
+  one_mzroll_list <- romic::update_tomic(one_mzroll_list, updated_mzroll_list$samples)
+  
+  return(one_mzroll_list)
 }
 
 mzroll_multi_qc <- function(mzroll_list) {
-  mzroll_coverage_table <- mzroll_list$peaks %>%
+  
+  mzroll_coverage_table <- mzroll_list$measurements %>%
     dplyr::left_join(
-      mzroll_list$peakgroups %>%
+      mzroll_list$features %>%
         dplyr::select(groupId, method_tag),
       by = "groupId"
     ) %>%
     dplyr::left_join(
       mzroll_list$samples %>%
-        dplyr::select(sampleId, `tube label`),
+        dplyr::select(sampleId, samples_tbl_row),
       by = "sampleId"
     ) %>%
-    dplyr::count(`tube label`, method_tag) %>%
+    dplyr::count(samples_tbl_row, method_tag) %>%
     tidyr::spread(method_tag, n)
 
   missed_matches <- mzroll_coverage_table %>%
@@ -455,10 +531,10 @@ mzroll_multi_qc <- function(mzroll_list) {
 
   if (nrow(missed_matches) != 0) {
     missed_matches_warning <- missed_matches %>%
-      tidyr::gather(-`tube label`, key = "method_tag", value = "n_entries") %>%
+      tidyr::gather(-samples_tbl_row, key = "method_tag", value = "n_entries") %>%
       dplyr::filter(is.na(n_entries)) %>%
       dplyr::mutate(out = glue::glue(
-        "tube: {`tube label`}, method_tag: {method_tag}"
+        "row: {samples_tbl_row}, method_tag: {method_tag}"
       )) %>%
       {
         paste(.$out, collapse = "\n")
@@ -466,7 +542,7 @@ mzroll_multi_qc <- function(mzroll_list) {
 
     stop(
       nrow(missed_matches),
-      " tubes only matched a subset of methods; this will cause downstream problems.
+      " rows only matched a subset of methods; this will cause downstream problems.
         Either update your sample sheet or analyze each method separately.
         Details:\n",
       missed_matches_warning
@@ -538,18 +614,4 @@ add_peakgroup_annotations <- function() {
   } else {
     annotated_peakgroups <- peakgroups
   }
-}
-
-add_sample_metadata <- function() {
-  
-  if (class(sample_sheet_list) == "list") {
-    samples <- augment_samples_with_samplesheet(samples, sample_sheet_list)
-    
-    # drop data from unmatched samples
-    peaks <- peaks %>%
-      dplyr::semi_join(samples, by = "sampleId")
-    reduced_peakgroups <- reduced_peakgroups %>%
-      dplyr::semi_join(peaks, by = "groupId")
-  }
-  
 }

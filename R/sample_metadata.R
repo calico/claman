@@ -24,6 +24,14 @@ add_samples_tbl <- function(
   checkmate::assertClass(mzroll_list, "tomic")
   checkmate::assertClass(mzroll_list, "mzroll")
   checkmate::assertDataFrame(samples_tbl)
+  
+  if ("samples_tbl_row" %in% colnames(samples_tbl)) {
+    stop(
+      "\"samples_tbl_row\" is a reserved variable in samples_tbl,
+        do not include it"
+      )
+    }
+  
   checkmate::assertCharacter(id_strings)
   purrr::walk(id_strings, checkmate::assertChoice, colnames(samples_tbl))
   checkmate::assertLogical(exact)
@@ -31,14 +39,14 @@ add_samples_tbl <- function(
   # match samples_tbl to mzroll samples
   
   samples_tbl <- samples_tbl %>%
-    dplyr::mutate(.entry = 1:dplyr::n())
+    dplyr::mutate(samples_tbl_row = 1:dplyr::n())
   
   # read all id_strings - substrings used to match sample names in mzroll
   
   ms_id_strings <- samples_tbl %>%
-    dplyr::select(!!!rlang::syms(c(".entry", id_strings))) %>%
-    dplyr::mutate_at(dplyr::vars(-.entry), as.character) %>%
-    tidyr::gather(id_string_var, id_string_value, -.entry) %>%
+    dplyr::select(!!!rlang::syms(c("samples_tbl_row", id_strings))) %>%
+    dplyr::mutate_at(dplyr::vars(-samples_tbl_row), as.character) %>%
+    tidyr::gather(id_string_var, id_string_value, -samples_tbl_row) %>%
     dplyr::filter(!is.na(id_string_value))
   
   sample_ms_id_string_matches <- mzroll_list$samples %>%
@@ -63,7 +71,7 @@ add_samples_tbl <- function(
       dplyr::semi_join(sample_multimatch, by = "name") %>%
       dplyr::arrange(name) %>%
       dplyr::mutate(out_string = glue::glue(
-        "name: {name} matching row: {.entry}, id string column: {id_string_var}, id string entry: {id_string_value}"
+        "name: {name} matching row: {samples_tbl_row}, id string column: {id_string_var}, id string entry: {id_string_value}"
       )) %>%
       {
         paste(.$out_string, collapse = "\n")
@@ -81,15 +89,15 @@ add_samples_tbl <- function(
   # check whether 1 ID matches 2+ samples
   
   condition_multimatch <- sample_ms_id_string_matches %>%
-    dplyr::count(.entry) %>%
+    dplyr::count(samples_tbl_row) %>%
     dplyr::filter(n > 1)
   
   if (nrow(condition_multimatch) != 0) {
     multimatch_details <- sample_ms_id_string_matches %>%
-      dplyr::semi_join(condition_multimatch, by = ".entry") %>%
-      dplyr::arrange(.entry) %>%
+      dplyr::semi_join(condition_multimatch, by = "samples_tbl_row") %>%
+      dplyr::arrange(samples_tbl_row) %>%
       dplyr::mutate(out_string = glue::glue(
-        "row: {.entry} matching name_match: {name} with id string column: {id_string_var}, id string entry: {id_string_value}"
+        "row: {samples_tbl_row} matching name_match: {name} with id string column: {id_string_var}, id string entry: {id_string_value}"
       )) %>%
       {
         paste(.$out_string, collapse = "\n")
@@ -98,7 +106,7 @@ add_samples_tbl <- function(
     stop(
       nrow(condition_multimatch),
       " rows in sample_tbl matched multiple experimental samples: ",
-      paste(condition_multimatch$.entry, collapse = ", "),
+      paste(condition_multimatch$samples_tbl_row, collapse = ", "),
       "\nDetails:\n",
       multimatch_details
     )
@@ -107,8 +115,8 @@ add_samples_tbl <- function(
   matched_augmented_samples <- mzroll_list$samples %>%
     dplyr::inner_join(
       sample_ms_id_string_matches %>%
-        dplyr::select(sampleId, .entry) %>%
-        dplyr::left_join(samples_tbl, by = ".entry"),
+        dplyr::select(sampleId, samples_tbl_row) %>%
+        dplyr::left_join(samples_tbl, by = "samples_tbl_row"),
       by = "sampleId"
     )
   

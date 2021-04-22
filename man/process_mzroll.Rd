@@ -37,8 +37,5 @@ a **triple_omic** from **romic** containing three tibbles:
 Process mzRoll
 }
 \examples{
-library(dplyr)
-
-mzroll_db_path = nplug_mzroll()
-process_mzroll(mzroll_db_path)
+process_mzroll(nplug_mzroll())
 }

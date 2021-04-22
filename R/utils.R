@@ -68,6 +68,9 @@ test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
   
   # check for invalid variables
   
+  checkmate::assertClass(mzroll_list[["features"]]$groupId, "factor")
+  checkmate::assertClass(mzroll_list[["samples"]]$sampleId, "factor")
+  
   unnamed_samples <- mzroll_list$samples %>% dplyr::filter(is.na(name))
   if (nrow(unnamed_samples) > 0){
     stop(glue::glue(
@@ -110,29 +113,6 @@ check_required_variables <- function(mzroll_list, table, required_variables) {
   return (invisible(0))
 }
 
-
-#' Paths for X0106 examples
-#'
-#' methods and paths to X0106 example mzroll datasets.
-#'
-#' @examples
-#' \dontrun{
-#' X0106_paths <- tibble::tribble(
-#'   ~method_tag, ~mzroll_db_path,
-#'   "metabolites (neg)", "/tmp/mzkit_assets/X0106_mzrollDBs/X0106-M001-peakdetector.mzrollDB",
-#'   "metabolites (pos) - 1", "/tmp/mzkit_assets/X0106_mzrollDBs/X0106-M002-peakdetector.mzrollDB",
-#'   "metabolites (pos) - 2", "/tmp/mzkit_assets/X0106_mzrollDBs/X0106-M002-peakdetector2.mzrollDB",
-#'   "lipids (neg) - 1", "/tmp/mzkit_assets/X0106_mzrollDBs/X0106-M004A-1.mzrollDB",
-#'   "lipids (neg) - 2", "/tmp/mzkit_assets/X0106_mzrollDBs/X0106-M004A-2.mzrollDB",
-#'   "lipids (neg) - 3", "/tmp/mzkit_assets/X0106_mzrollDBs/X0106-M004A-2b-AA-BDP-CL.mzrollDB",
-#'   "lipids (neg) - 4", "/tmp/mzkit_assets/X0106_mzrollDBs/X0106-M004A-2b-AA-BDP-CL+Stds.mzrollDB",
-#'   "lipids (pos) - 1", "/tmp/mzkit_assets/X0106_mzrollDBs/X0106-M005A-peakdetector.mzrollDB",
-#'   "lipids (pos) - 2", "/tmp/mzkit_assets/X0106_mzrollDBs/X0106-M005A-peakdetectorMGDGTGStds.mzrollDB"
-#' )
-#'
-#' usethis::use_data(X0106_paths, overwrite = TRUE)
-#' }
-"X0106_paths"
 
 #' Flatten mzroll list to single table
 #'
