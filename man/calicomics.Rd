@@ -3,10 +3,11 @@
 \docType{package}
 \name{calicomics}
 \alias{calicomics}
-\title{\code{calicomics} package}
+\title{\code{claman} package}
 \description{
-Calicomics can read .mzrollDB files created using MAVEN or Quahog into an
-mzroll_list. These lists can then be modified through normalization,
-signal flooring, and filtering. Differential abundance analysis of
-metabolites can then be performed along with a variety of visualizations.
+Claman (Calico Lipidomics And Metabolomics ANalysis) can read .mzrollDB
+files created using MAVEN or Quahog into an mzroll_list. These lists
+can then be modified through normalization, signal flooring, and filtering.
+Differential abundance analysis of metabolites can then be performed along
+with a variety of visualizations.
 }

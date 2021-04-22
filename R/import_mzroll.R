@@ -1,24 +1,21 @@
 #' Process mzRoll
 #'
 #' @param mzroll_db_path path to mzroll DB file
-#' @param standard_databases connections to Calico standards and systematic
-#'   compound databases - generated with \link{configure_db_access}.
-#' @param sample_sheet_list list of googlesheets information describing
-#'   experimental design - generated with \link{import_sample_sheet}.
-#' @param method_tag what method was run (for the purpose of matching
-#'   meta-data and aggregating).
 #' @param only_identified TRUE/FALSE, filter to only features which were
 #'   identified.
 #' @param validate TRUE/FALSE, use meta-data to only name the subset of
 #'   features which were manually validated.
+#' @param method_tag what method was run (for the purpose of matching
+#'   meta-data and aggregating).
 #'
-#' @return an mzroll_list containing three tibbles:
+#' @return a **triple_omic** from **romic** containing three tibbles:
 #' \itemize{
-#'   \item{peakgroups: one row per unique analyte (defined by a unique
+#'   \item{features: one row per unique analyte (defined by a unique
 #'     groupId)},
 #'   \item{samples: one row per unique sample (defined by a unique sampleId)},
-#'   \item{peaks: one row per peak (samples x peakgroups)}
+#'   \item{measurements: one row per peak (samples x peakgroups)}
 #'   }
+#'  And, a design list which tracks the variables in each table.
 #'
 #' @export
 #'
@@ -26,34 +23,19 @@
 #' library(dplyr)
 #'
 #' mzroll_db_path = nplug_mzroll()
-#' authutils::get_clamr_assets("X0083-M001A.mzrollDB") %>%
-#'   process_mzroll(
-#'     standard_databases = NULL,
-#'     method_tag = "M001A",
-#'     only_identified = TRUE,
-#'     validate = FALSE
-#'   )
+#' process_mzroll(mzroll_db_path)
 process_mzroll <- function(
   mzroll_db_path,
-  standard_databases = NULL,
-  sample_sheet_list = NULL, 
-  method_tag = "",
   only_identified = TRUE,
-  validate = FALSE
+  validate = FALSE,
+  method_tag = ""
   ) {
   
   checkmate::assertFileExists(mzroll_db_path)
-  
-  stopifnot(any(class(sample_sheet_list) %in% c("NULL", "list")))
-  if ("list" %in% class(sample_sheet_list)) {
-    stopifnot(all(
-      names(sample_sheet_list) == c("tracking_sheet_id", "sample_sheet")
-    ))
-  }
-  checkmate::assertString(method_tag)
   checkmate::assertLogical(only_identified, len = 1)
   checkmate::assertLogical(validate, len = 1)
-
+  checkmate::assertString(method_tag)
+  
   mzroll_db_con <- authutils::create_sqlite_con(mzroll_db_path)
   
   # add peakgroup m/z and rt
@@ -63,62 +45,6 @@ process_mzroll <- function(
   # if only_identified is true, only named compounds are retained, if false
   #   unknowns are labeled by m/z and rt
   peakgroups <- process_mzroll_identify_peakgroups(peakgroups, only_identified)
-
-  # add standard and systematic standard data if available
-
-  if (class(standard_databases) != "NULL") {
-
-    # match compounds to standards
-    compounds <- dplyr::tbl(
-      standard_databases$mass_spec_standards_con,
-      "compounds"
-    ) %>%
-      dplyr::collect()
-
-    peakgroup_compounds <- peakgroups %>%
-      dplyr::left_join(compounds %>%
-        dplyr::select(compoundName, compoundId, systematicCompoundId),
-      by = "compoundName"
-      )
-
-    # add pathway of each compound
-    peakgroup_compound_pathways <- peakgroup_compounds %>%
-      dplyr::left_join(
-        query_systematic_compounds(
-          unique(peakgroup_compounds$systematicCompoundId) %>%
-            .[!is.na(.)],
-          standard_databases$systematic_compounds_con
-        ) %>%
-          summarize_compound_pathways(
-            min_pw_size = 5L,
-            focus_pathways = c(
-              "Glycolysis / Gluconeogenesis",
-              "Citrate cycle (TCA cycle)",
-              "Pentose phosphate pathway",
-              "Biosynthesis of amino acids",
-              "Purine metabolism",
-              "Pyrimidine metabolism"
-            )
-          ),
-        by = "systematicCompoundId"
-      ) %>%
-      dplyr::mutate(
-        pathway = ifelse(is.na(pathway), "Other", pathway),
-        focus_pathway = ifelse(is.na(focus_pathway), "Other", focus_pathway)
-      )
-
-    if (!only_identified) {
-      peakgroup_compound_pathways <- peakgroup_compound_pathways %>%
-        dplyr::mutate(
-          pathway = ifelse(is_unknown, "Unidentified", pathway),
-          focus_pathway = ifelse(is_unknown, "Unidentified", focus_pathway)
-        )
-    }
-
-    annotated_peakgroups <- peakgroup_compound_pathways
-  } else {
-    annotated_peakgroups <- peakgroups
-  }
 
   # reduce to smaller number of peakgroups features
 
@@ -132,8 +58,6 @@ process_mzroll <- function(
     "mz",
     "rt",
     "systematicCompoundId",
-    "pathway",
-    "focus_pathway",
     "compoundDB",
     "searchTableName",
     "label"
@@ -141,11 +65,11 @@ process_mzroll <- function(
 
   detected_peakgroup_reduced_vars <- intersect(
     possible_peakgroup_reduced_vars,
-    colnames(annotated_peakgroups)
+    colnames(peakgroups)
   )
 
-  if (nrow(annotated_peakgroups) == 0) {
-    reduced_peakgroups <- annotated_peakgroups %>%
+  if (nrow(peakgroups) == 0) {
+    reduced_peakgroups <- peakgroups %>%
       dplyr::select(!!!rlang::syms(detected_peakgroup_reduced_vars)) %>%
       dplyr::mutate(
         peak_label = "",
@@ -154,7 +78,7 @@ process_mzroll <- function(
 
     warning("No named compounds were found; an empty dataset will be returned")
   } else {
-    reduced_peakgroups <- annotated_peakgroups %>%
+    reduced_peakgroups <- peakgroups %>%
       dplyr::select(!!!rlang::syms(detected_peakgroup_reduced_vars)) %>%
       dplyr::group_by(compoundName) %>%
       dplyr::mutate(peak_label = dplyr::case_when(
@@ -162,7 +86,8 @@ process_mzroll <- function(
         TRUE ~ paste0(compoundName, " (", 1:dplyr::n(), ")")
       )) %>%
       dplyr::ungroup() %>%
-      dplyr::mutate(method_tag = method_tag)
+      dplyr::mutate(method_tag = method_tag) %>%
+      dplyr::arrange(groupId)
   }
 
   debugr::dwatch(
@@ -171,9 +96,12 @@ process_mzroll <- function(
 
   # summarize distinct peaks and samples
 
-  peaks <- dplyr::tbl(mzroll_db_con, dbplyr::sql("SELECT * FROM peaks")) %>%
+  peaks <- dplyr::tbl(
+    mzroll_db_con,
+    dbplyr::sql("SELECT peakId, groupId, sampleId, peakAreaTop FROM peaks")
+    ) %>%
     dplyr::collect() %>%
-    dplyr::semi_join(annotated_peakgroups, by = "groupId") %>%
+    dplyr::semi_join(peakgroups, by = "groupId") %>%
     dplyr::group_by(groupId) %>%
     dplyr::mutate(
       log2_abundance = log2(peakAreaTop),
@@ -187,7 +115,8 @@ process_mzroll <- function(
       centered_log2_abundance
     ) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(sampleId = as.character(sampleId))
+    dplyr::mutate(sampleId = as.character(sampleId)) %>%
+    dplyr::arrange(peakId)
 
   debugr::dwatch(
     msg = "Summarized peaks. [calicomics<import_mzroll.R>::process_mzroll]\n"
@@ -195,14 +124,14 @@ process_mzroll <- function(
 
   samples <- dplyr::tbl(
     mzroll_db_con,
-    dbplyr::sql("SELECT * FROM samples")
+    dbplyr::sql("SELECT sampleId, name, filename FROM samples")
   ) %>%
     dplyr::collect() %>%
-    dplyr::select(sampleId, name, filename) %>%
+    dplyr::arrange(sampleId) %>%
     dplyr::mutate(
-      sampleId = as.character(sampleId),
-      method_tag = method_tag
+      sampleId = as.character(sampleId)
     )
+    
 
   debugr::dwatch(
     msg = "Summarized samples. [calicomics<import_mzroll.R>::process_mzroll]\n"
@@ -211,36 +140,26 @@ process_mzroll <- function(
   # disconnect for sql-lite
   DBI::dbDisconnect(mzroll_db_con)
 
-  # add sample meta-data
-
-  if (class(sample_sheet_list) == "list") {
-    samples <- augment_samples_with_samplesheet(samples, sample_sheet_list)
-
-    # drop data from unmatched samples
-    peaks <- peaks %>%
-      dplyr::semi_join(samples, by = "sampleId")
-    reduced_peakgroups <- reduced_peakgroups %>%
-      dplyr::semi_join(peaks, by = "groupId")
-  }
-
   debugr::dwatch(
     msg = "About to create list... [calicomics<import_mzroll.R>::process_mzroll]\n"
   )
 
-  mzroll_list <- list(
-    peakgroups = reduced_peakgroups,
-    samples = samples,
-    peaks = peaks
+  mzroll_list <- romic::create_triple_omic(
+    measurement_df = peaks,
+    feature_df = reduced_peakgroups,
+    sample_df = samples,
+    feature_pk = "groupId",
+    sample_pk = "sampleId",
+    omic_type_tag = "mzroll"
   )
-
+  
   debugr::dwatch(
     msg = "Created list. [calicomics<import_mzroll.R>::process_mzroll]\n"
   )
 
-  debugr::dwatch(msg = paste(
-    "number of samples in mzroll_list$samples:",
-    base::toString(nrow(mzroll_list$samples))
-  ))
+  debugr::dwatch(msg = glue::glue(
+    "number of samples in mzroll_list$samples: {nrow(mzroll_list$samples)}"
+    ))
 
   return(mzroll_list)
 }
@@ -501,11 +420,13 @@ augment_samples_with_samplesheet <- function(samples, sample_sheet_list) {
 #'   }
 #'
 #' @export
-process_mzroll_multi <- function(mzroll_paths,
-                                 standard_databases,
-                                 sample_sheet_list,
-                                 only_identified = TRUE,
-                                 validate = FALSE) {
+process_mzroll_multi <- function(
+  mzroll_paths,
+  standard_databases,
+  sample_sheet_list,
+  only_identified = TRUE,
+  validate = FALSE
+  ) {
   checkmate::assertDataFrame(mzroll_paths)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
     stop("mzroll_paths must contain two columns: method_tag & mnzroll_db_path")
@@ -663,4 +584,82 @@ mzroll_multi_qc <- function(mzroll_list) {
   }
 
   return(invisible(0))
+}
+
+#' MOVE ME - Add Peakgroup Annotations
+#' 
+#' TO DO - MOVE TO AUTHUTILS
+#' 
+#' @export
+add_peakgroup_annotations <- function() {
+  
+  # add standard and systematic standard data if available
+  
+  if (class(standard_databases) != "NULL") {
+    
+    # match compounds to standards
+    compounds <- dplyr::tbl(
+      standard_databases$mass_spec_standards_con,
+      "compounds"
+    ) %>%
+      dplyr::collect()
+    
+    peakgroup_compounds <- peakgroups %>%
+      dplyr::left_join(compounds %>%
+                         dplyr::select(compoundName, compoundId, systematicCompoundId),
+                       by = "compoundName"
+      )
+    
+    # add pathway of each compound
+    peakgroup_compound_pathways <- peakgroup_compounds %>%
+      dplyr::left_join(
+        query_systematic_compounds(
+          unique(peakgroup_compounds$systematicCompoundId) %>%
+            .[!is.na(.)],
+          standard_databases$systematic_compounds_con
+        ) %>%
+          summarize_compound_pathways(
+            min_pw_size = 5L,
+            focus_pathways = c(
+              "Glycolysis / Gluconeogenesis",
+              "Citrate cycle (TCA cycle)",
+              "Pentose phosphate pathway",
+              "Biosynthesis of amino acids",
+              "Purine metabolism",
+              "Pyrimidine metabolism"
+            )
+          ),
+        by = "systematicCompoundId"
+      ) %>%
+      dplyr::mutate(
+        pathway = ifelse(is.na(pathway), "Other", pathway),
+        focus_pathway = ifelse(is.na(focus_pathway), "Other", focus_pathway)
+      )
+    
+    if (!only_identified) {
+      peakgroup_compound_pathways <- peakgroup_compound_pathways %>%
+        dplyr::mutate(
+          pathway = ifelse(is_unknown, "Unidentified", pathway),
+          focus_pathway = ifelse(is_unknown, "Unidentified", focus_pathway)
+        )
+    }
+    
+    annotated_peakgroups <- peakgroup_compound_pathways
+  } else {
+    annotated_peakgroups <- peakgroups
+  }
+}
+
+add_sample_metadata <- function() {
+  
+  if (class(sample_sheet_list) == "list") {
+    samples <- augment_samples_with_samplesheet(samples, sample_sheet_list)
+    
+    # drop data from unmatched samples
+    peaks <- peaks %>%
+      dplyr::semi_join(samples, by = "sampleId")
+    reduced_peakgroups <- reduced_peakgroups %>%
+      dplyr::semi_join(peaks, by = "groupId")
+  }
+  
 }

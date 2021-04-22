@@ -1,6 +1,6 @@
 #' Growth-Limiting Metabolites
 #' 
-#' The NPLUG experiment is a has a full factorial design exploring relationship
+#' The NPLUG experiment has a full factorial design exploring relationship
 #'   between nutrient limitation and growth rate in yeast.
 #' 
 #' @details
@@ -16,6 +16,7 @@
 #' 
 #' @return path to the NPLUG .mzrollDB dataset
 #' 
+#' @export
 nplug_mzroll <- function() {
   
   path <- system.file("extdata", "nplug.mzrollDB", package = "claman")

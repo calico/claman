@@ -25,9 +25,6 @@ pathway_enrichments(
 \item{significance}{returned by \code{\link{diffex_mzroll}}; a tibble of
 tests performed.}
 
-\item{standard_databases}{connections to Calico standards and systematic
-compound databases - generated with \link{configure_db_access}.}
-
 \item{test_absolute_effects}{If TRUE then only consider the magnitude of
 test-statistics when calculating rankings for enrichment; if FALSE then
 consider sign as well.}

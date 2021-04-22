@@ -6,22 +6,6 @@
 \usage{
 import_sample_sheet(pattern)
 }
-\arguments{
-\item{pattern}{Pattern to look for.
-
-The default interpretation is a regular expression, as described
-in \link[stringi:about_search_regex]{stringi::stringi-search-regex}. Control options with
-\code{\link[stringr:modifiers]{regex()}}.
-
-Match a fixed string (i.e. by comparing only bytes), using
-\code{\link[stringr:modifiers]{fixed()}}. This is fast, but approximate. Generally,
-for matching human text, you'll want \code{\link[stringr:modifiers]{coll()}} which
-respects character matching rules for the specified locale.
-
-Match character, word, line and sentence boundaries with
-\code{\link[stringr:modifiers]{boundary()}}. An empty pattern, "", is equivalent to
-\code{boundary("character")}.}
-}
 \description{
 Find, read and process a sample meta sheet from googlesheets
 }

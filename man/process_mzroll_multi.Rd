@@ -19,12 +19,6 @@ process_mzroll_multi(
   \item{mzroll_db_path: path to a mzrollDB file}
   }}
 
-\item{standard_databases}{connections to Calico standards and systematic
-compound databases - generated with \link{configure_db_access}.}
-
-\item{sample_sheet_list}{list of googlesheets information describing
-experimental design - generated with \link{import_sample_sheet}.}
-
 \item{only_identified}{TRUE/FALSE, filter to only features which were
 identified.}
 

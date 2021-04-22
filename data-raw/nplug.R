@@ -43,28 +43,36 @@ nplug_raw <- nplug_raw %>%
 # setup measurements
 abundances <- nplug_raw %>%
   dplyr::select(-c(sample_name:Method)) %>%
-  tidyr::gather(name, peakAreaTop, -sampleId)
+  tidyr::gather(compoundName, peakAreaTop, -sampleId)
   
 peakgroups <- abundances %>%
-  dplyr::distinct(name) %>%
+  dplyr::distinct(compoundName) %>%
   dplyr::mutate(
     groupId = 1:n(),
     # indicate that the peakgroup has been validated
-    tagString = "g"
+    label = "g"
   )
 
 peaks <- abundances %>%
-  dplyr::inner_join(peakgroups, by = "name") %>%
-  dplyr::select(-name)
+  dplyr::inner_join(
+    peakgroups %>%
+      dplyr::select(groupId, compoundName),
+    by = "compoundName"
+    ) %>%
+  dplyr::select(-compoundName) %>%
+  dplyr::mutate(peakId = 1:dplyr::n())
 
 mzroll_data <- list(
-  samples = nplug_raw %>% dplyr::select(sampleId),
+  samples = nplug_raw %>% dplyr::select(sampleId, name = sample_name),
   peakgroups = peakgroups,
   peaks = peaks
 ) %>%
   clamr::expand_with_mzroll_defaults()
 
 mzroll_db_path <- file.path("inst", "extdata", "nplug.mzrollDB")
+if (file.exists(mzroll_db_path)) {
+  file.remove(mzroll_db_path)
+}
 
 mzroll_db_con <- DBI::dbConnect(RSQLite::SQLite(), mzroll_db_path)
 

@@ -10,7 +10,7 @@ nplug_mzroll()
 path to the NPLUG .mzrollDB dataset
 }
 \description{
-The NPLUG experiment is a has a full factorial design exploring relationship
+The NPLUG experiment has a full factorial design exploring relationship
   between nutrient limitation and growth rate in yeast.
 }
 \details{

@@ -1,0 +1,70 @@
+---
+title: "NPLUG"
+output: 
+  html_document:
+    theme: simplex
+    toc: true
+    toc_depth: 2
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{NPLUG}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The NPLUG (**N**itrogen, **P**hosphorous, **L**eucine, **U**racil, or **G**lucose) experiment of [Boer et al. 2010](https://pubmed.ncbi.nlm.nih.gov/19889834/) explored the impacts of nutrient limitation and growth rate on the yeast' metabolome.
+
+Growth conditions in chemostat culture (indefinite exponential growth) followed a full factorial experimental design, such that the 25 primary experimental conditions contained all pairs of:
+
+- 5 limiting nutrients: nitrogen, phosphorous, and glucose, as well as leucine and uracil in auxotrophs.
+- 5 dilution rates (growth rate / ln(2)): from 0.05-0.3 hrs^-1^.
+
+In total, 136 biological samples were collected. Two extraction methods were used on each culture (pellet- or filter-based) and each extraction method had two technical replicates. In addition, each batch of experimental cultures was paired with a phosphate-limited slow growth (DR = 0.05 hrs^-1^) reference culture to correct for week-to-week variability.
+
+This study demonstrates the nature of nutrient limitation massively impacts the metabolome, with some growth-limiting metabolites becoming greatly depleted and other metabolites appearing to overflow. This vignette reproduces some of the major findings of this study using the standard functionality built into **claman**.
+
+***
+
+# Data Import
+
+claman is meant to nicely interface with .mzrollDB SQLite databases produced by [MAVEN](https://github.com/eugenemel/maven), the Metabolomics Analysis and Visualization ENgine. Accordingly, we can start with a .mzrollDB file containing a stripped-down version of the NPLUG data, which bas been bundled with the claman package.
+
+```{r data_loading, message = FALSE}
+library(claman)
+library(dplyr)
+
+mzroll_db_path <- nplug_mzroll()
+```
+
+This database contains tables of peakgroups (ions with characteristic m/z and rt), samples, and peaks (measurements of peakgroups in each sample). It does not include meta-data about metabolites (such as metabolites' pathways), nor samples (such as the experimental design), so this information will be added later.
+
+## Read .mzrollDB
+
+```{r read_mzroll}
+mzroll_list <- process_mzroll(mzroll_db_path)
+
+util_pretty_khead(mzroll_list$features, caption = "Features table")
+util_pretty_khead(mzroll_list$samples, caption = "Samples table")
+util_pretty_khead(mzroll_list$measurements, caption = "Measurements table")
+```
+
+## Add sample meta-data
+
+```{r}
+
+# add samples
+
+# stitch together
+
+
+
+```
+
+## Add compounds meta-data

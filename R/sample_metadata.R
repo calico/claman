@@ -1,115 +1,8 @@
-#' Find Tracking Sheet
+#' Read Samples Table
 #'
-#' Locate the meta data tracking sheet for the project
-#'
-#' @inheritParams stringr::str_detect
-#'
-#' @return tracking_sheet_id: if a unique tracking sheet is found, then
-#'   return the googlesheets id
-#'
-#' @examples
-#' \dontrun{
-#' find_tracking_sheet(pattern = "X0083")
-#' }
-#'
-#' @export
-find_tracking_sheet <- function(pattern) {
-
-  # search in Metabolomics Core > Experiments > Project ID
-  experiments <- googledrive::drive_ls(
-    googledrive::as_id("0B6szsSC6az3YN0dhZDZ4bzFLM00")
-  )
-
-  experiments_folder <- experiments %>%
-    dplyr::filter(stringr::str_detect(name, pattern))
-
-  if (nrow(experiments_folder) > 1) {
-    stop(
-      nrow(reduced_tracking_sheets),
-      ' experiments folders matched "pattern": ',
-      paste(reduced_tracking_sheets$name, collapse = ", ")
-    )
-  } else if (nrow(experiments_folder) == 1) {
-    # check experiment folder for .gsheet
-    experiment_tracking_sheet <- googledrive::as_id(experiments_folder$id) %>%
-      googledrive::drive_ls() %>%
-      # filter to just googlesheets with relevant worksheets
-      dplyr::mutate(is_tracking_sheet = purrr::map_lgl(
-        id,
-        identify_tracking_sheet
-      )) %>%
-      dplyr::filter(is_tracking_sheet)
-
-    if (nrow(experiment_tracking_sheet) > 1) {
-      # too many sheets found
-      stop(
-        nrow(experiment_tracking_sheet),
-        ' tracking sheets found in folder matching "pattern": ',
-        paste(reduced_tracking_sheets$name, collapse = ", ")
-      )
-    } else if (nrow(experiment_tracking_sheet) == 1) {
-      # return ID uniquely found in folder
-      return(experiment_tracking_sheet$id)
-    } else {
-      # continue looking for sheets
-      message(
-        "No experiments folder matching pattern in Experiments folder
-          checking in sample sheets"
-      )
-    }
-  } else {
-    # continue looking for sheets
-    message(
-      "No experiments folder matching pattern in Experiments folder,
-        checking in sample sheets"
-    )
-  }
-
-  # search in Metabolomics Core > Experimental Tracking Spreadsheets
-  tracking_sheets <- googledrive::drive_ls(
-    googledrive::as_id("1PSk5g-sYkwT5jMTOQRO9BUozoruAJJGI")
-  )
-
-  reduced_tracking_sheets <- tracking_sheets %>%
-    dplyr::filter(stringr::str_detect(name, pattern))
-
-  if (nrow(reduced_tracking_sheets) != 1) {
-    stop(
-      nrow(reduced_tracking_sheets),
-      ' tracking sheets matched "pattern :"',
-      paste(reduced_tracking_sheets$name, collapse = ", ")
-    )
-  } else {
-    reduced_tracking_sheets$id
-  }
-}
-
-identify_tracking_sheet <- function(id) {
-  id_sheets <- try(googlesheets4::sheets_sheets(id), silent = TRUE)
-
-  if (class(id_sheets) == "try-error") {
-    return(FALSE)
-  }
-
-  if (all(
-    c("USER SUBMISSION", "USER SAMPLE LIST", "Metabolomics User Sample List")
-    %in% id_sheets
-  )) {
-    TRUE
-  } else {
-    FALSE
-  }
-}
-
-#' Read Sample List
-#'
-#' @param tracking_sheet_id output of \link{find_tracking_sheet}
-read_sample_list <- function(tracking_sheet_id) {
-  sample_list <- googlesheets4::read_sheet(
-    tracking_sheet_id,
-    sheet = "Metabolomics User Sample List"
-  )
-
+#' @param samples_tbl Table of sample metadata
+read_samples_tbl <- function(samples_tbl) {
+  
   # require a few standard fields in the Metabolomics User Sample List
   required_sample_list_vars <- c(
     "tube label",
@@ -123,6 +16,7 @@ read_sample_list <- function(tracking_sheet_id) {
     required_sample_list_vars,
     colnames(sample_list)
   )
+  
   if (length(missing_required_vars) != 0) {
     stop(
       "\"Metabolomics User Sample List\" is missing required variables: ",
@@ -187,6 +81,11 @@ read_sample_list <- function(tracking_sheet_id) {
 import_sample_sheet <- function(pattern) {
   tracking_sheet_id <- find_tracking_sheet(pattern = pattern)
 
+  sample_list <- googlesheets4::read_sheet(
+    tracking_sheet_id,
+    sheet = "Metabolomics User Sample List"
+  )
+  
   sample_sheet <- read_sample_list(tracking_sheet_id)
 
   list(

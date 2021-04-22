@@ -8,9 +8,6 @@ augment_samples_with_samplesheet(samples, sample_sheet_list)
 }
 \arguments{
 \item{samples}{samples table generated within \link{process_mzroll}.}
-
-\item{sample_sheet_list}{list of googlesheets information describing
-experimental design - generated with \link{import_sample_sheet}.}
 }
 \value{
 samples with added metadata from sample_sheet_list
