@@ -60,11 +60,9 @@ test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
     c("groupId", "sampleId", "log2_abundance")
   )
   
-  check_required_variables(
-    mzroll_list,
-    "samples", 
-    c("sampleId", "name", "filename")
-  )
+  # the only required field is sampleId, other field will likely
+  #   be discarded as samples are merged during normalization
+  check_required_variables(mzroll_list, "samples", "sampleId")
   
   # check for invalid variables
   
