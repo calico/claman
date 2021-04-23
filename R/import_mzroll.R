@@ -326,7 +326,7 @@ process_mzroll_identify_peakgroups <- function(peakgroups, only_identified){
 #'   \item{mzroll_db_path: path to a mzrollDB file}
 #'   }
 #' @inheritParams process_mzroll
-#' @inheritParams add_samples_tbl
+#' @inheritParams merge_samples_tbl
 #'
 #' @return an mzroll_list containing three tibbles:
 #' \itemize{
@@ -378,7 +378,7 @@ process_mzroll_multi <- function(
       # add sample meta-data
       mzroll_list = purrr::map(
         mzroll_list,
-        add_samples_tbl,
+        merge_samples_tbl,
         samples_tbl = samples_tbl,
         id_strings = id_strings,
         exact = exact
@@ -400,7 +400,7 @@ process_mzroll_multi <- function(
 #'
 #' @param mzroll_list_nest a nested list of mzroll_lists produced from
 #'   \link{process_mzroll}.
-#' @inheritParams add_samples_tbl
+#' @inheritParams merge_samples_tbl
 #'
 #' @return a single mzroll_list
 aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
@@ -552,66 +552,3 @@ mzroll_multi_qc <- function(mzroll_list) {
   return(invisible(0))
 }
 
-#' MOVE ME - Add Peakgroup Annotations
-#' 
-#' TO DO - MOVE TO AUTHUTILS
-#' 
-#' @export
-add_peakgroup_annotations <- function() {
-  
-  # add standard and systematic standard data if available
-  
-  if (class(standard_databases) != "NULL") {
-    
-    # match compounds to standards
-    compounds <- dplyr::tbl(
-      standard_databases$mass_spec_standards_con,
-      "compounds"
-    ) %>%
-      dplyr::collect()
-    
-    peakgroup_compounds <- peakgroups %>%
-      dplyr::left_join(compounds %>%
-                         dplyr::select(compoundName, compoundId, systematicCompoundId),
-                       by = "compoundName"
-      )
-    
-    # add pathway of each compound
-    peakgroup_compound_pathways <- peakgroup_compounds %>%
-      dplyr::left_join(
-        query_systematic_compounds(
-          unique(peakgroup_compounds$systematicCompoundId) %>%
-            .[!is.na(.)],
-          standard_databases$systematic_compounds_con
-        ) %>%
-          summarize_compound_pathways(
-            min_pw_size = 5L,
-            focus_pathways = c(
-              "Glycolysis / Gluconeogenesis",
-              "Citrate cycle (TCA cycle)",
-              "Pentose phosphate pathway",
-              "Biosynthesis of amino acids",
-              "Purine metabolism",
-              "Pyrimidine metabolism"
-            )
-          ),
-        by = "systematicCompoundId"
-      ) %>%
-      dplyr::mutate(
-        pathway = ifelse(is.na(pathway), "Other", pathway),
-        focus_pathway = ifelse(is.na(focus_pathway), "Other", focus_pathway)
-      )
-    
-    if (!only_identified) {
-      peakgroup_compound_pathways <- peakgroup_compound_pathways %>%
-        dplyr::mutate(
-          pathway = ifelse(is_unknown, "Unidentified", pathway),
-          focus_pathway = ifelse(is_unknown, "Unidentified", focus_pathway)
-        )
-    }
-    
-    annotated_peakgroups <- peakgroup_compound_pathways
-  } else {
-    annotated_peakgroups <- peakgroups
-  }
-}

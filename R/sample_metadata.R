@@ -1,6 +1,6 @@
-#' Add Samples Table
+#' Merge Samples Table
 #'
-#' Add a table of sample metadata to an existing mzroll_list
+#' Merge a table of sample metadata with an existing mzroll_list
 #'
 #' @inheritParams test_mzroll_list
 #' @param samples_tbl Table of sample metadata
@@ -11,10 +11,10 @@
 #'   
 #' @examples 
 #' mzroll_list <- process_mzroll(nplug_mzroll())
-#' add_samples_tbl(mzroll_list, nplug_samples, "sample_name")
+#' merge_samples_tbl(mzroll_list, nplug_samples, "sample_name")
 #' 
 #' @export
-add_samples_tbl <- function(
+merge_samples_tbl <- function(
   mzroll_list,
   samples_tbl,
   id_strings,

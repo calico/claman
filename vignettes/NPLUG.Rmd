@@ -38,7 +38,9 @@ claman is meant to nicely interface with .mzrollDB SQLite databases produced by 
 
 ```{r data_loading, message = FALSE}
 library(claman)
+
 library(dplyr)
+library(ggplot2)
 
 mzroll_db_path <- nplug_mzroll()
 ```
@@ -55,26 +57,31 @@ util_pretty_khead(mzroll_list$samples, caption = "Samples table")
 util_pretty_khead(mzroll_list$measurements, caption = "Measurements table")
 ```
 
+## Add sample meta-data
+
+```{r read_sample_metadata}
+mzroll_list_augmented <- merge_samples_tbl(mzroll_list, nplug_samples, "sample_name")
+
+util_pretty_khead(mzroll_list_augmented$samples, 5, caption = "updated mzroll samples table")
+```
+
+## Add compounds meta-data
+
+```{r read_compounds_metadata}
+mzroll_list_augmented <- merge_compounds_tbl(mzroll_list_augmented, nplug_compounds)
+
+util_pretty_khead(mzroll_list_augmented$features, 5, caption = "updated mzroll features table")
+```
+
+
 Having loaded the dataset, we can take a quick look at the data using a heatmap.
 
 ```{r preliminary_heatmap}
 romic::plot_heatmap(
-  mzroll_list,
+  mzroll_list_augmented,
   feature_var = "compoundName",
   sample_var = "name",
   value_var = "centered_log2_abundance",
   change_threshold = 5
-  )
+  ) + facet_grid(~ limitation, scales = "free_x", space = "free_x")
 ```
-
-## Add sample meta-data
-
-```{r read_sample_metadata}
-util_pretty_khead(nplug_samples, caption = "sample meta-data table")
-
-mzroll_list_augmented <- add_samples_tbl(mzroll_list, nplug_samples, "sample_name")
-
-util_pretty_khead(mzroll_list_augmented$samples, caption = "updated mzroll samples table")
-```
-
-## Add compounds meta-data
