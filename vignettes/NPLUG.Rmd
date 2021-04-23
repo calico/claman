@@ -74,14 +74,101 @@ util_pretty_khead(mzroll_list_augmented$features, 5, caption = "updated mzroll f
 ```
 
 
-Having loaded the dataset, we can take a quick look at the data using a heatmap.
+# Preliminary Analysis
 
-```{r preliminary_heatmap}
+Having loaded the dataset, we can take a quick look at the data using heatmaps.
+
+## Limiting Nutrients and Dilution Rate
+
+The biological variables in the experimental design are limiting nutrient and dilution rate. To look at their influence in shaping the metabolome, we can separate limiting nutrients using facets and order samples based on dilution rate (this will happen naturally if we order alphabetically by sample name).
+
+To make plots like this we can take advantage of the fact that mzroll_lists build on top of the [**romic**](http://www.github.com/calico/romic) *triple_omic* classes.
+
+```{r bio_heatmap}
 romic::plot_heatmap(
   mzroll_list_augmented,
   feature_var = "compoundName",
   sample_var = "name",
   value_var = "centered_log2_abundance",
   change_threshold = 5
-  ) + facet_grid(~ limitation, scales = "free_x", space = "free_x")
+  ) + facet_grid(~ exp_ref + limitation, scales = "free_x", space = "free_x") +
+  ggtitle("Metabolites separated by limiting nutrients")
 ```
+
+From this plot, its clear that limiting nutrients have a strong role in shaping the metabolome, while dilution rate creates relatively smooth transitions as each limitation progresses from slow growth (left) to fast growth (right).
+
+## Extraction Method and Batch
+
+The technical variables in the experimental design are extraction method, month (which is likely associated with batch effects), and replication. Like the heatmap of limitation above, we can look at how extraction method and month shape the metabolome with heatmaps. 
+
+Since limiting nutrient has a major effect, we'll want to account for it when looking extraction method's impact on metabolome variability.
+
+```{r extraction_heatmap}
+romic::plot_heatmap(
+  mzroll_list_augmented,
+  feature_var = "compoundName",
+  sample_var = "name",
+  value_var = "centered_log2_abundance",
+  change_threshold = 5
+  ) + facet_grid(~ limitation + extraction, scales = "free_x", space = "free_x") +
+  ggtitle("Metabolites separated by extraction") +
+  theme(strip.text = element_text(size = 10))
+```
+
+From this plot, there are clear, but often relatively minor effects of exctraction method on metabolite abundances.
+
+To look at month-effects, we can take advantage of the fact that in each month two biological replicate reference cultures were generated. These two cultures can be distinguished in the sample meta-data most easily by subtle differences in their dilution rate.
+
+```{r month_heatmap}
+mzroll_list_augmented %>%
+  # only look at reference samples
+  romic::filter_tomic(
+    filter_type = "category",
+    filter_table = "samples",
+    filter_variable = "exp_ref",
+    filter_value = "ref"
+    ) %>%
+  romic::plot_heatmap(
+  feature_var = "compoundName",
+  sample_var = "name",
+  value_var = "centered_log2_abundance",
+  change_threshold = 5
+  ) + facet_grid(~ month + DR, scales = "free_x", space = "free_x") +
+  ggtitle("References separated by month and distinct cultures (by DR)") +
+  theme(strip.text = element_text(size = 10))
+```
+From this plot, the biological replicate reference cultures are nearly identical (that's one reason why chemostats are awesome!) while there are subtle differences between months.
+
+# Normalization
+
+From the preliminary analysis, when normalizing this dataset to remove sources of technical variability (and thereby clarify the biological signal), we'll want to account of month-to-month variability, extraction methodology, and technical replication.
+
+To tackle these obstacles we will:
+
+1. compare and then collapse techical replicates.
+2. contrast experimental conditions with reference conditions to account for month-to-month variability.
+3. determine whether one extaction method is superior or whether both can be used for downstream analysis with appropriate normalization.
+
+## Collapsing Technical Replicates
+
+```{r technical_replicates}
+
+
+
+
+collapse_injections(
+  mzroll_list_augmented,
+  grouping_vars = "condition",
+  peak_quant_vars = c("log2_abundance", "centered_log2_abundance"),
+  collapse_fxn = "mean"
+  )
+
+```
+
+## Contrasting to a Reference Condition
+
+
+## Accounting for Extraction Method
+
+
+

@@ -36,4 +36,11 @@ A table of meta-data for all NPLUG samples with variables:
   \item{reference}{Condition number that this sample should be compared to.}
   }
 }
+\seealso{
+Other nplug: 
+\code{\link{nplug_compounds}},
+\code{\link{nplug_mzroll_augmented}},
+\code{\link{nplug_mzroll}()}
+}
+\concept{nplug}
 \keyword{datasets}

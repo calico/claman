@@ -176,3 +176,11 @@ nplug_compounds <- purrr::map(names(pathways),
   dplyr::select(compoundName, pathway)
 
 usethis::use_data(nplug_compounds, overwrite = TRUE)
+
+# create an annotated intermediate mzroll_list
+
+nplug_mzroll <- process_mzroll(nplug_mzroll())
+nplug_mzroll_augmented <- merge_samples_tbl(nplug_mzroll, nplug_samples, "sample_name")
+nplug_mzroll_augmented <- merge_compounds_tbl(nplug_mzroll_augmented, nplug_compounds)
+
+usethis::use_data(nplug_mzroll_augmented, overwrite = TRUE)

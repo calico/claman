@@ -24,3 +24,10 @@ The experiment contains 25 primary experimental conditions:
 Metabolomics of 
   limited yeast cultures growing at different rates.
 }
+\seealso{
+Other nplug: 
+\code{\link{nplug_compounds}},
+\code{\link{nplug_mzroll_augmented}},
+\code{\link{nplug_samples}}
+}
+\concept{nplug}

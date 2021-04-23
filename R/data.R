@@ -16,6 +16,8 @@
 #' 
 #' @return path to the NPLUG .mzrollDB dataset
 #' 
+#' @family nplug
+#' 
 #' @export
 nplug_mzroll <- function() {
   
@@ -55,4 +57,26 @@ nplug_mzroll <- function() {
 #'   \item{reference}{Condition number that this sample should be compared to.}
 #'   }
 #' 
+#' @family nplug
 "nplug_samples"
+
+#' NPLUG samples
+#' 
+#' A table of meta-data for all NPLUG features with variables:
+#' \describe{
+#'   \item{compoundName}{compound name corresponding to the compoundName
+#'     variable in the nplug_mzroll's features table.}
+#'   \item{pathway}{A (rough) categorization of compounds into metabolic
+#'     pathways.}
+#'     }
+#'     
+#' @family nplug
+"nplug_compounds"
+
+#' NPLUG MzRoll Augmented
+#' 
+#' \link{nplug_mzroll} formatted with \link{process_mzroll} with sample
+#'   (\link{nplug_samples}) and compound (\link{nplug_samples}) merged.
+#'   
+#' @family nplug
+"nplug_mzroll_augmented"
