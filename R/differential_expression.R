@@ -27,7 +27,7 @@ diffex_mzroll <- function(mzroll_list,
   quant_vars <- colnames(mzroll_list$peaks)[
     purrr::map_chr(mzroll_list$peaks, class) == "numeric"
   ]
-  valid_quant_vars <- setdiff(quant_vars, c("peakId", "groupId"))
+  valid_quant_vars <- setdiff(quant_vars, c("groupId", "sampleId"))
   if (!(value.var %in% valid_quant_vars)) {
     stop(
       value.var,

@@ -51,7 +51,9 @@ This database contains tables of peakgroups (ions with characteristic m/z and rt
 
 ```{r read_mzroll}
 mzroll_list <- process_mzroll(mzroll_db_path)
+```
 
+```{r read_mzrolls_tables, echo = FALSE}
 util_pretty_khead(mzroll_list$features, caption = "Features table")
 util_pretty_khead(mzroll_list$samples, caption = "Samples table")
 util_pretty_khead(mzroll_list$measurements, caption = "Measurements table")
@@ -61,7 +63,9 @@ util_pretty_khead(mzroll_list$measurements, caption = "Measurements table")
 
 ```{r read_sample_metadata}
 mzroll_list_augmented <- merge_samples_tbl(mzroll_list, nplug_samples, "sample_name")
+```
 
+```{r read_sample_metadata_tables, echo = FALSE}
 util_pretty_khead(mzroll_list_augmented$samples, 5, caption = "updated mzroll samples table")
 ```
 
@@ -69,7 +73,9 @@ util_pretty_khead(mzroll_list_augmented$samples, 5, caption = "updated mzroll sa
 
 ```{r read_compounds_metadata}
 mzroll_list_augmented <- merge_compounds_tbl(mzroll_list_augmented, nplug_compounds)
+```
 
+```{r read_compounds_metadata_tables, echo = FALSE}
 util_pretty_khead(mzroll_list_augmented$features, 5, caption = "updated mzroll features table")
 ```
 
@@ -152,21 +158,47 @@ To tackle these obstacles we will:
 ## Collapsing Technical Replicates
 
 ```{r technical_replicates}
+plot_compare_injection(
+  mzroll_list_augmented,
+  grouping_vars = "condition",
+  peak_quant_var = "centered_log2_abundance"
+  ) + ggtitle("Comparison of injection technical replicates")
 
-
-
-
-collapse_injections(
+mzroll_list_distinct_conditions <- collapse_injections(
   mzroll_list_augmented,
   grouping_vars = "condition",
   peak_quant_vars = c("log2_abundance", "centered_log2_abundance"),
   collapse_fxn = "mean"
   )
+```
 
+```{r technical_replicates_table, echo = FALSE}
+util_pretty_khead(
+  mzroll_list_distinct_conditions$samples,
+  caption = "samples aggregated over injections"
+)
 ```
 
 ## Contrasting to a Reference Condition
 
+To remove 
+
+```{r}
+normalize_peaks(
+  mzroll_list_distinct_conditions,
+  normalization_method = "reference condition",
+  quant_peak_varname = "log2_abundance",
+  norm_peak_varname = "normalized_log2_abundance",
+  condition_varname = "condition",
+  reference_varname = "reference"
+)
+
+normalize_peaks(
+  mzroll_list_distinct_conditions,
+  normalization_method = "reference sample"
+)
+
+```
 
 ## Accounting for Extraction Method
 

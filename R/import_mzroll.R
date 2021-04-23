@@ -111,7 +111,7 @@ process_mzroll <- function(
   
   peaks <- dplyr::tbl(
     mzroll_db_con,
-    dbplyr::sql("SELECT peakId, groupId, sampleId, peakAreaTop FROM peaks")
+    dbplyr::sql("SELECT groupId, sampleId, peakAreaTop FROM peaks")
     ) %>%
     dplyr::collect() %>%
     dplyr::semi_join(peakgroups, by = "groupId") %>%
@@ -121,7 +121,6 @@ process_mzroll <- function(
       centered_log2_abundance = log2_abundance - mean(log2_abundance)
     ) %>%
     dplyr::select(
-      peakId,
       groupId,
       sampleId,
       log2_abundance,
@@ -136,8 +135,7 @@ process_mzroll <- function(
       sampleId = factor(
         sampleId,
         levels = levels(samples$sampleId)
-        )) %>%
-    dplyr::arrange(peakId)
+        ))
 
   debugr::dwatch(
     msg = "Summarized peaks. [calicomics<import_mzroll.R>::process_mzroll]\n"
@@ -432,9 +430,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
 
   # iterate through mzrollDB
 
-  max_peakId <- 0
   max_groupId <- 0
-
   mzroll_indecies <- 1:nrow(mzroll_list_nest)
 
   # samples defined upfront as the union of samples from the sample sheet
@@ -454,13 +450,11 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
     checkmate::assertClass(one_mzroll_list, "tomic")
     checkmate::assertClass(one_mzroll_list, "mzroll")
     
-    # update groupid and peakId to new unique values
+    # update groupId to new unique values
     # temporarily convert from factors -> integers so they can be added
     
     one_mzroll_list[["features"]]$groupId <-
       as.integer(one_mzroll_list[["features"]]$groupId) + max_groupId
-    one_mzroll_list[["measurements"]]$peakId <-
-      as.integer(one_mzroll_list[["measurements"]]$peakId) + max_peakId
     one_mzroll_list[["measurements"]]$groupId <-
       as.integer(one_mzroll_list[["measurements"]]$groupId) + max_groupId
 
@@ -488,7 +482,6 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
       one_mzroll_list$features
     )
 
-    max_peakId <- max(one_mzroll_list[["measurements"]]$peakId)
     max_groupId <- max(one_mzroll_list[["features"]]$groupId)
   }
 

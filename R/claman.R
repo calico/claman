@@ -104,7 +104,6 @@ utils::globalVariables(c(
   "peak_label",
   "peakAreaTop",
   "peakMz",
-  "peakId",
   "plasmalogen_type",
   "position",
   "processed_mzroll",

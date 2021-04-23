@@ -57,7 +57,7 @@ test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
   check_required_variables(
     mzroll_list,
     "measurements", 
-    c("peakId", "groupId", "sampleId", "log2_abundance")
+    c("groupId", "sampleId", "log2_abundance")
   )
   
   check_required_variables(

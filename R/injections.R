@@ -46,7 +46,7 @@ collapse_injections <- function(
   new_samples <- found_injections$new_samples
   collapse_dict <- found_injections$collapse_dict
   
-  mzroll_list$measurements <- mzroll_list$measurements %>%
+  new_measurements <- mzroll_list$measurements %>%
     dplyr::rename(old_sampleId = sampleId) %>%
     dplyr::left_join(collapse_dict, by = "old_sampleId") %>%
     dplyr::select(-old_sampleId) %>%
@@ -54,8 +54,11 @@ collapse_injections <- function(
     dplyr::summarize_each(funs = collapse_fxn, peak_quant_vars) %>%
     dplyr::ungroup()
   
-  mzroll_list$samples <- new_samples
-  mzroll_list
+  # update sample and measurements and the schema
+  mzroll_list <- romic::update_tomic(mzroll_list, new_measurements)
+  mzroll_list <- romic::update_tomic(mzroll_list, new_samples)
+  
+  return(mzroll_list)
 }
 
 n_unique <- function(x) {
@@ -137,10 +140,10 @@ plot_compare_injection <- function(
     ) +
     scale_fill_viridis_c(trans = "log2", option = "plasma") +
     coord_equal() +
-    scale_x_continuous(paste0(stringr::str_replace(
+    scale_x_continuous(paste0(stringr::str_replace_all(
       peak_quant_var, "[-_]", " "
       ), " A"), expand = c(0,0)) +
-    scale_y_continuous(paste0(stringr::str_replace(
+    scale_y_continuous(paste0(stringr::str_replace_all(
       peak_quant_var, "[-_]", " "
     ), " B"), expand = c(0,0)) +
     theme_minimal() +
