@@ -1,7 +1,7 @@
 #' Differential Expression Analysis on Mzroll List
 #'
 #' @inheritParams test_mzroll_list
-#' @inheritParams plot_heatmap
+#' @param value.var measurement variable
 #' @param test_model a RHS formula for regression
 #' @param null_model if provided a null RHS formula to compare to
 #'   \code{test_model} using the likelihood-ratio test.

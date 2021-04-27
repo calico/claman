@@ -22,7 +22,7 @@ diffex_mzroll(
   \item{measurements: one row per peak (samples x peakgroups)}
   }}
 
-\item{value.var}{which variable in "peaks" to use for quantification.}
+\item{value.var}{measurement variable}
 
 \item{test_model}{a RHS formula for regression}
 

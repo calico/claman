@@ -75,7 +75,7 @@ write_tidy_list_augmented <- function(mzroll_list, dir_path, name_preamble) {
 #'   Use transpose to treat samples as rows
 #'
 #' @inheritParams write_tidy_list_triple
-#' @inheritParams plot_heatmap
+#' @inheritParams diffex_mzroll
 #' @param transpose if TRUE then samples will be stored as rows
 #'
 #' @return
