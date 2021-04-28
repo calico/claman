@@ -48,7 +48,8 @@ normalize_peaks.reference_condition(
   quant_peak_varname,
   norm_peak_varname,
   condition_varname = "condition #",
-  reference_varname = "reference condition #"
+  reference_varname = "reference condition #",
+  log2_floor_value = NA
 )
 
 normalize_peaks.loess(
@@ -150,7 +151,7 @@ normalize_peaks(
   quant_peak_varname = "log2_abundance",
   norm_peak_varname = "normalized_log2_abundance",
   condition_varname = "condition",
-  reference_varname = "reference"
+  reference_varname = "reference",
 )
 
 normalize_peaks(
@@ -160,7 +161,7 @@ normalize_peaks(
   norm_peak_varname = "normalized_log2_abundance",
   batch_varnames = "month",
   reference_varname = "exp_ref",
-  reference_values = "ref"
+  reference_values = "ref",
 )
 
 }

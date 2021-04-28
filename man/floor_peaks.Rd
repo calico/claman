@@ -27,3 +27,7 @@ missing peaks}
 Set a minimum peak abundance of floor_value for low abundance and
   undetected peaks.
 }
+\examples{
+floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
+
+}

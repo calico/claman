@@ -9,12 +9,15 @@
 #'
 #' @return \code{\link{process_mzroll}}
 #'
+#' @examples
+#' floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
+#'
 #' @export
 floor_peaks <- function(mzroll_list, log2_floor_value = 12) {
   # summarize peaks associated with each peakgroup
 
   missing_peaks <- tidyr::expand_grid(
-    groupId = mzroll_list$peakgroups$groupId,
+    groupId = mzroll_list$features$groupId,
     sampleId = mzroll_list$samples$sampleId
   ) %>%
     dplyr::anti_join(mzroll_list$measurements, by = c("groupId", "sampleId")) %>%
@@ -88,7 +91,7 @@ floor_peaks <- function(mzroll_list, log2_floor_value = 12) {
 #'   quant_peak_varname = "log2_abundance",
 #'   norm_peak_varname = "normalized_log2_abundance",
 #'   condition_varname = "condition",
-#'   reference_varname = "reference"
+#'   reference_varname = "reference",
 #' )
 #' 
 #' normalize_peaks(
@@ -98,7 +101,7 @@ floor_peaks <- function(mzroll_list, log2_floor_value = 12) {
 #'   norm_peak_varname = "normalized_log2_abundance",
 #'   batch_varnames = "month",
 #'   reference_varname = "exp_ref",
-#'   reference_values = "ref"
+#'   reference_values = "ref",
 #' )
 #' 
 #' @export
@@ -146,6 +149,14 @@ normalize_peaks <- function(
     names(formals(normalization_method_call))
   )]
   
+  unused_args <- setdiff(names(dots), names(formals(normalization_method_call)))
+  if (length(unused_args) > 0) {
+    warning(glue::glue(
+      "{length(unused_args)} passed arguments could not be used by
+       {normalization_method_call}: {paste(unused_args, collapse = ', ')} ")
+      )
+  }
+
   normalization_output <- do.call(
     normalization_method_call,
     append(
@@ -342,24 +353,12 @@ normalize_peaks.reference_sample <- function(
   log2_floor_value = NA
   ) {
   
-  checkmate::assertString(batch_varnames)
-  if (!(batch_varnames %in% colnames(mzroll_list$samples))) {
-    stop(
-      "\"batch_varnames\":",
-      batch_varnames,
-      ", not present in samples table"
+  purrr::walk(
+    batch_varnames,
+    checkmate::assertChoice,
+    colnames(mzroll_list$samples)
     )
-  }
-
-  checkmate::assertString(reference_varname)
-  if (!(reference_varname %in% colnames(mzroll_list$samples))) {
-    stop(
-      "\"reference_varname\":",
-      reference_varname,
-      ", not present in samples table"
-    )
-  }
-
+  checkmate::assertChoice(reference_varname, colnames(mzroll_list$samples))
   checkmate::assertCharacter(reference_values)
 
   stopifnot(length(log2_floor_value) == 1)
@@ -381,10 +380,23 @@ normalize_peaks.reference_sample <- function(
       !!rlang::quo(!!rlang::sym(reference_varname) %in% reference_values)
     ) %>%
     dplyr::group_by(groupId, !!!rlang::syms(batch_varnames)) %>%
-    dplyr::summarize(.reference = median(!!rlang::sym(quant_peak_varname))) %>%
-    dplyr::group_by(groupId) %>%
-    dplyr::mutate(.reference_diff = .reference - mean(.reference))
+    dplyr::summarize(
+      .reference = median(!!rlang::sym(quant_peak_varname)),
+      .groups = "drop"
+      )
 
+  if (is.na(log2_floor_value)) {
+    # use the relative scale
+    reference_peaks <- reference_peaks %>%
+      dplyr::mutate(.reference_diff = .reference)
+  } else {
+    # retain the original scale
+    reference_peaks <- reference_peaks %>%
+      dplyr::group_by(groupId) %>%
+      dplyr::mutate(.reference_diff = .reference - mean(.reference)) %>%
+      dplyr::ungroup()
+  }
+  
   normalized_peaks <- annotated_peaks %>%
     dplyr::left_join(reference_peaks, by = c("groupId", batch_varnames)) %>%
     dplyr::mutate(
@@ -426,7 +438,8 @@ normalize_peaks.reference_condition <- function(
   quant_peak_varname,
   norm_peak_varname,
   condition_varname = "condition #",
-  reference_varname = "reference condition #"
+  reference_varname = "reference condition #",
+  log2_floor_value = NA
   ) {
 
   # check for valid inputs
@@ -471,6 +484,11 @@ normalize_peaks.reference_condition <- function(
     )
   }
 
+  stopifnot(length(log2_floor_value) == 1)
+  if (!is.na(log2_floor_value)) {
+    stopifnot(class(log2_floor_value) == "numeric")
+  }
+  
   # summarize reference conditions
 
   annotated_peaks <- mzroll_list$measurements %>%
@@ -483,15 +501,30 @@ normalize_peaks.reference_condition <- function(
     )
 
   # estimate log abundance for each reference condition per group
-  references <- annotated_peaks %>%
+  reference_peaks <- annotated_peaks %>%
     dplyr::filter(
       !!rlang::sym(condition_varname) %in%
         unique(mzroll_list$samples[[reference_varname]])
     ) %>%
     dplyr::group_by(groupId, !!rlang::sym(condition_varname)) %>%
-    dplyr::summarize(.reference = median(!!rlang::sym(quant_peak_varname))) %>%
+    dplyr::summarize(
+      .reference = median(!!rlang::sym(quant_peak_varname)),
+      .groups = "drop"
+      ) %>%
     dplyr::ungroup()
 
+  if (is.na(log2_floor_value)) {
+    # use the relative scale
+    reference_peaks <- reference_peaks %>%
+      dplyr::mutate(.reference_diff = .reference)
+  } else {
+    # retain the original scale
+    reference_peaks <- reference_peaks %>%
+      dplyr::group_by(groupId) %>%
+      dplyr::mutate(.reference_diff = .reference - mean(.reference)) %>%
+      dplyr::ungroup()
+  }
+  
   join_by <- rlang::set_names(
     rlang::quo_name(condition_varname),
     rlang::quo_name(reference_varname)
@@ -499,16 +532,24 @@ normalize_peaks.reference_condition <- function(
 
   normalized_peaks <- annotated_peaks %>%
     # add reference to each peak
-    dplyr::left_join(references, by = c("groupId", join_by)) %>%
+    dplyr::left_join(reference_peaks, by = c("groupId", join_by)) %>%
     dplyr::mutate(
       !!rlang::sym(norm_peak_varname) :=
-        !!rlang::sym(quant_peak_varname) - .reference
+        !!rlang::sym(quant_peak_varname) - .reference_diff
     ) %>%
     dplyr::select(
       !!!rlang::syms(c(colnames(mzroll_list$measurements), norm_peak_varname))
     )
 
-  mzroll_list <- romic::update_tomic(mzroll_list, normalized_peaks)
+  # ensure that normalized values still respect the limit of detection
+  reference_refloor <- normalization_refloor(
+    normalized_peaks,
+    log2_floor_value,
+    norm_peak_varname,
+    quant_peak_varname
+  )
+  
+  mzroll_list <- romic::update_tomic(mzroll_list, reference_refloor)
 
   return(mzroll_list)
 }
@@ -641,7 +682,6 @@ normalization_refloor <- function(
           log2_floor_value + 0.001 ~ log2_floor_value,
         !!rlang::sym(norm_peak_varname) <=
           log2_floor_value + 0.001 ~ log2_floor_value,
-        log2_floor_value + 0.001 ~ log2_floor_value,
         TRUE ~ !!rlang::sym(norm_peak_varname)
       ))
   }

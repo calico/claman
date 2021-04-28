@@ -45,11 +45,6 @@ test_that("Test reference samples and reference conditions", {
     reference_varname = "reference"
   )
   
-  expect_false(isTRUE(all.equal(
-    reference_condition_normalized$measurements$log2_abundance,
-    reference_condition_normalized$measurements$normalized_log2_abundance
-    )))
-  
   reference_sample_normalized <- normalize_peaks(
     nplug_mzroll_augmented,
     normalization_method = "reference sample",
@@ -60,11 +55,6 @@ test_that("Test reference samples and reference conditions", {
     reference_values = "ref"
   )
   
-  expect_false(isTRUE(all.equal(
-    reference_sample_normalized$measurements$log2_abundance,
-    reference_sample_normalized$measurements$normalized_log2_abundance
-  )))
-
   # reference condition and reference samples should just be off by
   # an intercept
   
@@ -85,6 +75,115 @@ test_that("Test reference samples and reference conditions", {
     ) %>%
     dplyr::mutate(diff = sample_normalized - condition_normalized)
   
-  
-  
+  expect_equal(
+    compare_normalizations$diff,
+    rep(0, nrow(compare_normalizations))
+    )
   })
+
+test_that("Flooring works and is maintained", {
+  
+  floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
+  
+  expect_equal(
+    floored_peaks$measurements$log2_abundance >= 12,
+    rep(TRUE, nrow(floored_peaks$measurements))
+  )
+  
+  median_polished <- normalize_peaks(
+    nplug_mzroll_augmented,
+    "median polish",
+    quant_peak_varname = "log2_abundance",
+    norm_peak_varname = "normalized_log2_abundance",
+    log2_floor_value = 12
+  )
+
+  expect_equal(
+    median_polished$measurements$normalized_log2_abundance >= 12,
+    rep(TRUE, nrow(median_polished$measurements))
+  )
+
+  reference_condition_normalized <- normalize_peaks(
+    nplug_mzroll_augmented,
+    normalization_method = "reference condition",
+    quant_peak_varname = "log2_abundance",
+    norm_peak_varname = "normalized_log2_abundance",
+    condition_varname = "condition",
+    reference_varname = "reference",
+    log2_floor_value = 12
+  )
+  
+  # is normalization actually doing something
+  expect_false(isTRUE(all.equal(
+    reference_condition_normalized$measurements$log2_abundance,
+    reference_condition_normalized$measurements$normalized_log2_abundance
+  )))
+  
+  # is flooring maintained
+  expect_equal(
+    reference_condition_normalized$measurements$normalized_log2_abundance >= 12,
+    rep(TRUE, nrow(reference_condition_normalized$measurements))
+  )
+  
+  reference_sample_normalized <- normalize_peaks(
+    nplug_mzroll_augmented,
+    normalization_method = "reference sample",
+    quant_peak_varname = "log2_abundance",
+    norm_peak_varname = "normalized_log2_abundance",
+    batch_varnames = c("month", "extraction"),
+    reference_varname = "exp_ref",
+    reference_values = "ref",
+    log2_floor_value = 12
+  )
+  
+  # is normalization doing something
+  expect_false(isTRUE(all.equal(
+    reference_condition_normalized$measurements$log2_abundance,
+    reference_condition_normalized$measurements$normalized_log2_abundance
+  )))
+  
+  # is flooring maintained
+  expect_equal(
+    reference_sample_normalized$measurements$normalized_log2_abundance >= 12,
+    rep(TRUE, nrow(reference_sample_normalized$measurements))
+  )
+  
+  reference_sample_nofloor <- normalize_peaks(
+    nplug_mzroll_augmented,
+    normalization_method = "reference sample",
+    quant_peak_varname = "log2_abundance",
+    norm_peak_varname = "normalized_log2_abundance",
+    batch_varnames = c("month", "extraction"),
+    reference_varname = "exp_ref",
+    reference_values = "ref"
+  )
+  # this should be identical reference_sample_normalized aside from
+  # group-level intercept
+  
+  inconsistencies <- reference_sample_normalized$measurements %>%
+    dplyr::select(
+      groupId,
+      sampleId,
+      abund_unfloored = normalized_log2_abundance
+      ) %>%
+    dplyr::left_join(
+      reference_sample_nofloor$measurements %>%
+        dplyr::select(
+          groupId,
+          sampleId,
+          abund_floored = normalized_log2_abundance
+          ),
+      by = c("groupId", "sampleId")
+    ) %>%
+    dplyr::mutate(diff = abund_unfloored - abund_floored) %>%
+    dplyr::group_by(groupId) %>%
+    dplyr::filter(all(abund_unfloored >= 12.5)) %>%
+    dplyr::summarize(val = diff(range(diff)))
+    
+  expect_equal(
+    inconsistencies$val,
+    rep(0, nrow(inconsistencies))
+  )
+  
+  
+})
