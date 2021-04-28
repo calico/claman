@@ -25,3 +25,7 @@ provided groupIds}
 \description{
 Remove all data besides those from provided groupIds
 }
+\examples{
+filter_groupIds(nplug_mzroll_normalized, 1:10)
+
+}

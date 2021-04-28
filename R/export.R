@@ -82,11 +82,13 @@ write_tidy_list_augmented <- function(mzroll_list, dir_path, name_preamble) {
 #' Export one table which contains metabolites as rows and samples as columns.
 #'
 #' @export
-write_tidy_list_wide <- function(mzroll_list,
-                                 dir_path,
-                                 name_preamble,
-                                 value.var = "log2_abundance",
-                                 transpose = FALSE) {
+write_tidy_list_wide <- function(
+  mzroll_list,
+  dir_path,
+  name_preamble,
+  value.var = "log2_abundance",
+  transpose = FALSE
+  ) {
   test_mzroll_list(mzroll_list)
 
   stopifnot(class(dir_path) == "character", length(dir_path) == 1)

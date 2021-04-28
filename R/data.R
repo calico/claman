@@ -80,3 +80,14 @@ nplug_mzroll <- function() {
 #'   
 #' @family nplug
 "nplug_mzroll_augmented"
+
+#' NPLUG MzRoll Augmented
+#' 
+#' \link{nplug_mzroll_augmented} with injections collapsed using 
+#'   \link{collapse_injections}, followed by reference-sample normalization
+#'   using \link{normalize_peaks}. Finally, reference samples and samples
+#'   extracting using the pellet method were removed and sample names
+#'   were cleaned up. These steps are described in the NPLUG vignette.
+#'   
+#' @family nplug
+"nplug_mzroll_normalized"

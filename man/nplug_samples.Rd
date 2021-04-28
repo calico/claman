@@ -40,6 +40,7 @@ A table of meta-data for all NPLUG samples with variables:
 Other nplug: 
 \code{\link{nplug_compounds}},
 \code{\link{nplug_mzroll_augmented}},
+\code{\link{nplug_mzroll_normalized}},
 \code{\link{nplug_mzroll}()}
 }
 \concept{nplug}

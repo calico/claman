@@ -17,6 +17,7 @@ nplug_mzroll_augmented
 \seealso{
 Other nplug: 
 \code{\link{nplug_compounds}},
+\code{\link{nplug_mzroll_normalized}},
 \code{\link{nplug_mzroll}()},
 \code{\link{nplug_samples}}
 }

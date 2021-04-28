@@ -22,6 +22,7 @@ A table of meta-data for all NPLUG features with variables:
 \seealso{
 Other nplug: 
 \code{\link{nplug_mzroll_augmented}},
+\code{\link{nplug_mzroll_normalized}},
 \code{\link{nplug_mzroll}()},
 \code{\link{nplug_samples}}
 }

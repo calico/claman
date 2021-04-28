@@ -4,12 +4,7 @@
 \alias{pathway_enrichments}
 \title{Pathway Enrichments}
 \usage{
-pathway_enrichments(
-  mzroll_list,
-  significance,
-  standard_databases,
-  test_absolute_effects = TRUE
-)
+pathway_enrichments(mzroll_list, significance, test_absolute_effects = TRUE)
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or

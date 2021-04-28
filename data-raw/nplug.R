@@ -1,6 +1,7 @@
 ## code to prepare `NPLUG` dataset goes here
 
 library(dplyr)
+library(claman)
 
 # save the raw data file to the top-level data directory to future-proof
 #   against journal URL changes.
@@ -59,6 +60,7 @@ nplug_samples <- bind_rows(
     ),
   nplug_samples %>%
     filter(exp_ref == "ref") %>%
+    mutate(DR = 0.05) %>%
     left_join(
       distinct_ref_conditions,
       by = c("month", "extraction")
@@ -179,8 +181,67 @@ usethis::use_data(nplug_compounds, overwrite = TRUE)
 
 # create an annotated intermediate mzroll_list
 
-nplug_mzroll <- process_mzroll(nplug_mzroll())
-nplug_mzroll_augmented <- merge_samples_tbl(nplug_mzroll, nplug_samples, "sample_name")
-nplug_mzroll_augmented <- merge_compounds_tbl(nplug_mzroll_augmented, nplug_compounds)
+nplug_mzroll <- claman::process_mzroll(claman::nplug_mzroll())
+nplug_mzroll_augmented <- claman::merge_samples_tbl(nplug_mzroll, nplug_samples, "sample_name")
+nplug_mzroll_augmented <- claman::merge_compounds_tbl(nplug_mzroll_augmented, nplug_compounds)
 
 usethis::use_data(nplug_mzroll_augmented, overwrite = TRUE)
+
+# mzroll processed to account for batch effects and summarized based on distinct biological conditions
+
+mzroll_list_distinct_conditions <- collapse_injections(
+  nplug_mzroll_augmented,
+  grouping_vars = "condition",
+  peak_quant_vars = c("log2_abundance", "centered_log2_abundance"),
+  collapse_fxn = "mean"
+)
+
+mzroll_list_normalized <- normalize_peaks(
+  mzroll_list_distinct_conditions,
+  normalization_method = "reference sample",
+  quant_peak_varname = "log2_abundance",
+  norm_peak_varname = "normalized_log2_abundance",
+  batch_varnames = c("month", "extraction"),
+  reference_varname = "exp_ref",
+  reference_values = "ref"
+) %>%
+  # having normalized by the common reference, we can re-center the data
+  #  since slow-phosphate limited growth is not a biological reference.
+  romic::center_tomic(measurement_vars = "normalized_log2_abundance")
+
+final_processed_data <- mzroll_list_normalized %>%
+  # retain just experimental samples
+  romic::filter_tomic(
+    filter_type = "category",
+    filter_table = "samples",
+    filter_variable = "exp_ref",
+    filter_value = "exp"
+  ) %>%
+  # retain only filter extraction
+  romic::filter_tomic(
+    filter_type = "category",
+    filter_table = "samples",
+    filter_variable = "extraction",
+    filter_value = "filter"
+  )
+
+# clean-up sample data
+renamed_samples <- final_processed_data$samples %>%
+  select(sampleId, limitation, DR) %>%
+  mutate(name = glue::glue(
+    "{stringr::str_sub(limitation, 1, 1)}{round(DR,2)}"
+  )) %>%
+  group_by(name) %>%
+  mutate(
+    name = case_when(n() == 1 ~ name,
+                     TRUE ~ paste0(name, "-", 1:n()))
+    ) %>%
+  ungroup()
+
+nplug_mzroll_normalized <- romic::update_tomic(
+  final_processed_data,
+  renamed_samples
+)
+
+usethis::use_data(nplug_mzroll_normalized, overwrite = TRUE)
+

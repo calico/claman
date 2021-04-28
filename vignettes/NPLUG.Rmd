@@ -15,7 +15,9 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 10,
+  fig.height = 10
 )
 ```
 
@@ -121,7 +123,7 @@ romic::plot_heatmap(
   theme(strip.text = element_text(size = 10))
 ```
 
-From this plot, there are clear, but often relatively minor effects of exctraction method on metabolite abundances.
+From this plot, there are clear, but often relatively minor effects of extraction method on metabolite abundances. Large differences in extraction efficiency are generally seen for nucleotides, where using a filter-based extraction results in greater signal than using pellets. 
 
 To look at month-effects, we can take advantage of the fact that in each month two biological replicate reference cultures were generated. These two cultures can be distinguished in the sample meta-data most easily by subtle differences in their dilution rate.
 
@@ -151,9 +153,9 @@ From the preliminary analysis, when normalizing this dataset to remove sources o
 
 To tackle these obstacles we will:
 
-1. compare and then collapse techical replicates.
+1. compare and then collapse technical replicates.
 2. contrast experimental conditions with reference conditions to account for month-to-month variability.
-3. determine whether one extaction method is superior or whether both can be used for downstream analysis with appropriate normalization.
+3. determine whether one extraction method is superior or whether both can be used for downstream analysis with appropriate normalization.
 
 ## Collapsing Technical Replicates
 
@@ -181,26 +183,167 @@ util_pretty_khead(
 
 ## Contrasting to a Reference Condition
 
-Since experimental cultures of the same limiting nutrient were generated simultaneously, limitation and the month-of-generation are confounded. Without correcting this confounding, some of the month effects would be interpreted as limitation-specific signals. To correct for this month-to-month variability in instrument performance, each experimental sample can be compared to common reference conditions. Since these cultures possess very similar biological signals, but should share the performance biases, contrasting each biological culture with a month-matched reference should remove this shared bias. 
+Since experimental cultures of the same limiting nutrient were generated simultaneously, limitation and the month-of-generation are confounded. Without correcting this confounding, some of the month effects would be interpreted as limitation-specific signals. To correct for this month-to-month variability in instrument performance, each experimental sample can be compared to common reference conditions. Since these cultures possess very similar biological signals, but should share the performance biases, contrasting each biological culture with a month-matched reference should remove this shared bias. In a similar fashion we can evaluate whether differences due to extraction methodology are resolved when we are comparing an experimental condition to its extraction-matched, month-matched reference.
 
 ```{r normalization}
-normalize_peaks(
+mzroll_list_normalized <- normalize_peaks(
   mzroll_list_distinct_conditions,
-  normalization_method = "reference condition",
+  normalization_method = "reference sample",
   quant_peak_varname = "log2_abundance",
   norm_peak_varname = "normalized_log2_abundance",
-  condition_varname = "condition",
-  reference_varname = "reference"
-)
-
-normalize_peaks(
-  mzroll_list_distinct_conditions,
-  normalization_method = "reference sample"
-)
-
+  batch_varnames = c("month", "extraction"),
+  reference_varname = "exp_ref",
+  reference_values = "ref"
+  ) %>%
+  # having normalized by the common reference, we can re-center the data
+  #  since slow-phosphate limited growth is not a biological reference.
+  romic::center_tomic(measurement_vars = "normalized_log2_abundance")
 ```
+
+Have normalized for month and extraction method, we can look at the results as another heatmap.
+
+```{r post_normalized_heatmap}
+romic::plot_heatmap(
+  mzroll_list_normalized,
+  feature_var = "compoundName",
+  sample_var = "name",
+  value_var = "normalized_log2_abundance",
+  change_threshold = 5,
+  cluster_dim = "rows"
+  ) + facet_grid(~ exp_ref + limitation, scales = "free_x", space = "free_x") +
+  ggtitle("Post-normalization metabolite abundances") +
+  theme(strip.text = element_text(size = 10))
+```
+
+From this visualization, we can note that the reference chemostats are uniform for a given peakgroup (these were set to zero during normalization and then offset during re-centering). There does seem to be an issue with the attempted extraction normalization though; having compared each experimental sample to its extraction method matched reference, meaningful differences relative abundance associated with extraction remain.
 
 ## Accounting for Extraction Method
 
+While we could try to make use of data from both extraction methods, as they did in the original paper, due to the inconsistent extraction efficiency, I think its better to just retain the higher-signal filter-extraction samples. At this point we can also discard the reference samples since they're no longer needed.
+
+```{r extraction_correction}
+final_processed_data <- mzroll_list_normalized %>%
+  # retain just experimental samples
+  romic::filter_tomic(
+    filter_type = "category",
+    filter_table = "samples",
+    filter_variable = "exp_ref",
+    filter_value = "exp"
+    ) %>%
+  # retain only filter extraction
+  romic::filter_tomic(
+    filter_type = "category",
+    filter_table = "samples",
+    filter_variable = "extraction",
+    filter_value = "filter"
+    )
+  
+# clean-up sample data
+renamed_samples <- final_processed_data$samples %>%
+  select(sampleId, limitation, DR) %>%
+  mutate(name = glue::glue(
+    "{stringr::str_sub(limitation, 1, 1)}{round(DR,2)}"
+  )) %>%
+  group_by(name) %>%
+  mutate(name = ifelse(n() == 1, name, paste0(name, "-", 1:n()))) %>%
+  ungroup()
+   
+final_processed_data <- romic::update_tomic(
+  final_processed_data,
+  renamed_samples
+  )
+
+romic::plot_heatmap(
+  final_processed_data,
+  feature_var = "compoundName",
+  sample_var = "name",
+  value_var = "normalized_log2_abundance",
+  change_threshold = 5,
+  cluster_dim = "rows"
+  ) + facet_grid(~ limitation, scales = "free_x", space = "free_x") +
+  ggtitle("Final processed metabolite abundances across 25 growth conditions") +
+  theme(strip.text = element_text(size = 10))
+```
+
+# Differential Abundance Testing
+
+Having generated a processed dataset, we can already see some patterns clearly by looking at the heatmap, such as bottlenecking of pyrimidine biosynthesis during uracil limitation, amino acid accumulation during leucine limitation, and TCA up-regulation during ammonium limitation. Its also apparent that many of the strongest metabolomic alterations are observed at slow growth rates, while these there are relatively smooth transitions back to a normalish-metabolome as cell growth more quickly. To quantitatively summarize trends like these, its helpful to carryout differential abundance testing. But, before we proceed we should determine the type of model we need to fit by interpreting the major sources of variation in our dataset in light of the experimental design. This is 
+
+## Exploratory Data Analysis (EDA)
+
+Our analysis thus far has already corrected for major sources of variation in this original dataset, such as month-to-month variation and differences in extraction methodology. If we hadn't controlled for those factors by this point, we would want to create visualizations which appropriately identify major unaccounted for sources of variation. Similarly, this will help us to determine how we should represent our experimental design as an appropriate hypothesis test. 
+
+Two visualizations that are particularly useful for EDA are heatmaps (I'm sure you've seen enough of those), and principal components plots which overlay elements of the experimental design on the leading principal components.
+
+```{r static_eda}
+samples_with_pcs <- final_processed_data %>%
+  romic::add_pca_loadings(value_var = "normalized_log2_abundance", npcs = 5)
+
+romic::plot_bivariate(
+  samples_with_pcs$samples,
+  "PC1",
+  "PC2",
+  color_var = "limitation"
+  ) + ggtitle("Top principal components driving metabolomic variation")
+```
+
+One plot doesn't quite cut it here. Luckily, romic has some powerful methods for shiny-based interactive analysis that we can leverage here to quickly make plots like these.
+
+```{r eda, eval = FALSE}
+romic::app_flow(samples_with_pcs)
+
+romic::app_heatmap(final_processed_data %>% romic::triple_to_tidy())
+```
+
+## Hypothesis Testing
+
+From the results thus far, we've seen that limitation greatly impacts the metabolome, as does growth rate which tends to have a limitation-specific trend. Whatever model we fit should account for these features of the data. The actual model we fit will depend on the question we want to ask of the data. For example, we could be interested in just finding metabolites impacted by nutrient, or those that are perturbed by a specific nutrient. To keep things manageable, I'll explore how nitrogen-limitation alters the metatbolome.
+
+To ask this, we can formulate a linear regression of the form:
+
+$$
+y^{\text{normalized}} \sim \text{lim} + \text{lim} \cdot \text{DR}
+$$
+
+```{r hypothesis_testing}
+regression_significance <- diffex_mzroll(
+  nplug_mzroll_normalized,
+  "normalized_log2_abundance",
+  "limitation + limitation:DR + 0"
+  )
+
+plot_pvalues(regression_significance)
+
+plot_volcano(regression_significance)
+```
+
+## Plotting Individual Metabolites
+
+```{r met_examples}
+n_lim_signif <- regression_significance %>%
+  filter(term == "limitationNH4") %>%
+  arrange(qvalue) %>%
+  left_join(
+    nplug_mzroll_normalized$features %>%
+      select(groupId, peak_label),
+    by = "groupId")
+
+plot_barplot(
+  mzroll_list = nplug_mzroll_normalized,
+  groupIds = n_lim_signif$groupId[1:4],
+  grouping_vars = c("limitation", "DR"),
+  value_var = "normalized_log2_abundance",
+  fill_var = "limitation"
+  )
+```
+
+## Pathway Analysis
+
+```{r pathway_enrichment}
 
 
+
+```
+
+
+# Export results

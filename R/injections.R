@@ -192,6 +192,15 @@ find_injections <- function(mzroll_list, grouping_vars) {
       ) %>%
     dplyr::left_join(reduced_names, by = grouping_vars)
   
+  dropped_fields <- setdiff(colnames(mzroll_list$samples), colnames(new_samples))
+  if (length(dropped_fields) > 0) {
+    message(glue::glue(
+      "{length(dropped_fields)} sample variables will be dropped since they
+        - vary for the same grouping_vars:
+        - {paste(dropped_fields, collapse = ', ')}"
+    ))
+  }
+  
   collapse_dict <- mzroll_list$samples %>%
     dplyr::select(old_sampleId = sampleId, !!!syms(grouping_vars)) %>%
     dplyr::left_join(new_samples %>%

@@ -3,7 +3,6 @@
 #' @inheritParams test_mzroll_list
 #' @param significance returned by \code{\link{diffex_mzroll}}; a tibble of
 #'   tests performed.
-#' @inheritParams process_mzroll
 #' @param test_absolute_effects If TRUE then only consider the magnitude of
 #'   test-statistics when calculating rankings for enrichment; if FALSE then
 #'   consider sign as well.
@@ -17,10 +16,11 @@
 #'   }
 #'
 #' @export
-pathway_enrichments <- function(mzroll_list,
-                                significance,
-                                standard_databases,
-                                test_absolute_effects = TRUE) {
+pathway_enrichments <- function(
+  mzroll_list,
+  significance,
+  test_absolute_effects = TRUE
+  ) {
   test_mzroll_list(mzroll_list)
 
   if (!("data.frame" %in% class(significance))) {
@@ -142,9 +142,11 @@ pathway_enrichments <- function(mzroll_list,
 #'
 #' @return a list containing a summary plot for the term and tibble
 #'   containing data and plots for all comparisons performed.
-calculate_pathway_enrichment <- function(term_data,
-                                         pathway_list,
-                                         padj_cutoff = 0.2) {
+calculate_pathway_enrichment <- function(
+  term_data,
+  pathway_list,
+  padj_cutoff = 0.2
+  ) {
   stopifnot(
     "numeric" %in% class(padj_cutoff),
     length(padj_cutoff) == 1,

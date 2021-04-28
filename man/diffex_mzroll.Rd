@@ -4,12 +4,7 @@
 \alias{diffex_mzroll}
 \title{Differential Expression Analysis on Mzroll List}
 \usage{
-diffex_mzroll(
-  mzroll_list,
-  value.var = "centered_log2_abundance",
-  test_model,
-  null_model = NULL
-)
+diffex_mzroll(mzroll_list, value_var, test_model, null_model = NULL)
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or
@@ -22,7 +17,7 @@ diffex_mzroll(
   \item{measurements: one row per peak (samples x peakgroups)}
   }}
 
-\item{value.var}{measurement variable}
+\item{value_var}{measurement variable}
 
 \item{test_model}{a RHS formula for regression}
 
@@ -36,12 +31,16 @@ a tibble of significance tests for each feature
 Differential Expression Analysis on Mzroll List
 }
 \examples{
-library(dplyr)
-
-mzroll_list <- readRDS(
-  authutils::get_clamr_assets("X0083-mzroll-list.Rds")
-) \%>\%
-  floor_peaks(12)
-
-diffex_mzroll(mzroll_list, test_model = "mutation + sex")
+diffex_mzroll(
+  nplug_mzroll_normalized,
+  "normalized_log2_abundance",
+  "limitation + limitation:DR + 0"
+  )
+  
+diffex_mzroll(
+  nplug_mzroll_normalized,
+  "normalized_log2_abundance",
+  "limitation + 0",
+  "0"
+  )
 }

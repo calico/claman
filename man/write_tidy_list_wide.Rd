@@ -27,8 +27,6 @@ write_tidy_list_wide(
 
 \item{name_preamble}{start of output file name}
 
-\item{value.var}{measurement variable}
-
 \item{transpose}{if TRUE then samples will be stored as rows}
 }
 \value{
