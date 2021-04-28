@@ -62,7 +62,7 @@ test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
   
   # the only required field is sampleId, other field will likely
   #   be discarded as samples are merged during normalization
-  check_required_variables(mzroll_list, "samples", "sampleId")
+  check_required_variables(mzroll_list, "samples", c("sampleId", "name"))
   
   # check for invalid variables
   
@@ -112,64 +112,7 @@ check_required_variables <- function(mzroll_list, table, required_variables) {
 }
 
 
-#' Flatten mzroll list to single table
-#'
-#' Flatten mzroll list to single table using groupId and sampleId
-#'
-#' @param mzroll_list output of process_mzrollDB functions
-#' \itemize{
-#'   \item{peakgroups: one row per unique analyte (defined by a unique
-#'     groupId)},
-#'   \item{samples: one row per unique sample (defined by a unique sampleId)},
-#'   \item{peaks: one row per peak (samples x peakgroups)}
-#'   }
-#'
-#' @return mzroll_list (process_mzrollDB functions output) reformatted as a
-#'   single table
-#'
-#' @export
-mzroll_table <- function(mzroll_list) {
-
-  # guards
-  if (class(mzroll_list) != "list") {
-    stop("input \"mzroll_list\" must be a list.")
-  }
-  if (length(mzroll_list) != 3) {
-    stop("input \"mzroll_list\" must contain exactly 3 entries.")
-  }
-  if (names(mzroll_list[1]) != "peakgroups") {
-    stop("input \"mzroll_list\" first element must be named \"peakgroups\"")
-  }
-  if (names(mzroll_list[2]) != "samples") {
-    stop("input \"mzroll_list\" second element must be named \"samples\"")
-  }
-  if (names(mzroll_list[3]) != "peaks") {
-    stop("input \"mzroll_list\" third element must be named \"peaks\"")
-  }
-  if (!"groupId" %in% colnames(mzroll_list[[1]])) {
-    stop("peakgroups table missing required column \"groupId\"")
-  }
-  if (!"groupId" %in% colnames(mzroll_list[[3]])) {
-    stop("peaks table missing required column \"groupId\"")
-  }
-  if (!"sampleId" %in% colnames(mzroll_list[[2]])) {
-    stop("samples table missing required column \"sampleId\"")
-  }
-  if (!"sampleId" %in% colnames(mzroll_list[[3]])) {
-    stop("peaks table missing required column \"sampleId\"")
-  }
-
-  mzroll_table <- dplyr::inner_join(
-    mzroll_list$peakgroups,
-    mzroll_list$peaks,
-    by = c("groupId")
-  ) %>%
-    dplyr::inner_join(mzroll_list$samples, by = c("sampleId"))
-
-  mzroll_table
-}
-
-#' Util Pretty Knitr Head
+#' Util - Pretty Knitr Head
 #' 
 #' @param tbl a data.frame or tibble
 #' @param nrows the max number of rows to show

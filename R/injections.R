@@ -163,21 +163,34 @@ find_injections <- function(mzroll_list, grouping_vars) {
     choices = mzroll_list$design$samples$variable
   )
   
+  not_grouping_vars <- setdiff(colnames(mzroll_list$samples), grouping_vars)
+  
   consistent_reduced_fields <- mzroll_list$samples %>%
     dplyr::group_by(!!!syms(grouping_vars)) %>%
     dplyr::summarize_all(n_unique) %>%
-    tidyr::gather(field, n_unique_records, -grouping_vars) %>%
+    tidyr::gather(field, n_unique_records, !!!(not_grouping_vars)) %>%
     dplyr::group_by(field) %>%
     dplyr::filter(all(n_unique_records == 1)) %>%
     dplyr::distinct(field) %>%
     dplyr::ungroup()
   
+  # names aren't consistent but should still be maintained
+  reduced_names <- mzroll_list$samples %>%
+    dplyr::select(name, !!!syms(grouping_vars)) %>%
+    dplyr::group_by(!!!syms(grouping_vars)) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup()
+  
   new_samples <- mzroll_list$samples %>%
-    dplyr::select(c(grouping_vars, consistent_reduced_fields$field)) %>%
+    dplyr::select(c(!!!rlang::syms(grouping_vars), consistent_reduced_fields$field)) %>%
     dplyr::group_by(!!!syms(grouping_vars)) %>%
     dplyr::slice(1) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(sampleId = as.character(1:dplyr::n()))
+    dplyr::mutate(
+      sampleId = as.character(1:dplyr::n()),
+      sampleId = factor(sampleId, levels = sampleId)
+      ) %>%
+    dplyr::left_join(reduced_names, by = grouping_vars)
   
   collapse_dict <- mzroll_list$samples %>%
     dplyr::select(old_sampleId = sampleId, !!!syms(grouping_vars)) %>%

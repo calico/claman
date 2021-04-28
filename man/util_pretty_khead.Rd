@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{util_pretty_khead}
 \alias{util_pretty_khead}
-\title{Util Pretty Knitr Head}
+\title{Util - Pretty Knitr Head}
 \usage{
 util_pretty_khead(tbl, nrows = 10, caption = NULL)
 }
@@ -17,7 +17,7 @@ util_pretty_khead(tbl, nrows = 10, caption = NULL)
 an html knitr table
 }
 \description{
-Util Pretty Knitr Head
+Util - Pretty Knitr Head
 }
 \examples{
 util_pretty_khead(mtcars, nrows = 5, caption = "cars!")

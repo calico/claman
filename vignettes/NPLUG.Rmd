@@ -183,8 +183,7 @@ util_pretty_khead(
 
 Since experimental cultures of the same limiting nutrient were generated simultaneously, limitation and the month-of-generation are confounded. Without correcting this confounding, some of the month effects would be interpreted as limitation-specific signals. To correct for this month-to-month variability in instrument performance, each experimental sample can be compared to common reference conditions. Since these cultures possess very similar biological signals, but should share the performance biases, contrasting each biological culture with a month-matched reference should remove this shared bias. 
 
-
-```{r}
+```{r normalization}
 normalize_peaks(
   mzroll_list_distinct_conditions,
   normalization_method = "reference condition",
