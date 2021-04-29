@@ -7,7 +7,8 @@
 plot_volcano(regression_significance, max_p_trans = 10, FDR_cutoff = 0.1)
 }
 \arguments{
-\item{regression_significance}{output of diffex_mzroll}
+\item{regression_significance}{returned by \code{\link{diffex_mzroll}};
+a tibble of tests performed.}
 
 \item{max_p_trans}{maximum value of -log10 pvalues to plot}
 

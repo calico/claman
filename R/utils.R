@@ -19,7 +19,7 @@ test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
   
   # check that mzroll_list is a valid tomic
   
-  romic:::check_triple_omic(mzroll_list, fast_check)
+  romic::check_tomic(mzroll_list, fast_check)
 
   # check for claman-specific conventions
   

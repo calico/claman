@@ -27,8 +27,8 @@ Imports:
     glue,
     purrr,
     readr,
-    rlang,
     reshape2,
+    rlang,
     stringr,
     tibble,
     tidyr (>= 1.0.0)
@@ -42,6 +42,7 @@ Suggests:
     plotly,
     qvalue,
     rmarkdown,
+    romic,
     testthat
 Encoding: UTF-8
 LazyData: true

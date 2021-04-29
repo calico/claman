@@ -81,7 +81,7 @@ nplug_mzroll <- function() {
 #' @family nplug
 "nplug_mzroll_augmented"
 
-#' NPLUG MzRoll Augmented
+#' NPLUG MzRoll Normalized
 #' 
 #' \link{nplug_mzroll_augmented} with injections collapsed using 
 #'   \link{collapse_injections}, followed by reference-sample normalization

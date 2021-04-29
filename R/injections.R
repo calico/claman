@@ -38,7 +38,7 @@ collapse_injections <- function(
     choices = mzroll_list$design$measurements$variable
   )
   checkmate::assertString(collapse_fxn)
-  stopifnot(length(find(collapse_fxn, mode="function")) >= 1)
+  stopifnot(length(utils::find(collapse_fxn, mode="function")) >= 1)
   
   # reduce samples to fields which are defined unambiguously with grouping vars
   
@@ -121,12 +121,12 @@ plot_compare_injection <- function(
     # remove self comparisons, and only retain one pair for each {A-B, B-A}
     dplyr::filter(.entry.x < .entry.y)
   
-  R_squared <- round(cor(
+  R_squared <- round(stats::cor(
     quant_comparison$quant_1,
     quant_comparison$quant_2
     )^2, 3)
   
-  label_dat <- tibble(
+  label_dat <- tibble::tibble(
     quant_1 = min(quant_comparison$quant_1),
     quant_2 = max(quant_comparison$quant_2),
     )

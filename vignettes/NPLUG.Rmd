@@ -307,7 +307,7 @@ $$
 
 ```{r hypothesis_testing}
 regression_significance <- diffex_mzroll(
-  nplug_mzroll_normalized,
+  final_processed_data,
   "normalized_log2_abundance",
   "limitation + limitation:DR + 0"
   )
@@ -319,31 +319,107 @@ plot_volcano(regression_significance)
 
 ## Plotting Individual Metabolites
 
-```{r met_examples}
+```{r met_examples, fig.width = 6, fig.height = 6}
 n_lim_signif <- regression_significance %>%
   filter(term == "limitationNH4") %>%
   arrange(qvalue) %>%
   left_join(
-    nplug_mzroll_normalized$features %>%
+    final_processed_data$features %>%
       select(groupId, peak_label),
     by = "groupId")
+```
 
+```{r met_examples_table, echo = FALSE}
+util_pretty_khead(
+  n_lim_signif,
+  caption = "Metabolites that most perturbed by nitrogen limitation"
+)
+```
+
+```{r met_examples_barplot}
 plot_barplot(
-  mzroll_list = nplug_mzroll_normalized,
+  mzroll_list = final_processed_data,
   groupIds = n_lim_signif$groupId[1:4],
   grouping_vars = c("limitation", "DR"),
   value_var = "normalized_log2_abundance",
   fill_var = "limitation"
-  )
+  ) + scale_fill_brewer(palette = "Set2")
 ```
 
 ## Pathway Analysis
 
 ```{r pathway_enrichment}
+pathway_nest <- final_processed_data$features %>%
+  dplyr::select(groupId, pathway) %>%
+  tidyr::nest(pathway_members = groupId)
 
+pathway_list <- purrr::map(
+  pathway_nest$pathway_members,
+    function(x) {
+      as.character(x$groupId)
+    }
+  )
+names(pathway_list) <- pathway_nest$pathway
 
-
+enrichments <- find_pathway_enrichments(
+  final_processed_data,
+  regression_significance,
+  pathway_list,
+  test_absolute_effects = FALSE
+  )
 ```
 
+# generate a table of top enrichments
+
+```{r fgsea_table, echo=FALSE}
+enrichments$enrichment_table %>%
+  arrange(padj) %>%
+  select(-pathway_members, -enrichment_plot) %>%
+  util_pretty_khead(caption = "Top pathway enrichments across all regression terms")
+```
+
+```{r top_enrichments}
+plot(enrichments$enrichment_plots[["limitationNH4"]])
+
+# see specific pathway enrichments
+ranked_nitrogen_enrichments <- enrichments$enrichment_table %>%
+  arrange(padj) %>%
+  filter(term == "limitationNH4")
+
+ranked_nitrogen_enrichments$enrichment_plot[[1]] +
+  ggtitle(
+    "Amino acids are depleted during nitrogen limitation",
+    "Note that the x-axis is ranks, and negative values have higher ranks"
+    ) 
+```
 
 # Export results
+
+While self-contained reproducible notebooks like this vignette are an ideal way to share results with collaborators,  normalized data and analysis artifacts can easily be exported as well. This is done using romic functions: *export_tomic_as_tidy*, *export_tomic_as_triple*, and *export_tomic_as_wide*. These three exports write the same comprehensive summaries of an mzroll to disk just in different formats. Before exporting, we may also want to include additional feature and sample attributes that have not been directly incorporated into the mzroll_list such as summaries of differential expression.
+
+```{r add_diffex}
+wide_stats <- regression_significance %>%
+  select(groupId, term, diffex_label) %>%
+  tidyr::spread(term, diffex_label)
+
+final_processed_data <- romic::update_tomic(
+  final_processed_data,
+  final_processed_data$features %>%
+    left_join(wide_stats, by = "groupId")
+)
+```
+
+```{r add_diffex_table, echo = FALSE}
+util_pretty_khead(
+  final_processed_data$features,
+  caption = "Peakgroups with differential abundance statistics added"
+  )
+```
+
+```{r export_results, eval = FALSE}
+romic::export_tomic_as_tidy(
+  final_processed_data,
+  dir_path = "/tmp",
+  name_preamble = "nplug"
+  )
+```

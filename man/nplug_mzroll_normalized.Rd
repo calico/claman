@@ -3,7 +3,7 @@
 \docType{data}
 \name{nplug_mzroll_normalized}
 \alias{nplug_mzroll_normalized}
-\title{NPLUG MzRoll Augmented}
+\title{NPLUG MzRoll Normalized}
 \format{
 An object of class \code{triple_omic} (inherits from \code{tomic}, \code{mzroll}) of length 4.
 }

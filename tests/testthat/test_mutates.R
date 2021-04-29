@@ -4,7 +4,7 @@ test_that("Remove constant name", {
   name_set <- c("aaaxyzbbb", "aaaklbbb", "aaaxyzbbb")
   truncated_name_set <- c("xyz", "kl", "xyz")
 
-  constant_names <- calicomics::remove_constant_name(name_set)
+  constant_names <- claman::remove_constant_name(name_set)
 
   expect_equal(constant_names, truncated_name_set)
 })
@@ -12,7 +12,7 @@ test_that("Remove constant name", {
 test_that("Test batch centering", {
   
   centered_batches <- normalize_peaks(
-    nplug_mzroll_augmented,
+    claman::nplug_mzroll_augmented,
     "center batches",
     quant_peak_varname = "log2_abundance",
     norm_peak_varname = "normalized_log2_abundance",
@@ -36,8 +36,8 @@ test_that("Test batch centering", {
 
 test_that("Test reference samples and reference conditions", {
   
-  reference_condition_normalized <- normalize_peaks(
-    nplug_mzroll_augmented,
+  reference_condition_normalized <- claman::normalize_peaks(
+    claman::nplug_mzroll_augmented,
     normalization_method = "reference condition",
     quant_peak_varname = "log2_abundance",
     norm_peak_varname = "normalized_log2_abundance",
@@ -45,8 +45,8 @@ test_that("Test reference samples and reference conditions", {
     reference_varname = "reference"
   )
   
-  reference_sample_normalized <- normalize_peaks(
-    nplug_mzroll_augmented,
+  reference_sample_normalized <- claman::normalize_peaks(
+    claman::nplug_mzroll_augmented,
     normalization_method = "reference sample",
     quant_peak_varname = "log2_abundance",
     norm_peak_varname = "normalized_log2_abundance",
@@ -83,15 +83,15 @@ test_that("Test reference samples and reference conditions", {
 
 test_that("Flooring works and is maintained", {
   
-  floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
+  floored_peaks <- claman::floor_peaks(nplug_mzroll_augmented, 12)
   
   expect_equal(
     floored_peaks$measurements$log2_abundance >= 12,
     rep(TRUE, nrow(floored_peaks$measurements))
   )
   
-  median_polished <- normalize_peaks(
-    nplug_mzroll_augmented,
+  median_polished <- claman::normalize_peaks(
+    claman::nplug_mzroll_augmented,
     "median polish",
     quant_peak_varname = "log2_abundance",
     norm_peak_varname = "normalized_log2_abundance",
@@ -103,8 +103,8 @@ test_that("Flooring works and is maintained", {
     rep(TRUE, nrow(median_polished$measurements))
   )
 
-  reference_condition_normalized <- normalize_peaks(
-    nplug_mzroll_augmented,
+  reference_condition_normalized <- claman::normalize_peaks(
+    claman::nplug_mzroll_augmented,
     normalization_method = "reference condition",
     quant_peak_varname = "log2_abundance",
     norm_peak_varname = "normalized_log2_abundance",
@@ -125,8 +125,8 @@ test_that("Flooring works and is maintained", {
     rep(TRUE, nrow(reference_condition_normalized$measurements))
   )
   
-  reference_sample_normalized <- normalize_peaks(
-    nplug_mzroll_augmented,
+  reference_sample_normalized <- claman::normalize_peaks(
+    claman::nplug_mzroll_augmented,
     normalization_method = "reference sample",
     quant_peak_varname = "log2_abundance",
     norm_peak_varname = "normalized_log2_abundance",
@@ -148,8 +148,8 @@ test_that("Flooring works and is maintained", {
     rep(TRUE, nrow(reference_sample_normalized$measurements))
   )
   
-  reference_sample_nofloor <- normalize_peaks(
-    nplug_mzroll_augmented,
+  reference_sample_nofloor <- claman::normalize_peaks(
+    claman::nplug_mzroll_augmented,
     normalization_method = "reference sample",
     quant_peak_varname = "log2_abundance",
     norm_peak_varname = "normalized_log2_abundance",
@@ -184,6 +184,4 @@ test_that("Flooring works and is maintained", {
     inconsistencies$val,
     rep(0, nrow(inconsistencies))
   )
-  
-  
 })

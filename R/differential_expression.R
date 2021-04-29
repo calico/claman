@@ -61,7 +61,7 @@ diffex_mzroll <- function(
   
   # determine how many distinct conditions there are from a feature
   # with the most samples
-  n_conditions <- ncol(model.matrix(
+  n_conditions <- ncol(stats::model.matrix(
     test_model_formula,
     nested_peaks %>%
       dplyr::mutate(n = purrr::map_int(one_peak_data, nrow)) %>%
@@ -116,11 +116,23 @@ diffex_mzroll <- function(
 
   # FDR control
 
-  peakgroup_signif %>%
+  output <- peakgroup_signif %>%
     tidyr::nest(term_data = -term) %>%
     dplyr::mutate(fdr_summary = purrr::map(term_data, diffex_fdr)) %>%
     dplyr::select(-term_data) %>%
-    tidyr::unnest(fdr_summary)
+    tidyr::unnest(fdr_summary) %>%
+    dplyr::mutate(
+      signif_qual = dplyr::case_when(
+        qvalue < 0.001 ~ " ***",
+        qvalue < 0.01 ~ " **",
+        qvalue < 0.1 ~ " *",
+        TRUE ~ ""
+      ),
+      diffex_label = glue::glue("{round(statistic, 3)}{signif_qual}")
+    ) %>%
+    dplyr::select(-signif_qual)
+  
+  return(output)
 }
 
 
@@ -191,7 +203,8 @@ diffex_fdr <- function(term_data) {
 
 #' Volcano plot
 #'
-#' @param regression_significance output of diffex_mzroll
+#' @param regression_significance returned by \code{\link{diffex_mzroll}};
+#'   a tibble of tests performed.
 #' @param max_p_trans maximum value of -log10 pvalues to plot
 #' @param FDR_cutoff FDR cutoff to label for significance
 #'

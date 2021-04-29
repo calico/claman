@@ -7,7 +7,8 @@
 plot_pvalues(regression_significance)
 }
 \arguments{
-\item{regression_significance}{output of diffex_mzroll}
+\item{regression_significance}{returned by \code{\link{diffex_mzroll}};
+a tibble of tests performed.}
 }
 \description{
 P-value Histogram

@@ -4,7 +4,7 @@
 \alias{plot_barplot}
 \title{Plot Barplots}
 \usage{
-plot_barplot(mzroll_list, groupIds)
+plot_barplot(mzroll_list, groupIds, grouping_vars, value_var, fill_var = NULL)
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or
@@ -18,7 +18,25 @@ plot_barplot(mzroll_list, groupIds)
   }}
 
 \item{groupIds}{groupIds for compounds to plot}
+
+\item{grouping_vars}{variables to use for ordering samples and calculating
+standard errors}
+
+\item{value_var}{measurement variable}
+
+\item{fill_var}{variable to use for filling bars}
 }
 \description{
 Plot Barplots
+}
+\examples{
+
+plot_barplot(
+  mzroll_list = nplug_mzroll_normalized,
+  groupIds = 1:4,
+  grouping_vars = c("limitation", "DR"),
+  value_var = "normalized_log2_abundance",
+  fill_var = "limitation"
+  )
+
 }
