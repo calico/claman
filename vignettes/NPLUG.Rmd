@@ -245,7 +245,10 @@ renamed_samples <- final_processed_data$samples %>%
     "{stringr::str_sub(limitation, 1, 1)}{round(DR,2)}"
   )) %>%
   group_by(name) %>%
-  mutate(name = ifelse(n() == 1, name, paste0(name, "-", 1:n()))) %>%
+  mutate(
+    name = case_when(n() == 1 ~ name,
+                     TRUE ~ paste0(name, "-", 1:n()))
+    ) %>%
   ungroup()
    
 final_processed_data <- romic::update_tomic(
@@ -267,7 +270,7 @@ romic::plot_heatmap(
 
 # Differential Abundance Testing
 
-Having generated a processed dataset, we can already see some patterns clearly by looking at the heatmap, such as bottlenecking of pyrimidine biosynthesis during uracil limitation, amino acid accumulation during leucine limitation, and TCA up-regulation during ammonium limitation. Its also apparent that many of the strongest metabolomic alterations are observed at slow growth rates, while these there are relatively smooth transitions back to a normalish-metabolome as cell growth more quickly. To quantitatively summarize trends like these, its helpful to carryout differential abundance testing. But, before we proceed we should determine the type of model we need to fit by interpreting the major sources of variation in our dataset in light of the experimental design. This is 
+Having generated a processed dataset, we can already see some patterns clearly by looking at the heatmap, such as bottlenecking of pyrimidine biosynthesis during uracil limitation, amino acid accumulation during leucine limitation, and TCA up-regulation during ammonium limitation. Its also apparent that many of the strongest metabolomic alterations are observed at slow growth rates, while these there are relatively smooth transitions back to a normalish-metabolome as cell growth more quickly. To quantitatively summarize trends like these, its helpful to carryout differential abundance testing. But, before we proceed we should determine the type of model we need to fit by interpreting the major sources of variation in our dataset in light of the experimental design.
 
 ## Exploratory Data Analysis (EDA)
 
@@ -369,7 +372,7 @@ enrichments <- find_pathway_enrichments(
   )
 ```
 
-# generate a table of top enrichments
+### Generate tables and plots of top enrichments
 
 ```{r fgsea_table, echo=FALSE}
 enrichments$enrichment_table %>%

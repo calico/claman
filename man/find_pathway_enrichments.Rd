@@ -50,6 +50,8 @@ Find Pathway Enrichments
 }
 \examples{
 
+library(dplyr)
+
 regression_significance <- diffex_mzroll(
   nplug_mzroll_normalized,
   "normalized_log2_abundance",

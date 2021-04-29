@@ -171,6 +171,12 @@ process_mzroll <- function(
 }
 
 #' Create SQLite Connection
+#' 
+#' Open a connection to an SQLite database
+#' 
+#' @param sqlite_path path to sqlite file
+#' 
+#' @return sqlite connection
 create_sqlite_con <- function(sqlite_path) {
   
   checkmate::assertFileExists(sqlite_path)
@@ -494,9 +500,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
       groupId = factor(
         groupId,
         levels = levels(one_mzroll_list$features$groupId)
-        ),
-      peakId = factor(peakId, levels = peakId)
-      )
+        ))
   # update values and schema
   one_mzroll_list <- romic::update_tomic(one_mzroll_list, updated_mzroll_list$samples)
   

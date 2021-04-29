@@ -29,6 +29,7 @@ Imports:
     readr,
     reshape2,
     rlang,
+    RSQLite,
     stringr,
     tibble,
     tidyr (>= 1.0.0)
@@ -37,6 +38,7 @@ Suggests:
     dbplyr,
     fgsea,
     grDevices,
+    kableExtra,
     knitr,
     lubridate,
     plotly,

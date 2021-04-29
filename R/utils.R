@@ -130,7 +130,7 @@ util_pretty_khead <- function(tbl, nrows = 10, caption = NULL) {
   checkmate::assertNumber(nrows, lower = 1)
   
   tbl %>%
-    slice(1:nrows) %>%
+    dplyr::slice(1:nrows) %>%
     knitr::kable(caption = caption) %>%
     kableExtra::kable_styling(
       position = "left",

@@ -6,6 +6,12 @@
 \usage{
 create_sqlite_con(sqlite_path)
 }
+\arguments{
+\item{sqlite_path}{path to sqlite file}
+}
+\value{
+sqlite connection
+}
 \description{
-Create SQLite Connection
+Open a connection to an SQLite database
 }
