@@ -1,4 +1,4 @@
 library(testthat)
-library(calicomics)
+library(claman)
 
-test_check("calicomics")
+test_check("claman")

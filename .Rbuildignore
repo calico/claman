@@ -1,3 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 assets
+^data-raw$
+_pkgdown.yml
+rsconnect

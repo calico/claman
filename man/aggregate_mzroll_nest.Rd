@@ -4,11 +4,13 @@
 \alias{aggregate_mzroll_nest}
 \title{Aggregate mzroll lists}
 \usage{
-aggregate_mzroll_nest(mzroll_list_nest)
+aggregate_mzroll_nest(mzroll_list_nest, samples_tbl)
 }
 \arguments{
 \item{mzroll_list_nest}{a nested list of mzroll_lists produced from
 \link{process_mzroll}.}
+
+\item{samples_tbl}{Table of sample metadata}
 }
 \value{
 a single mzroll_list

@@ -11,10 +11,10 @@ floor_peaks(mzroll_list, log2_floor_value = 12)
   \link{process_mzroll_multi}
 
 \itemize{
-  \item{peakgroups: one row per unique analyte (defined by a
+  \item{features: one row per unique analyte (defined by a
     unique groupId)},
   \item{samples: one row per unique sample (defined by a unique sampleId)},
-  \item{peaks: one row per peak (samples x peakgroups)}
+  \item{measurements: one row per peak (samples x peakgroups)}
   }}
 
 \item{log2_floor_value}{minimum value to set for low abundance or
@@ -26,4 +26,8 @@ missing peaks}
 \description{
 Set a minimum peak abundance of floor_value for low abundance and
   undetected peaks.
+}
+\examples{
+floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
+
 }

@@ -1,4 +1,4 @@
-Package: calicomics
+Package: claman
 Type: Package
 Title: Streamlined methods for analysis of metabolomics and lipidomics data at Calico Life Sciences LLC
 Version: 0.1.0
@@ -27,8 +27,9 @@ Imports:
     glue,
     purrr,
     readr,
-    rlang,
     reshape2,
+    rlang,
+    RSQLite,
     stringr,
     tibble,
     tidyr (>= 1.0.0)
@@ -36,16 +37,14 @@ Suggests:
     authutils,
     dbplyr,
     fgsea,
-    gargle,
-    googledrive (>= 1.0.0),
-    googlesheets4,
     grDevices,
+    kableExtra,
     knitr,
     lubridate,
     plotly,
     qvalue,
     rmarkdown,
-    RMySQL,
+    romic,
     testthat
 Encoding: UTF-8
 LazyData: true

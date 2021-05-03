@@ -1,7 +1,7 @@
 #' Differential Expression Analysis on Mzroll List
 #'
 #' @inheritParams test_mzroll_list
-#' @inheritParams plot_heatmap
+#' @param value_var measurement variable
 #' @param test_model a RHS formula for regression
 #' @param null_model if provided a null RHS formula to compare to
 #'   \code{test_model} using the likelihood-ratio test.
@@ -9,54 +9,68 @@
 #' @return a tibble of significance tests for each feature
 #'
 #' @examples
-#' library(dplyr)
-#'
-#' mzroll_list <- readRDS(
-#'   authutils::get_clamr_assets("X0083-mzroll-list.Rds")
-#' ) %>%
-#'   floor_peaks(12)
-#'
-#' diffex_mzroll(mzroll_list, test_model = "mutation + sex")
+#' diffex_mzroll(
+#'   nplug_mzroll_normalized,
+#'   "normalized_log2_abundance",
+#'   "limitation + limitation:DR + 0"
+#'   )
+#'   
+#' diffex_mzroll(
+#'   nplug_mzroll_normalized,
+#'   "normalized_log2_abundance",
+#'   "limitation + 0",
+#'   "0"
+#'   )
 #' @export
-diffex_mzroll <- function(mzroll_list,
-                          value.var = "centered_log2_abundance",
-                          test_model,
-                          null_model = NULL) {
+diffex_mzroll <- function(
+  mzroll_list,
+  value_var,
+  test_model,
+  null_model = NULL
+  ) {
+  
   test_mzroll_list(mzroll_list)
 
-  quant_vars <- colnames(mzroll_list$peaks)[
-    purrr::map_chr(mzroll_list$peaks, class) == "numeric"
+  quant_vars <- colnames(mzroll_list$measurements)[
+    purrr::map_chr(mzroll_list$measurements, class) == "numeric"
   ]
-  valid_quant_vars <- setdiff(quant_vars, c("peakId", "groupId"))
-  if (!(value.var %in% valid_quant_vars)) {
+  valid_quant_vars <- setdiff(quant_vars, c("groupId", "sampleId"))
+  if (!(value_var %in% valid_quant_vars)) {
     stop(
-      value.var,
-      " not present in \"mzroll_list$peaks\", valid numeric variables are:",
+      value_var,
+      " not present in \"mzroll_list$measurements\", valid numeric variables
+      are:",
       paste(valid_quant_vars, collapse = ", ")
     )
   }
 
-  # setup data
-
-  nested_peaks <- mzroll_list$peaks %>%
-    dplyr::left_join(mzroll_list$samples, "sampleId") %>%
-    tidyr::nest(one_peak_data = -groupId)
-
   # setup and validate formulas
-  viable_sample_fields <- setdiff(
-    colnames(mzroll_list$samples),
-    c("sampleId", "tube label", "MS ID string", "MS ID string alternative")
-  )
+  viable_sample_fields <- setdiff(colnames(mzroll_list$samples), "sampleId")
 
   test_model_formula <- validate_formulas(
     test_model,
-    value.var,
+    value_var,
     viable_sample_fields
   )
 
+  # setup data
+  
+  nested_peaks <- mzroll_list$measurements %>%
+    dplyr::left_join(mzroll_list$samples, "sampleId") %>%
+    tidyr::nest(one_peak_data = -groupId)
+  
+  # determine how many distinct conditions there are from a feature
+  # with the most samples
+  n_conditions <- ncol(stats::model.matrix(
+    test_model_formula,
+    nested_peaks %>%
+      dplyr::mutate(n = purrr::map_int(one_peak_data, nrow)) %>%
+      dplyr::arrange(desc(n)) %>%
+      dplyr::slice(1) %>%
+      tidyr::unnest(one_peak_data)
+    ))
+  
   # flag peakgroups which cannot be fit due to too few samples
-
-  n_conditions <- length(unique(mzroll_list$samples$`condition #`))
 
   underspecified_groups <- nested_peaks %>%
     dplyr::filter(purrr::map_dbl(one_peak_data, nrow) < n_conditions + 1)
@@ -85,7 +99,7 @@ diffex_mzroll <- function(mzroll_list,
   } else {
     null_model_formula <- validate_formulas(
       null_model,
-      value.var,
+      value_var,
       viable_sample_fields
     )
 
@@ -102,15 +116,27 @@ diffex_mzroll <- function(mzroll_list,
 
   # FDR control
 
-  peakgroup_signif %>%
+  output <- peakgroup_signif %>%
     tidyr::nest(term_data = -term) %>%
     dplyr::mutate(fdr_summary = purrr::map(term_data, diffex_fdr)) %>%
     dplyr::select(-term_data) %>%
-    tidyr::unnest(fdr_summary)
+    tidyr::unnest(fdr_summary) %>%
+    dplyr::mutate(
+      signif_qual = dplyr::case_when(
+        qvalue < 0.001 ~ " ***",
+        qvalue < 0.01 ~ " **",
+        qvalue < 0.1 ~ " *",
+        TRUE ~ ""
+      ),
+      diffex_label = glue::glue("{round(statistic, 3)}{signif_qual}")
+    ) %>%
+    dplyr::select(-signif_qual)
+  
+  return(output)
 }
 
 
-validate_formulas <- function(model, value.var, viable_sample_fields) {
+validate_formulas <- function(model, value_var, viable_sample_fields) {
   if (stringr::str_detect(model, "~")) {
     stop("your regression model: ", model, " should not include an \"~\"")
   }
@@ -129,7 +155,7 @@ validate_formulas <- function(model, value.var, viable_sample_fields) {
     )
   }
 
-  full_formula <- stats::as.formula(paste(value.var, "~", model))
+  full_formula <- stats::as.formula(paste(value_var, "~", model))
 
   return(full_formula)
 }
@@ -166,8 +192,8 @@ diffex_fdr <- function(term_data) {
     q_values <- q_values[-length(q_values)]
 
     warning(
-      "q-value calculation initially failed but calicomics
-        was able to recover results"
+      "q-value calculation initially failed due to too many small p-values
+        but claman was able to recover results"
     )
   }
 
@@ -177,14 +203,28 @@ diffex_fdr <- function(term_data) {
 
 #' Volcano plot
 #'
-#' @param regression_significance output of diffex_mzroll
+#' @param regression_significance returned by \code{\link{diffex_mzroll}};
+#'   a tibble of tests performed.
 #' @param max_p_trans maximum value of -log10 pvalues to plot
 #' @param FDR_cutoff FDR cutoff to label for significance
 #'
+#' @returns a grob
+#'
+#' @examples 
+#' regression_significance <- diffex_mzroll(
+#'   nplug_mzroll_normalized,
+#'   "normalized_log2_abundance",
+#'   "limitation + limitation:DR + 0"
+#'   )
+#'
+#' plot_volcano(regression_significance, 10, 0.1)
+#'
 #' @export
-volcano_plot <- function(regression_significance,
-                         max_p_trans = 10,
-                         FDR_cutoff = 0.1) {
+plot_volcano <- function(
+  regression_significance,
+  max_p_trans = 10,
+  FDR_cutoff = 0.1
+  ) {
   checkmate::assertDataFrame(regression_significance)
   stopifnot("term" %in% colnames(regression_significance))
 
@@ -219,10 +259,19 @@ trans_pvalues <- function(p, max_p_trans = 10) {
 
 #' P-value Histogram
 #'
-#' @inheritParams volcano_plot
+#' @inheritParams plot_volcano
+#'
+#' @examples 
+#' regression_significance <- diffex_mzroll(
+#'   nplug_mzroll_normalized,
+#'   "normalized_log2_abundance",
+#'   "limitation + limitation:DR + 0"
+#'   )
+#'
+#' plot_pvalues(regression_significance)
 #'
 #' @export
-pvalue_histograms <- function(regression_significance) {
+plot_pvalues <- function(regression_significance) {
   stopifnot("data.frame" %in% class(regression_significance))
   stopifnot("term" %in% colnames(regression_significance))
 

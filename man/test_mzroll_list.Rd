@@ -2,21 +2,24 @@
 % Please edit documentation in R/utils.R
 \name{test_mzroll_list}
 \alias{test_mzroll_list}
-\title{Test Mzroll List}
+\title{Test MzRoll List}
 \usage{
-test_mzroll_list(mzroll_list)
+test_mzroll_list(mzroll_list, fast_check = TRUE)
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or
   \link{process_mzroll_multi}
 
 \itemize{
-  \item{peakgroups: one row per unique analyte (defined by a
+  \item{features: one row per unique analyte (defined by a
     unique groupId)},
   \item{samples: one row per unique sample (defined by a unique sampleId)},
-  \item{peaks: one row per peak (samples x peakgroups)}
+  \item{measurements: one row per peak (samples x peakgroups)}
   }}
+
+\item{fast_check}{if TRUE then skip some checks which are slow and that are
+generally only needed when a \code{tomic} object is first created.}
 }
 \description{
-Test Mzroll List
+Test MzRoll List
 }

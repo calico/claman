@@ -6,10 +6,11 @@
 \usage{
 process_mzroll_multi(
   mzroll_paths,
-  standard_databases,
-  sample_sheet_list,
+  samples_tbl,
+  id_strings,
   only_identified = TRUE,
-  validate = FALSE
+  validate = FALSE,
+  exact = TRUE
 )
 }
 \arguments{
@@ -19,17 +20,19 @@ process_mzroll_multi(
   \item{mzroll_db_path: path to a mzrollDB file}
   }}
 
-\item{standard_databases}{connections to Calico standards and systematic
-compound databases - generated with \link{configure_db_access}.}
+\item{samples_tbl}{Table of sample metadata}
 
-\item{sample_sheet_list}{list of googlesheets information describing
-experimental design - generated with \link{import_sample_sheet}.}
+\item{id_strings}{one or more variables which will be used to match
+sample names.}
 
 \item{only_identified}{TRUE/FALSE, filter to only features which were
 identified.}
 
 \item{validate}{TRUE/FALSE, use meta-data to only name the subset of
 features which were manually validated.}
+
+\item{exact}{if true, an exact match between mzroll names and id_strings
+will be found; if false, then substring matches will be used.}
 }
 \value{
 an mzroll_list containing three tibbles:
@@ -42,4 +45,14 @@ an mzroll_list containing three tibbles:
 }
 \description{
 Aggregate multiple mzrollDB datasets which possess the same sample metadata
+}
+\examples{
+mzroll_paths <- tibble::tribble(
+  ~method_tag, ~mzroll_db_path,
+  "method1", nplug_mzroll(),
+  "method2", nplug_mzroll()   
+  )
+
+process_mzroll_multi(mzroll_paths, nplug_samples, "sample_name")
+
 }

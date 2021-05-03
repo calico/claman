@@ -32,7 +32,7 @@ After installing this package, the package functions can be accessed by just loa
 library(claman)
 ```
 
-Once calicomics is installed, run package vignette(s):
+Once claman is installed, run package vignette(s):
 
 ```r
 vignette(package = "claman", topic = "metabolomics_example")
