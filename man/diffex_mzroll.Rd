@@ -4,7 +4,14 @@
 \alias{diffex_mzroll}
 \title{Differential Expression Analysis on Mzroll List}
 \usage{
-diffex_mzroll(mzroll_list, value_var, test_model, null_model = NULL)
+diffex_mzroll(
+  mzroll_list,
+  value_var,
+  test_model,
+  null_model = NULL,
+  additional_grouping_vars = NULL,
+  fdr_by_groupings = FALSE
+)
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or
@@ -23,6 +30,12 @@ diffex_mzroll(mzroll_list, value_var, test_model, null_model = NULL)
 
 \item{null_model}{if provided a null RHS formula to compare to
 \code{test_model} using the likelihood-ratio test.}
+
+\item{additional_grouping_vars}{sample-, or measurement-level variables
+to groupby when performing regression in addition to groupId.}
+
+\item{fdr_by_groupings}{if TRUE then calculate FDR separately across
+\code{additional_grouping_vars} (if they exist).}
 }
 \value{
 a tibble of significance tests for each feature
@@ -31,12 +44,23 @@ a tibble of significance tests for each feature
 Differential Expression Analysis on Mzroll List
 }
 \examples{
+
+# standard feature-wise regression
 diffex_mzroll(
   nplug_mzroll_normalized,
   "normalized_log2_abundance",
   "limitation + limitation:DR + 0"
   )
+
+# separate regression for each feature and limitatioon
+diffex_mzroll(
+  nplug_mzroll_normalized,
+  "normalized_log2_abundance",
+  "DR + 0",
+  additional_grouping_vars = "limitation"
+  )
   
+# feature-wise ANOVA
 diffex_mzroll(
   nplug_mzroll_normalized,
   "normalized_log2_abundance",
