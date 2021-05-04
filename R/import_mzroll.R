@@ -350,6 +350,7 @@ process_mzroll_identify_peakgroups <- function(peakgroups, only_identified){
 #' process_mzroll_multi(mzroll_paths, nplug_samples, "sample_name")
 #' 
 #' @export
+
 process_mzroll_multi <- function(
   mzroll_paths,
   samples_tbl,
@@ -428,7 +429,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
 
   consensus_samples <- mzroll_list_all_samples %>%
     dplyr::mutate(sampleId = samples_tbl_row) %>%
-    dplyr::select(sampleId, samples_tbl_row, !!!rlang::syms(colnames(samples_tbl))) %>%
+    dplyr::select(sampleId, name, samples_tbl_row, !!!rlang::syms(colnames(samples_tbl))) %>%
     dplyr::group_by(sampleId) %>%
     dplyr::slice(1) %>%
     dplyr::ungroup() %>%
