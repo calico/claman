@@ -214,3 +214,93 @@ find_injections <- function(mzroll_list, grouping_vars) {
     collapse_dict = collapse_dict
     ))
 }
+
+#' Collapse Metabolites
+#'
+#' Reduce multiple measurements of a metabolites within or across methods
+#'   into a single consensus.
+#'
+#' @inheritParams test_mzroll_list
+#' @param preserve_distinct_methods if TRUE then collapse metabolites
+#'   for each method separately. If FALSE, collapse over methods.
+#' @param preserve_adducts if TRUE then different ions of the same
+#'   metabolite will not be collapsed.
+#'
+#' @returns an mzroll_list
+#' 
+#' @examples
+#' collapse_metabolites(nplug_mzroll_augmented)
+#' 
+#' @export
+collapse_metabolites <- function(
+  mzroll_list,
+  preserve_distinct_methods = FALSE,
+  preserve_adducts = FALSE
+) {
+  
+  test_mzroll_list(mzroll_list)
+  checkmate::assertLogical(preserve_distinct_methods, len = 1)
+  checkmate::assertLogical(preserve_adducts, len = 1)
+  
+  defining_vars <- "compoundName"
+  if (preserve_distinct_methods) {
+    defining_vars <- c(defining_vars, "method_tag")
+  }
+  if (preserve_adducts) {
+    defining_vars <- c(defining_vars, "adductName")
+  }
+  
+  distinct_features <- mzroll_list$features %>%
+    dplyr::distinct(!!!rlang::syms(defining_vars)) %>%
+    dplyr::mutate(
+      .entry = 1:dplyr::n(),
+      .entry = factor(.entry, levels = .entry)
+    )
+  
+  tagged_features <- mzroll_list$features %>%
+    dplyr::left_join(distinct_features, by = defining_vars)
+  
+  value_vars <- mzroll_list$design$measurements %>%
+    dplyr::filter(type == "numeric") %>%
+    {.$variable}
+  
+  updated_measurements <- mzroll_list$measurements %>%
+    dplyr::left_join(
+      tagged_features %>%
+        dplyr::select(groupId, compoundName, adductName, method_tag, .entry),
+      by = "groupId"
+    ) %>%
+    # reduce compoundName by taking the most abundant analyte
+    #   to avoid issues where peakgroups may be similar aside from a couple of 
+    #   peaks that were missed in one group
+    dplyr::group_by(compoundName, adductName, method_tag, sampleId) %>%
+    dplyr::arrange(desc(log2_abundance)) %>%
+    dplyr::slice(1) %>%
+    # take non-collapsed entries and return median
+    dplyr::group_by(.entry, sampleId) %>%
+    dplyr::summarize(dplyr::across(value_vars, median), .groups = "drop") %>%
+    dplyr::ungroup() %>%
+    dplyr::rename(groupId = .entry)
+  
+  # variables that will be dropped from feature post-summarization
+  dropped_vars <- setdiff(
+    c("compoundName", "method_tag", "adductName"),
+    defining_vars
+  )
+  dropped_vars <- c(dropped_vars, "groupId", "peak_label")
+  new_feature_vars <- setdiff(colnames(tagged_features), dropped_vars)
+  
+  updated_features <- tagged_features %>%
+    dplyr::group_by(.entry) %>%
+    dplyr::arrange(searchTableName) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(!!!rlang::syms(new_feature_vars)) %>%
+    dplyr::relocate(groupId = .entry)
+  
+  # add new features and then updated measurements
+  mzroll_list <- romic::update_tomic(mzroll_list, updated_features) %>%
+    romic::update_tomic(updated_measurements)
+  
+  return(mzroll_list)
+}

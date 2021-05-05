@@ -133,6 +133,7 @@ find_pathway_enrichments <- function(
     ) %>%
     dplyr::select(
       term,
+      !!!rlang::syms(additional_grouping_vars),
       pathway,
       pathway_members,
       pval,
