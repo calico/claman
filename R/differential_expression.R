@@ -63,21 +63,10 @@ diffex_mzroll <- function(
     )
   }
   
-  if (is.null(additional_grouping_vars)) {
-    grouping_vars <- mzroll_list$design$feature_pk
-  } else {
-    sample_measurement_vars <- design_tbl %>%
-      dplyr::filter(table %in% c("samples", "measurements")) %>%
-      dplyr::filter(type != "sample_primary_key")
-    
-    purrr::walk(
-      additional_grouping_vars,
-      checkmate::assertChoice,
-      sample_measurement_vars$variable
-      )
-    
-    grouping_vars <- c(mzroll_list$design$feature_pk, additional_grouping_vars)
-  }
+  grouping_vars <- format_grouping_vars(
+    mzroll_list,
+    additional_grouping_vars
+  )
   
   # setup and validate formulas
   viable_sample_fields <- setdiff(colnames(mzroll_list$samples), "sampleId")
@@ -192,6 +181,31 @@ diffex_mzroll <- function(
   return(output)
 }
 
+format_grouping_vars <- function(
+  mzroll_list,
+  additional_grouping_vars = NULL
+  ) {
+  
+  design_tbl <- romic::get_design_tbl(mzroll_list)
+  
+  if (is.null(additional_grouping_vars)) {
+    grouping_vars <- mzroll_list$design$feature_pk
+  } else {
+    sample_measurement_vars <- design_tbl %>%
+      dplyr::filter(table %in% c("samples", "measurements")) %>%
+      dplyr::filter(type != "sample_primary_key")
+    
+    purrr::walk(
+      additional_grouping_vars,
+      checkmate::assertChoice,
+      sample_measurement_vars$variable
+    )
+    
+    grouping_vars <- c(mzroll_list$design$feature_pk, additional_grouping_vars)
+  }
+  
+  return(grouping_vars)
+}
 
 validate_formulas <- function(model, value_var, viable_sample_fields) {
   if (stringr::str_detect(model, "~")) {

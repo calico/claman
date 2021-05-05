@@ -9,7 +9,8 @@ find_pathway_enrichments(
   regression_significance,
   pathway_list,
   ranking_measure = "statistic",
-  test_absolute_effects = TRUE
+  test_absolute_effects = TRUE,
+  additional_grouping_vars = NULL
 )
 }
 \arguments{
@@ -35,6 +36,9 @@ when calculating enrichment.}
 \item{test_absolute_effects}{If TRUE then only consider the magnitude of
 test-statistics when calculating rankings for enrichment; if FALSE then
 consider sign as well.}
+
+\item{additional_grouping_vars}{sample-, or measurement-level variables
+to groupby when performing regression in addition to groupId.}
 }
 \value{
 a list containing:

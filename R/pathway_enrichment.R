@@ -9,6 +9,7 @@
 #' @param test_absolute_effects If TRUE then only consider the magnitude of
 #'   test-statistics when calculating rankings for enrichment; if FALSE then
 #'   consider sign as well.
+#' @inheritParams diffex_mzroll
 #'
 #' @return a list containing:
 #' \itemize{
@@ -52,7 +53,8 @@ find_pathway_enrichments <- function(
   regression_significance,
   pathway_list,
   ranking_measure = "statistic",
-  test_absolute_effects = TRUE
+  test_absolute_effects = TRUE,
+  additional_grouping_vars = NULL
   ) {
   
   test_mzroll_list(mzroll_list)
@@ -65,14 +67,35 @@ find_pathway_enrichments <- function(
   regression_significance <- regression_significance %>%
     dplyr::mutate(ranking_measure = !!rlang::sym(ranking_measure))
   
+  features_with_significance <- mzroll_list$features %>%
+    dplyr::inner_join(regression_significance, by = "groupId") %>%
+    dplyr::filter(!is.na(ranking_measure))
+  
   if (test_absolute_effects) {
     regression_significance <- regression_significance %>%
       dplyr::mutate(ranking_measure = abs(ranking_measure))
   }
 
-  enrichment_by_term <- mzroll_list$features %>%
-    dplyr::inner_join(regression_significance, by = "groupId") %>%
-    tidyr::nest(term_data = -term) %>%
+  # format grouping variables as per regression to chec
+  #   additional_grouping_vars 
+  grouping_vars <- format_grouping_vars(
+    mzroll_list,
+    additional_grouping_vars
+  )
+  
+  if (length(additional_grouping_vars) > 0) {
+    nesting_vars <- setdiff(
+      colnames(features_with_significance),
+      c("term", additional_grouping_vars)
+    )
+  } else {
+    nesting_vars <- setdiff(colnames(features_with_significance), "term")
+  }
+  
+  enrichment_by_term <- suppressWarnings(
+    features_with_significance %>%
+        tidyr::nest(!!!rlang::syms(nesting_vars), .key = "term_data")
+    ) %>%
     dplyr::mutate(gsea_results = purrr::map(
       term_data,
       calculate_pathway_enrichment,
@@ -156,7 +179,20 @@ calculate_pathway_enrichment <- function(
   ranked_coefs <- term_data$ranking_measure
   names(ranked_coefs) <- as.character(term_data$groupId)
   sorted_ranked_coefs <- sort(ranked_coefs, decreasing = TRUE)
-
+  
+  n_duplicated_names <- length(ranked_coefs) -
+    length(unique(names(ranked_coefs)))
+  
+  if (n_duplicated_names > 0) {
+    stop(glue::glue(
+      "There were {n_duplicated_names} duplicated statistics for the same
+      - group found. Set the \"additional_grouping_vars\" argument in
+      - \"find_pathway_enrichments\" so it matched \"diffex_mzroll\""
+      ))
+  }
+  
+  checkmate::assertNumeric(ranked_coefs, finite = TRUE, any.missing = FALSE)
+  
   # choose an appropriate score type based on whether coefs can be negative
   score_type <- ifelse(all(sorted_ranked_coefs >= 0), "pos", "std")
   
