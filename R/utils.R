@@ -44,7 +44,6 @@ test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
       "groupId",
       "compoundName",
       "smiles",
-      "adductName",
       "tagString",
       "mz",
       "rt",
