@@ -5,16 +5,31 @@
 #' @param test_model a RHS formula for regression
 #' @param null_model if provided a null RHS formula to compare to
 #'   \code{test_model} using the likelihood-ratio test.
+#' @param additional_grouping_vars sample-, or measurement-level variables
+#'   to groupby when performing regression in addition to groupId.
+#' @param fdr_by_groupings if TRUE then calculate FDR separately across
+#'  \code{additional_grouping_vars} (if they exist).
 #'
 #' @return a tibble of significance tests for each feature
 #'
 #' @examples
+#' 
+#' # standard feature-wise regression
 #' diffex_mzroll(
 #'   nplug_mzroll_normalized,
 #'   "normalized_log2_abundance",
 #'   "limitation + limitation:DR + 0"
 #'   )
+#' 
+#' # separate regression for each feature and limitatioon
+#' diffex_mzroll(
+#'   nplug_mzroll_normalized,
+#'   "normalized_log2_abundance",
+#'   "DR + 0",
+#'   additional_grouping_vars = "limitation"
+#'   )
 #'   
+#' # feature-wise ANOVA
 #' diffex_mzroll(
 #'   nplug_mzroll_normalized,
 #'   "normalized_log2_abundance",
@@ -26,10 +41,13 @@ diffex_mzroll <- function(
   mzroll_list,
   value_var,
   test_model,
-  null_model = NULL
+  null_model = NULL,
+  additional_grouping_vars = NULL,
+  fdr_by_groupings = FALSE
   ) {
   
   test_mzroll_list(mzroll_list)
+  design_tbl <- romic::get_design_tbl(mzroll_list)
 
   quant_vars <- colnames(mzroll_list$measurements)[
     purrr::map_chr(mzroll_list$measurements, class) == "numeric"
@@ -38,12 +56,18 @@ diffex_mzroll <- function(
   if (!(value_var %in% valid_quant_vars)) {
     stop(
       value_var,
-      " not present in \"mzroll_list$measurements\", valid numeric variables
-      are:",
+      " is not a valid quant variable in \"mzroll_list$measurements\",
+      - valid numeric variables are:
+      - ",
       paste(valid_quant_vars, collapse = ", ")
     )
   }
-
+  
+  grouping_vars <- format_grouping_vars(
+    mzroll_list,
+    additional_grouping_vars
+  )
+  
   # setup and validate formulas
   viable_sample_fields <- setdiff(colnames(mzroll_list$samples), "sampleId")
 
@@ -53,11 +77,20 @@ diffex_mzroll <- function(
     viable_sample_fields
   )
 
-  # setup data
+  checkmate::assertLogical(fdr_by_groupings, len = 1)
   
-  nested_peaks <- mzroll_list$measurements %>%
-    dplyr::left_join(mzroll_list$samples, "sampleId") %>%
-    tidyr::nest(one_peak_data = -groupId)
+  # setup data so each row in a table corresponds to a single regression
+  
+  nested_vars <- setdiff(unique(design_tbl$variable), grouping_vars)
+  
+  # warning is suppressed because I could only get this to work with the
+  #   deprecated key argument
+  nested_peaks <- suppressWarnings(
+    mzroll_list %>%
+      romic::triple_to_tidy() %>%
+      {.$data} %>%
+      tidyr::nest(!!!rlang::syms(nested_vars), .key = "one_peak_data")
+  )
   
   # determine how many distinct conditions there are from a feature
   # with the most samples
@@ -116,8 +149,21 @@ diffex_mzroll <- function(
 
   # FDR control
 
-  output <- peakgroup_signif %>%
-    tidyr::nest(term_data = -term) %>%
+  # nest by term and by additional_grouping_vars
+  
+  if (fdr_by_groupings) {
+    nested_vars <- setdiff(
+      colnames(peakgroup_signif),
+      c("term", additional_grouping_vars)
+    )
+  } else {
+    nested_vars <- setdiff(colnames(peakgroup_signif), "term")
+  }
+  
+  output <- suppressWarnings(
+    peakgroup_signif %>%
+      tidyr::nest(!!!rlang::syms(nested_vars), .key = "term_data")
+    ) %>%
     dplyr::mutate(fdr_summary = purrr::map(term_data, diffex_fdr)) %>%
     dplyr::select(-term_data) %>%
     tidyr::unnest(fdr_summary) %>%
@@ -135,6 +181,31 @@ diffex_mzroll <- function(
   return(output)
 }
 
+format_grouping_vars <- function(
+  mzroll_list,
+  additional_grouping_vars = NULL
+  ) {
+  
+  design_tbl <- romic::get_design_tbl(mzroll_list)
+  
+  if (is.null(additional_grouping_vars)) {
+    grouping_vars <- mzroll_list$design$feature_pk
+  } else {
+    sample_measurement_vars <- design_tbl %>%
+      dplyr::filter(table %in% c("samples", "measurements")) %>%
+      dplyr::filter(type != "sample_primary_key")
+    
+    purrr::walk(
+      additional_grouping_vars,
+      checkmate::assertChoice,
+      sample_measurement_vars$variable
+    )
+    
+    grouping_vars <- c(mzroll_list$design$feature_pk, additional_grouping_vars)
+  }
+  
+  return(grouping_vars)
+}
 
 validate_formulas <- function(model, value_var, viable_sample_fields) {
   if (stringr::str_detect(model, "~")) {

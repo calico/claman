@@ -8,8 +8,11 @@ find_pathway_enrichments(
   mzroll_list,
   regression_significance,
   pathway_list,
+  enrichment_method = "gsea",
   ranking_measure = "statistic",
-  test_absolute_effects = TRUE
+  fdr_cutoff = 0.1,
+  test_absolute_effects = TRUE,
+  additional_grouping_vars = NULL
 )
 }
 \arguments{
@@ -27,14 +30,27 @@ find_pathway_enrichments(
 a tibble of tests performed.}
 
 \item{pathway_list}{a named list where names are pathways and entries
-are groupIds belonging to each pathway}
+are groupIds belonging to each pathway.}
+
+\item{enrichment_method}{method used to calculate pathway enrichments.
+\describe{
+  \item{gsea}{gene set enrichment analysis using \code{fgsea}}
+  \item{fisher}{Fisher exact test to look for enrichment of differentially
+    abundant metabolite among pathways.}
+}}
 
 \item{ranking_measure}{variable in \code{regression_significance} to use
 when calculating enrichment.}
 
+\item{fdr_cutoff}{minimum adjusted p-value to use for creating a the
+pathway summary plot.}
+
 \item{test_absolute_effects}{If TRUE then only consider the magnitude of
 test-statistics when calculating rankings for enrichment; if FALSE then
 consider sign as well.}
+
+\item{additional_grouping_vars}{sample-, or measurement-level variables
+to groupby when performing regression in addition to groupId.}
 }
 \value{
 a list containing:
@@ -74,6 +90,14 @@ find_pathway_enrichments(
   regression_significance,
   pathway_list,
   test_absolute_effects = FALSE
+  )
+
+find_pathway_enrichments(
+  mzroll_list = nplug_mzroll_normalized,
+  regression_significance,
+  pathway_list,
+  test_absolute_effects = FALSE,
+  enrichment_method = "fisher"
   )
 
 }

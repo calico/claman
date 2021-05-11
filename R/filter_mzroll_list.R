@@ -12,7 +12,7 @@
 #'
 #' @export
 filter_groupIds <- function(mzroll_list, groupIds, invert = FALSE) {
-  checkmate::assertNumeric(groupIds)
+  checkmate::assertFactor(groupIds)
   checkmate::assertLogical(invert, len = 1)
 
   if (invert) {
