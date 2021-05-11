@@ -217,8 +217,8 @@ find_injections <- function(mzroll_list, grouping_vars) {
 
 #' Collapse Metabolites
 #'
-#' Reduce multiple measurements of a metabolites within or across methods
-#'   into a single consensus.
+#' Combine multiple measurements of the same metabolite into a consensus
+#'   to simplify result's presentation and pathway analysis. 
 #'
 #' @details Analytes are first aggregated by retaining the maximum
 #'   intensity peak on a sample-by-sample basis over peakgroups of the
