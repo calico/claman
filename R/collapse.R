@@ -220,6 +220,14 @@ find_injections <- function(mzroll_list, grouping_vars) {
 #' Reduce multiple measurements of a metabolites within or across methods
 #'   into a single consensus.
 #'
+#' @details Analytes are first aggregated by retaining the maximum
+#'   intensity peak on a sample-by-sample basis over peakgroups of the
+#'   same ion (i.e., same compoundName and adductName). This is meant to
+#'   deal with peakgroup splitting. Once measurements are reduced to
+#'   unique ions, ions can be further aggregated to metabolites by
+#'   taking the median quant value on a sample-by-sample basis while
+#'   preserving either adducts or methods.
+#'
 #' @inheritParams test_mzroll_list
 #' @param preserve_distinct_methods if TRUE then collapse metabolites
 #'   for each method separately. If FALSE, collapse over methods.
