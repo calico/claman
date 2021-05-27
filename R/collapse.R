@@ -55,9 +55,15 @@ collapse_injections <- function(
     dplyr::ungroup()
   
   # update sample and measurements and the schema
-  mzroll_list <- romic::update_tomic(mzroll_list, new_measurements)
-  mzroll_list <- romic::update_tomic(mzroll_list, new_samples)
+  # since they need to be updated simultaneusly update_tomic() won't work
+  mzroll_list$samples <- new_samples
+  mzroll_list$measurements <- new_measurements
   
+  mzroll_list$design$samples <- mzroll_list$design$samples %>%
+    dplyr::filter(variable %in% colnames(new_samples))
+  mzroll_list$design$measurements <- mzroll_list$design$measurements %>%
+    dplyr::filter(variable %in% colnames(new_measurements))
+
   return(mzroll_list)
 }
 
