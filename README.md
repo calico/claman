@@ -18,6 +18,7 @@ The package can be installed from GitHub using:
 
 ```r
 # install.packages("remotes")
+remotes::install_github('calico/romic')
 remotes::install_github('calico/claman')
 
 # for vignettes

@@ -31,8 +31,17 @@ metabolite will not be collapsed.}
 an mzroll_list
 }
 \description{
-Reduce multiple measurements of a metabolites within or across methods
-  into a single consensus.
+Combine multiple measurements of the same metabolite into a consensus
+  to simplify result's presentation and pathway analysis.
+}
+\details{
+Analytes are first aggregated by retaining the maximum
+  intensity peak on a sample-by-sample basis over peakgroups of the
+  same ion (i.e., same compoundName and adductName). This is meant to
+  deal with peakgroup splitting. Once measurements are reduced to
+  unique ions, ions can be further aggregated to metabolites by
+  taking the median quant value on a sample-by-sample basis while
+  preserving either adducts or methods.
 }
 \examples{
 collapse_metabolites(nplug_mzroll_augmented)
