@@ -64,6 +64,8 @@ collapse_injections <- function(
   mzroll_list$design$measurements <- mzroll_list$design$measurements %>%
     dplyr::filter(variable %in% colnames(new_measurements))
 
+  romic::check_tomic(mzroll_list)
+  
   return(mzroll_list)
 }
 
@@ -169,6 +171,25 @@ find_injections <- function(mzroll_list, grouping_vars) {
     choices = mzroll_list$design$samples$variable
   )
   
+  n_less_samples <- nrow(mzroll_list$samples) - nrow(
+    mzroll_list$samples %>%
+      dplyr::distinct(!!!syms(grouping_vars))
+    ) 
+  
+  if (n_less_samples == 0) {
+    stop(glue::glue(
+      "Injections cannot be collapsed, combinations of
+      - {paste(grouping_vars, collapse = ', ')} are already unique"
+      ))
+  }
+  
+  # names aren't consistent but should still be maintained
+  reduced_names <- mzroll_list$samples %>%
+    dplyr::select(name, !!!syms(grouping_vars)) %>%
+    dplyr::group_by(!!!syms(grouping_vars)) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup()
+  
   not_grouping_vars <- setdiff(colnames(mzroll_list$samples), grouping_vars)
   
   consistent_reduced_fields <- mzroll_list$samples %>%
@@ -178,13 +199,6 @@ find_injections <- function(mzroll_list, grouping_vars) {
     dplyr::group_by(field) %>%
     dplyr::filter(all(n_unique_records == 1)) %>%
     dplyr::distinct(field) %>%
-    dplyr::ungroup()
-  
-  # names aren't consistent but should still be maintained
-  reduced_names <- mzroll_list$samples %>%
-    dplyr::select(name, !!!syms(grouping_vars)) %>%
-    dplyr::group_by(!!!syms(grouping_vars)) %>%
-    dplyr::slice(1) %>%
     dplyr::ungroup()
   
   new_samples <- mzroll_list$samples %>%
@@ -197,7 +211,7 @@ find_injections <- function(mzroll_list, grouping_vars) {
       sampleId = factor(sampleId, levels = sampleId)
       ) %>%
     dplyr::left_join(reduced_names, by = grouping_vars)
-  
+
   dropped_fields <- setdiff(colnames(mzroll_list$samples), colnames(new_samples))
   if (length(dropped_fields) > 0) {
     message(glue::glue(
