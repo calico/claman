@@ -17,7 +17,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 10,
-  fig.height = 10
+  fig.height = 10,
+  dpi = 50 # lower the limit so the vignette's file size is not too large
 )
 ```
 
@@ -145,6 +146,7 @@ mzroll_list_augmented %>%
   ggtitle("References separated by month and distinct cultures (by DR)") +
   theme(strip.text = element_text(size = 10))
 ```
+
 From this plot, the biological replicate reference cultures are nearly identical (that's one reason why chemostats are awesome!) while there are subtle differences between months.
 
 # Normalization
@@ -382,8 +384,6 @@ enrichments$enrichment_table %>%
 ```
 
 ```{r top_enrichments}
-plot(enrichments$enrichment_plots[["limitationNH4"]])
-
 # see specific pathway enrichments
 ranked_nitrogen_enrichments <- enrichments$enrichment_table %>%
   arrange(padj) %>%

@@ -282,7 +282,7 @@ collapse_metabolites <- function(
     #   to avoid issues where peakgroups may be similar aside from a couple of 
     #   peaks that were missed in one group
     dplyr::group_by(compoundName, adductName, method_tag, sampleId) %>%
-    dplyr::arrange(desc(log2_abundance)) %>%
+    dplyr::arrange(dplyr::desc(log2_abundance)) %>%
     dplyr::slice(1) %>%
     # take non-collapsed entries and return median
     dplyr::group_by(.entry, sampleId) %>%

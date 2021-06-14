@@ -52,13 +52,6 @@
 #'   mzroll_list = nplug_mzroll_normalized,
 #'   regression_significance,
 #'   pathway_list,
-#'   test_absolute_effects = FALSE
-#'   )
-#' 
-#' find_pathway_enrichments(
-#'   mzroll_list = nplug_mzroll_normalized,
-#'   regression_significance,
-#'   pathway_list,
 #'   test_absolute_effects = FALSE,
 #'   enrichment_method = "fisher"
 #'   )
@@ -330,7 +323,7 @@ calculate_pathway_enrichment_fisher <- function(
       )) %>%
     dplyr::select(pathway, enrichment) %>%
     tidyr::unnest(enrichment) %>%
-    dplyr::mutate(qvalue = p.adjust(p.value, method = "BH"))
+    dplyr::mutate(qvalue = stats::p.adjust(p.value, method = "BH"))
   
   output <- list(
     pathway_enrichments = pathways_tibble
@@ -360,6 +353,6 @@ fisher_test_enrichment <- function(members, diffex_features, n_features) {
   
   stopifnot(all(contingency_table) >= 0, sum(contingency_table) == n_features)
   
-  fisher.test(contingency_table, alternative = "greater") %>%
+  stats::fisher.test(contingency_table, alternative = "greater") %>%
     broom::tidy()
 }

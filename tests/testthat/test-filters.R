@@ -2,7 +2,7 @@ test_that("Filtering by groupId works", {
   
   filtered_mzroll <- filter_groupIds(
     claman::nplug_mzroll_normalized,
-    groupIds = 1:10,
+    groupIds = factor(1:10),
     invert = FALSE
     )
   
@@ -10,7 +10,7 @@ test_that("Filtering by groupId works", {
   
   filtered_mzroll <- filter_groupIds(
     claman::nplug_mzroll_normalized,
-    groupIds = 1:10,
+    groupIds = factor(1:10),
     invert = TRUE
     )
   

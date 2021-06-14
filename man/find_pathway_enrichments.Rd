@@ -89,13 +89,6 @@ find_pathway_enrichments(
   mzroll_list = nplug_mzroll_normalized,
   regression_significance,
   pathway_list,
-  test_absolute_effects = FALSE
-  )
-
-find_pathway_enrichments(
-  mzroll_list = nplug_mzroll_normalized,
-  regression_significance,
-  pathway_list,
   test_absolute_effects = FALSE,
   enrichment_method = "fisher"
   )

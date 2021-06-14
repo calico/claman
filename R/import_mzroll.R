@@ -181,15 +181,11 @@ create_sqlite_con <- function(sqlite_path) {
   
   checkmate::assertFileExists(sqlite_path)
   
-  if ("authutils" %in% utils::installed.packages()) {
-    sqlite_con <- authutils::create_sqlite_con(sqlite_path)
-  } else {
-    sqlit_con <- DBI::dbConnect(
-      RSQLite::SQLite(),
-      sqlite_path,
-      synchronous = NULL
-      )
-  }
+  sqlite_con <- DBI::dbConnect(
+    RSQLite::SQLite(),
+    sqlite_path,
+    synchronous = NULL
+    )
   
   return(sqlite_con)
 }

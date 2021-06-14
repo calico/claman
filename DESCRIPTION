@@ -1,12 +1,25 @@
 Package: claman
 Type: Package
-Title: Streamlined methods for analysis of metabolomics and lipidomics data at Calico Life Sciences LLC
-Version: 0.1.0
+Title: Streamlined Analysis of Metabolomics and Lipidomics Data
+Version: 1.0.0
 Authors@R: c(
-    person("Sean", "Hackett", email = "sean@calicolabs.com", role = c("aut", "cre")),
-    person("Matt", "Kukurugya", role = "aut"),
-    person("Phil", "Seitzer", email = "phillipseitzer@calicolabs.com", role = "aut"))
-Author: Sean Hackett
+    person(
+      given = "Sean",
+      family = "Hackett",
+      email = "sean@calicolabs.com",
+      role = c("aut", "cre")
+      ),
+    person(
+      given = "Phil",
+      family = "Seitzer",
+      email = "phillipseitzer@calicolabs.com",
+      role = "aut"
+      ),
+    person(
+      given = "Calico Life Sciences LLC",
+      role = c("cph", "fnd")
+      )
+    )
 Maintainer: Sean Hackett <sean@calicolabs.com>
 Description: Provides a suite of methods for processing and visualizing LC-MS data.
     (1) Converting mzrollDB SQL objects into mzroll_list summaries of peaks (measurements), samples and peakgroups (features).
@@ -15,10 +28,9 @@ Description: Provides a suite of methods for processing and visualizing LC-MS da
     (4) Exploratory visualization using heatmaps.
     (5) Basic feature-wise statistical analysis using regression.
     (6) Summary plots of metabolite/lipids of interest.
-License: file LICENSE
+License: MIT + file LICENSE
 Depends: R (>= 3.1.0)
-Imports:
-    broom,
+Imports: broom,
     checkmate,
     DBI,
     debugr,
@@ -33,9 +45,7 @@ Imports:
     stringr,
     tibble,
     tidyr (>= 1.0.0)
-Suggests: 
-    authutils,
-    dbplyr,
+Suggests: dbplyr,
     fgsea,
     grDevices,
     kableExtra,
