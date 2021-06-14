@@ -98,7 +98,7 @@ diffex_mzroll <- function(
     test_model_formula,
     nested_peaks %>%
       dplyr::mutate(n = purrr::map_int(one_peak_data, nrow)) %>%
-      dplyr::arrange(desc(n)) %>%
+      dplyr::arrange(dplyr::desc(n)) %>%
       dplyr::slice(1) %>%
       tidyr::unnest(one_peak_data)
     ))

@@ -4,7 +4,7 @@
 \alias{merge_compounds_tbl}
 \title{Merge Compounds Table}
 \usage{
-merge_compounds_tbl(mzroll_list, compounds_tbl, join_by = "compoundName")
+merge_compounds_tbl(mzroll_list, compounds_tbl, by = "compoundName")
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or
@@ -19,7 +19,7 @@ merge_compounds_tbl(mzroll_list, compounds_tbl, join_by = "compoundName")
 
 \item{compounds_tbl}{Table of compound metadata}
 
-\item{join_by}{variable shared by mzroll peakgroups and compounds_tbl
+\item{by}{variable shared by mzroll peakgroups and compounds_tbl
 to merge results by.}
 }
 \description{
