@@ -50,7 +50,10 @@ floor_peaks <- function(mzroll_list, log2_floor_value = 12) {
 #' @inheritParams test_mzroll_list
 #' @param normalization_method Normalization method to apply
 #' \itemize{
-#'   \item{\code{median polish}: column normalization}
+#'   \item{\code{median polish}: column normalization based on average signal}
+#'   \item{\code{loading value}: column normalization using a sample-level
+#'     value
+#'     }
 #'   \item{\code{center batches}: batch centering}
 #'   \item{\code{reference sample}: compare to reference sample}
 #'   \item{\code{reference condition}: compare each sample to its specified
@@ -75,6 +78,15 @@ floor_peaks <- function(mzroll_list, log2_floor_value = 12) {
 #'   quant_peak_varname = "log2_abundance",
 #'   norm_peak_varname = "normalized_log2_abundance"
 #' )
+#' 
+#' # this examples doesn't make biological sense but its syntactically correct
+#' normalize_peaks(
+#'   nplug_mzroll_augmented,
+#'   "loading value",
+#'   quant_peak_varname = "log2_abundance",
+#'   norm_peak_varname = "normalized_log2_abundance",
+#'   loading_varname = "DR"
+#'   )
 #' 
 #' normalize_peaks(
 #'   nplug_mzroll_augmented,
@@ -129,6 +141,7 @@ normalize_peaks <- function(
   normalization_methods <- tibble::tribble(
     ~method_name, ~function_name,
     "median polish", "normalize_peaks.median_polish",
+    "loading value", "normalize_peaks.loading_value",
     "center batches", "normalize_peaks.batch_center",
     "reference sample", "normalize_peaks.reference_sample",
     "reference condition", "normalize_peaks.reference_condition",
@@ -270,6 +283,101 @@ normalize_peaks.median_polish <- function(
       dplyr::select(-scaling_factor)
   }
 
+  mzroll_list <- romic::update_tomic(mzroll_list, updated_measurements)
+  
+  return(mzroll_list)
+}
+
+
+#' Normalize Peaks - Loading Value
+#' 
+#' Using a sample-level summary, such as number of cells, adjust all values. 
+#' 
+#' @details Note, log2 intensities will be shifted down by this value, so
+#'   make sure the provided values are appropriately transformed.
+#'
+#' @inheritParams normalize_peaks
+#' @inheritParams floor_peaks
+#' @param loading_varname sample variable used for adjustment
+#'
+#' @rdname normalize_peaks
+normalize_peaks.loading_value <- function(
+  mzroll_list,
+  quant_peak_varname,
+  norm_peak_varname,
+  loading_varname,
+  log2_floor_value = NA
+) {
+  
+  stopifnot(length(log2_floor_value) == 1)
+  if (!is.na(log2_floor_value)) {
+    stopifnot(class(log2_floor_value) == "numeric")
+    
+    normalization_peaks <- mzroll_list$measurements %>%
+      dplyr::filter(
+        !!rlang::sym(quant_peak_varname) > log2_floor_value + 0.001
+      )
+  } else {
+    normalization_peaks <- mzroll_list$measurements
+  }
+  
+  if (any(is.na(mzroll_list$measurements[[quant_peak_varname]]))) {
+    stop(
+      "NAs are not allowed in ",
+      quant_peak_varname,
+      " try calling floor_peaks() first"
+    )
+  }
+  
+  # validate loading_varname
+  
+  checkmate::assertChoice(loading_varname, mzroll_list$design$samples$variable)
+  
+  loading_values <- mzroll_list$samples %>%
+    dplyr::select("sampleId", scaling_factor = !!rlang::sym(loading_varname))
+  
+  checkmate::assertNumeric(
+    loading_values$scaling_factor,
+    any.missing = FALSE,
+    finite = TRUE
+    )
+  
+  if (!is.na(log2_floor_value)) {
+    updated_measurements <- mzroll_list$measurements %>%
+      dplyr::filter(
+        !!rlang::sym(quant_peak_varname) > log2_floor_value + 0.001
+      ) %>%
+      dplyr::left_join(loading_values, by = "sampleId") %>%
+      dplyr::mutate(
+        !!rlang::sym(norm_peak_varname) :=
+          !!rlang::sym(quant_peak_varname) - scaling_factor
+      ) %>%
+      # measurements starting at limit of detection are reset to
+      #   log2_floor_value
+      dplyr::bind_rows(
+        mzroll_list$measurements %>%
+          dplyr::filter(
+            !!rlang::sym(quant_peak_varname) <= log2_floor_value + 0.001
+          ) %>%
+          dplyr::mutate(!!rlang::sym(norm_peak_varname) := log2_floor_value)
+      ) %>%
+      dplyr::select(-scaling_factor) %>%
+      # measurements pushed below limit of detection are reset to
+      #   log2_floor_value
+      dplyr::mutate(
+        !!rlang::sym(norm_peak_varname) :=
+          pmax(!!rlang::sym(norm_peak_varname), log2_floor_value)
+      )
+  } else {
+    updated_measurements <- mzroll_list$measurements %>%
+      dplyr::left_join(loading_values, by = "sampleId") %>%
+      dplyr::mutate(
+        !!rlang::sym(norm_peak_varname) :=
+          !!rlang::sym(quant_peak_varname) - scaling_factor
+      ) %>%
+      dplyr::select(-scaling_factor)
+  }
+  
   mzroll_list <- romic::update_tomic(mzroll_list, updated_measurements)
   
   return(mzroll_list)
