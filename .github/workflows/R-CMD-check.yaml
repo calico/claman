@@ -1,8 +1,8 @@
 on:
   push:
-    paths:
-      - 'R/*.R'
-      - 'vignettes/*Rmd'
+#    paths:
+#      - 'R/*.R'
+#      - 'vignettes/*Rmd'
   schedule:
     - cron:  '0 0 1 * *'
 
@@ -63,6 +63,7 @@ jobs:
         run: |
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
+          remotes::install_bioc(c("qvalue", "fgsea"))
         shell: Rscript {0}
 
       - name: Check

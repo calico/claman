@@ -247,9 +247,9 @@ renamed_samples <- final_processed_data$samples %>%
     "{stringr::str_sub(limitation, 1, 1)}{round(DR,2)}"
   )) %>%
   group_by(name) %>%
-  mutate(
-    name = case_when(n() == 1 ~ name,
-                     TRUE ~ paste0(name, "-", 1:n()))
+  mutate(name = case_when(
+    n() == 1 ~ name,
+    TRUE ~ paste0(name, "-", 1:n()))
     ) %>%
   ungroup()
    
