@@ -318,7 +318,6 @@ regression_significance <- diffex_mzroll(
   )
 
 plot_pvalues(regression_significance)
-
 plot_volcano(regression_significance)
 ```
 
