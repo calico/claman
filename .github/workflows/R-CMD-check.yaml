@@ -2,6 +2,7 @@ on:
   push:
     paths:
       - 'R/*.R'
+      - 'vignettes/*Rmd'
   schedule:
     - cron:  '0 0 1 * *'
 
