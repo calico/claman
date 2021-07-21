@@ -5,53 +5,49 @@
 #' @inheritParams test_mzroll_list
 #' @param samples_tbl Table of sample metadata
 #' @param id_strings one or more variables which will be used to match
-#'   sample names. 
+#'   sample names.
 #' @param exact if true, an exact match between mzroll names and id_strings
-#'   will be found; if false, then substring matches will be used.   
-#'   
-#' @examples 
+#'   will be found; if false, then substring matches will be used.
+#'
+#' @examples
 #' mzroll_list <- process_mzroll(nplug_mzroll())
 #' merge_samples_tbl(mzroll_list, nplug_samples, "sample_name")
-#' 
 #' @export
-merge_samples_tbl <- function(
-  mzroll_list,
-  samples_tbl,
-  id_strings,
-  exact = TRUE
-  ) {
-  
+merge_samples_tbl <- function(mzroll_list,
+                              samples_tbl,
+                              id_strings,
+                              exact = TRUE) {
   checkmate::assertClass(mzroll_list, "tomic")
   checkmate::assertClass(mzroll_list, "mzroll")
   checkmate::assertDataFrame(samples_tbl)
-  
+
   if ("samples_tbl_row" %in% colnames(samples_tbl)) {
     stop(
       "\"samples_tbl_row\" is a reserved variable in samples_tbl,
         do not include it"
-      )
-    }
-  
+    )
+  }
+
   checkmate::assertCharacter(id_strings)
   purrr::walk(id_strings, checkmate::assertChoice, colnames(samples_tbl))
   checkmate::assertLogical(exact)
-  
+
   # match samples_tbl to mzroll samples
-  
+
   samples_tbl <- samples_tbl %>%
     dplyr::mutate(samples_tbl_row = 1:dplyr::n())
-  
+
   # read all id_strings - substrings used to match sample names in mzroll
-  
+
   ms_id_strings <- samples_tbl %>%
     dplyr::select(!!!rlang::syms(c("samples_tbl_row", id_strings))) %>%
     dplyr::mutate_at(dplyr::vars(-samples_tbl_row), as.character) %>%
     tidyr::gather(id_string_var, id_string_value, -samples_tbl_row) %>%
     dplyr::filter(!is.na(id_string_value))
-  
+
   sample_ms_id_string_matches <- mzroll_list$samples %>%
     tidyr::crossing(ms_id_strings)
-  
+
   if (exact) {
     sample_ms_id_string_matches <- sample_ms_id_string_matches %>%
       dplyr::filter(name == id_string_value)
@@ -59,13 +55,13 @@ merge_samples_tbl <- function(
     sample_ms_id_string_matches <- sample_ms_id_string_matches %>%
       dplyr::filter(stringr::str_detect(name, id_string_value))
   }
-  
+
   # check whether 1 sample matches 2+ IDs
-  
+
   sample_multimatch <- sample_ms_id_string_matches %>%
     dplyr::count(name) %>%
     dplyr::filter(n > 1)
-  
+
   if (nrow(sample_multimatch) != 0) {
     multimatch_details <- sample_ms_id_string_matches %>%
       dplyr::semi_join(sample_multimatch, by = "name") %>%
@@ -76,7 +72,7 @@ merge_samples_tbl <- function(
       {
         paste(.$out_string, collapse = "\n")
       }
-    
+
     stop(
       nrow(sample_multimatch),
       " experimental samples matched multiple ID strings: ",
@@ -85,13 +81,13 @@ merge_samples_tbl <- function(
       multimatch_details
     )
   }
-  
+
   # check whether 1 ID matches 2+ samples
-  
+
   condition_multimatch <- sample_ms_id_string_matches %>%
     dplyr::count(samples_tbl_row) %>%
     dplyr::filter(n > 1)
-  
+
   if (nrow(condition_multimatch) != 0) {
     multimatch_details <- sample_ms_id_string_matches %>%
       dplyr::semi_join(condition_multimatch, by = "samples_tbl_row") %>%
@@ -102,7 +98,7 @@ merge_samples_tbl <- function(
       {
         paste(.$out_string, collapse = "\n")
       }
-    
+
     stop(
       nrow(condition_multimatch),
       " rows in sample_tbl matched multiple experimental samples: ",
@@ -111,7 +107,7 @@ merge_samples_tbl <- function(
       multimatch_details
     )
   }
-  
+
   matched_augmented_samples <- mzroll_list$samples %>%
     dplyr::inner_join(
       sample_ms_id_string_matches %>%
@@ -119,10 +115,10 @@ merge_samples_tbl <- function(
         dplyr::left_join(samples_tbl, by = "samples_tbl_row"),
       by = "sampleId"
     )
-  
+
   unmatched_samples <- mzroll_list$samples %>%
     dplyr::anti_join(sample_ms_id_string_matches, by = "sampleId")
-  
+
   if (nrow(unmatched_samples) != 0) {
     warning(
       nrow(unmatched_samples),
@@ -130,12 +126,12 @@ merge_samples_tbl <- function(
       paste(unmatched_samples$name, collapse = "\n  ")
     )
   }
-  
+
   mzroll_list <- romic::update_tomic(
     mzroll_list,
     matched_augmented_samples
-    )
-  
+  )
+
   return(mzroll_list)
 }
 
@@ -393,41 +389,41 @@ lipid_components <- function(compound_name) {
     dplyr::mutate(total_OH = ifelse(is.na(total_OH), 0, total_OH)) %>%
     dplyr::mutate(sumComposition = dplyr::case_when(
       num_sn_chains > 0 & total_OH == 0 ~
-        glue::glue("{class}({plas}{single}:{double})",
-                   class = lipidClass,
-                   plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
-                   single = total_single,
-                   double = ifelse(
-                     (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
-                     (total_double - 1),
-                     total_double
-                   )
-        ),
+      glue::glue("{class}({plas}{single}:{double})",
+        class = lipidClass,
+        plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
+        single = total_single,
+        double = ifelse(
+          (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
+          (total_double - 1),
+          total_double
+        )
+      ),
       num_sn_chains > 0 & total_OH == 1 ~
-        glue::glue(
-          "{class}({plas}{single}:{double};O)",
-          class = lipidClass,
-          plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
-          single = total_single,
-          double = ifelse(
-            (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
-            (total_double - 1),
-            total_double
-          )
-        ),
+      glue::glue(
+        "{class}({plas}{single}:{double};O)",
+        class = lipidClass,
+        plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
+        single = total_single,
+        double = ifelse(
+          (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
+          (total_double - 1),
+          total_double
+        )
+      ),
       num_sn_chains > 0 & total_OH > 1 ~
-        glue::glue(
-          "{class}({plas}{single}:{double};O{num_OH})",
-          class = lipidClass,
-          plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
-          single = total_single,
-          double = ifelse(
-            (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
-            (total_double - 1),
-            total_double
-          ),
-          num_OH = total_OH
+      glue::glue(
+        "{class}({plas}{single}:{double};O{num_OH})",
+        class = lipidClass,
+        plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
+        single = total_single,
+        double = ifelse(
+          (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
+          (total_double - 1),
+          total_double
         ),
+        num_OH = total_OH
+      ),
       num_sn_chains == 0 ~ compoundName
     )) %>%
     dplyr::mutate(etherPlasmalogenCompoundName = ifelse(
@@ -451,6 +447,6 @@ lipid_components <- function(compound_name) {
         double = total_double
       )
     ))
-  
+
   compound_components
 }

@@ -21,21 +21,18 @@
 #'
 #' @examples
 #' process_mzroll(nplug_mzroll())
-process_mzroll <- function(
-  mzroll_db_path,
-  only_identified = TRUE,
-  validate = FALSE,
-  method_tag = ""
-  ) {
-  
+process_mzroll <- function(mzroll_db_path,
+                           only_identified = TRUE,
+                           validate = FALSE,
+                           method_tag = "") {
   checkmate::assertFileExists(mzroll_db_path)
   checkmate::assertLogical(only_identified, len = 1)
   checkmate::assertLogical(validate, len = 1)
   checkmate::assertString(method_tag)
-  
+
   # connect to SQLite .mzrollDB database
   mzroll_db_con <- create_sqlite_con(mzroll_db_path)
-  
+
   # add peakgroup m/z and rt
   peakgroups <- process_mzroll_load_peakgroups(mzroll_db_con)
   # if validate is true, use peakgroup labels to rename unknowns
@@ -90,7 +87,7 @@ process_mzroll <- function(
   }
 
   debugr::dwatch(
-    msg = "Before summarizing distinct peaks and samples... [calicomics<import_mzroll.R>::process_mzroll]\n"
+    msg = "Before summarizing distinct peaks and samples...[calicomics<import_mzroll.R>::process_mzroll]\n"
   )
 
   # summarize distinct peaks and samples
@@ -98,21 +95,21 @@ process_mzroll <- function(
   samples <- dplyr::tbl(
     mzroll_db_con,
     dbplyr::sql("SELECT sampleId, name, filename FROM samples")
-    ) %>%
+  ) %>%
     dplyr::collect() %>%
     dplyr::arrange(sampleId) %>%
     dplyr::mutate(
       sampleId = factor(sampleId, levels = sampleId)
     )
-  
+
   debugr::dwatch(
     msg = "Summarized samples. [calicomics<import_mzroll.R>::process_mzroll]\n"
   )
-  
+
   peaks <- dplyr::tbl(
     mzroll_db_con,
     dbplyr::sql("SELECT groupId, sampleId, peakAreaTop FROM peaks")
-    ) %>%
+  ) %>%
     dplyr::collect() %>%
     dplyr::semi_join(peakgroups, by = "groupId") %>%
     dplyr::group_by(groupId) %>%
@@ -131,11 +128,12 @@ process_mzroll <- function(
       groupId = factor(
         groupId,
         levels = levels(reduced_peakgroups$groupId)
-        ),
+      ),
       sampleId = factor(
         sampleId,
         levels = levels(samples$sampleId)
-        ))
+      )
+    )
 
   debugr::dwatch(
     msg = "Summarized peaks. [calicomics<import_mzroll.R>::process_mzroll]\n"
@@ -156,51 +154,49 @@ process_mzroll <- function(
     sample_pk = "sampleId",
     omic_type_tag = "mzroll"
   )
-  
+
   debugr::dwatch(
     msg = "Created list. [calicomics<import_mzroll.R>::process_mzroll]\n"
   )
 
   debugr::dwatch(msg = glue::glue(
     "number of samples in mzroll_list$samples: {nrow(mzroll_list$samples)}"
-    ))
+  ))
 
   test_mzroll_list(mzroll_list)
-  
+
   return(mzroll_list)
 }
 
 #' Create SQLite Connection
-#' 
+#'
 #' Open a connection to an SQLite database
-#' 
+#'
 #' @param sqlite_path path to sqlite file
-#' 
+#'
 #' @return sqlite connection
 create_sqlite_con <- function(sqlite_path) {
-  
   checkmate::assertFileExists(sqlite_path)
-  
+
   sqlite_con <- DBI::dbConnect(
     RSQLite::SQLite(),
     sqlite_path,
     synchronous = NULL
-    )
-  
+  )
+
   return(sqlite_con)
 }
-  
-  
+
+
 #' Process MzRoll - Load Peakgroups
-#' 
+#'
 #' Load peakgroups table and add mz and rt variables to peakgroups based on
 #'   peak-level data.
-#' 
+#'
 #' @param mzroll_db_con an SQLite connection to an mzrollDB database
-#' 
+#'
 #' @return a table of peakgroups
-process_mzroll_load_peakgroups <- function(mzroll_db_con){
-  
+process_mzroll_load_peakgroups <- function(mzroll_db_con) {
   peakgroup_positions <- dplyr::tbl(mzroll_db_con, "peaks") %>%
     dplyr::collect() %>%
     dplyr::group_by(groupId) %>%
@@ -208,7 +204,7 @@ process_mzroll_load_peakgroups <- function(mzroll_db_con){
       mz = sum(peakMz * peakAreaTop) / sum(peakAreaTop),
       rt = sum(rt * peakAreaTop) / sum(peakAreaTop)
     )
-  
+
   peakgroups <- dplyr::tbl(mzroll_db_con, "peakgroups") %>%
     dplyr::collect() %>%
     dplyr::select(-compoundId) %>%
@@ -219,7 +215,7 @@ process_mzroll_load_peakgroups <- function(mzroll_db_con){
       sep = ": ", extra = "drop", fill = "right"
     ) %>%
     dplyr::left_join(peakgroup_positions, by = "groupId")
-  
+
   # if provided, prefer display name over compoundName
   if ("displayName" %in% colnames(peakgroups)) {
     peakgroups <- peakgroups %>%
@@ -229,25 +225,24 @@ process_mzroll_load_peakgroups <- function(mzroll_db_con){
         displayName
       ))
   }
-  
+
   return(peakgroups)
 }
 
 #' Process MzRoll - Validate Peakgroups
-#' 
+#'
 #' If validate is True then remove unvalidated compoundNames (based on
 #'   peakgroup labels) and identify all unvalidated compounds with an
 #'   "is_unknown" variable.
-#'   
+#'
 #' @param peakgroups a table of distinct ions with characteristic m/z and rt
 #' @inheritParams process_mzroll
 #'
 #' @return a table of peakgroups
-process_mzroll_validate_peakgroups <- function(peakgroups, validate){
-  
+process_mzroll_validate_peakgroups <- function(peakgroups, validate) {
   checkmate::assertDataFrame(peakgroups)
   checkmate::assertLogical(validate, len = 1)
-  
+
   if (validate) {
     peakgroups <- peakgroups %>%
       dplyr::mutate(
@@ -267,40 +262,40 @@ process_mzroll_validate_peakgroups <- function(peakgroups, validate){
         is_unknown = ifelse(is.na(compoundName), TRUE, FALSE)
       )
   }
-  
+
   return(peakgroups)
-  
 }
 
 #' Process MzRoll - Identify Peakgroups
-#' 
+#'
 #' Either remove unidentified peakgroups or name unknowns using m/z and rt.
-#' 
+#'
 #' @inheritParams process_mzroll_validate_peakgroups
 #' @inheritParams process_mzroll
-#' 
+#'
 #' @return a table of peakgroups
-process_mzroll_identify_peakgroups <- function(peakgroups, only_identified){
-  
+process_mzroll_identify_peakgroups <- function(peakgroups, only_identified) {
   checkmate::assertDataFrame(peakgroups)
-  
+
   if (only_identified) {
     peakgroups <- peakgroups %>%
       dplyr::filter(!is.na(compoundName))
   } else {
     unknown_groups <- peakgroups %>%
       dplyr::filter(is.na(compoundName)) %>%
-      {.$groupId}
-    
+      {
+        .$groupId
+      }
+
     # label unknowns based on m/z and rt
-    
+
     unknown_names <- peakgroups %>%
       dplyr::filter(groupId %in% unknown_groups) %>%
       dplyr::mutate(new_compoundName = as.character(glue::glue(
         "unk {round(mz, 3)} @ {round(rt,1)}"
       ))) %>%
       dplyr::select(groupId, new_compoundName)
-    
+
     peakgroups <- peakgroups %>%
       dplyr::left_join(unknown_names, by = "groupId") %>%
       dplyr::mutate(
@@ -312,7 +307,7 @@ process_mzroll_identify_peakgroups <- function(peakgroups, only_identified){
       ) %>%
       dplyr::select(-new_compoundName)
   }
-  
+
   return(peakgroups)
 }
 
@@ -335,27 +330,23 @@ process_mzroll_identify_peakgroups <- function(peakgroups, only_identified){
 #'   \item{samples: one row per unique sample (defined by a unique sampleId)},
 #'   \item{peaks: one row per peak (samples x peakgroups)}
 #'   }
-#' 
-#' @examples 
+#'
+#' @examples
 #' mzroll_paths <- tibble::tribble(
 #'   ~method_tag, ~mzroll_db_path,
 #'   "method1", nplug_mzroll(),
-#'   "method2", nplug_mzroll()   
-#'   )
-#' 
+#'   "method2", nplug_mzroll()
+#' )
+#'
 #' process_mzroll_multi(mzroll_paths, nplug_samples, "sample_name")
-#' 
 #' @export
 
-process_mzroll_multi <- function(
-  mzroll_paths,
-  samples_tbl,
-  id_strings,
-  only_identified = TRUE,
-  validate = FALSE,
-  exact = TRUE
-  ) {
-  
+process_mzroll_multi <- function(mzroll_paths,
+                                 samples_tbl,
+                                 id_strings,
+                                 only_identified = TRUE,
+                                 validate = FALSE,
+                                 exact = TRUE) {
   checkmate::assertDataFrame(mzroll_paths, min.rows = 2)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
     stop("mzroll_paths must contain two columns: method_tag & mnzroll_db_path")
@@ -365,7 +356,7 @@ process_mzroll_multi <- function(
   checkmate::assertDataFrame(samples_tbl)
   checkmate::assertLogical(only_identified, len = 1)
   checkmate::assertLogical(validate, len = 1)
-  
+
   mzroll_list_nest <- mzroll_paths %>%
     dplyr::mutate(
       # read each dataset
@@ -375,7 +366,7 @@ process_mzroll_multi <- function(
         process_mzroll,
         only_identified = only_identified,
         validate = validate
-        ),
+      ),
       # add sample meta-data
       mzroll_list = purrr::map(
         mzroll_list,
@@ -383,12 +374,13 @@ process_mzroll_multi <- function(
         samples_tbl = samples_tbl,
         id_strings = id_strings,
         exact = exact
-        ))
-  
+      )
+    )
+
   aggregate_mzroll_list <- aggregate_mzroll_nest(
     mzroll_list_nest,
     samples_tbl
-    )
+  )
 
   mzroll_multi_qc(aggregate_mzroll_list)
 
@@ -405,15 +397,16 @@ process_mzroll_multi <- function(
 #'
 #' @return a single mzroll_list
 aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
-
   checkmate::assertDataFrame(mzroll_list_nest)
   # check that all mzroll lists have the same design
-  
-  designs <- purrr::map(mzroll_list_nest$mzroll_list, function(x) {x$design})
+
+  designs <- purrr::map(mzroll_list_nest$mzroll_list, function(x) {
+    x$design
+  })
   if (length(unique(designs)) > 1) {
     stop("mzroll_lists have different designs and cannot be aggregated")
   }
-  
+
   # identify samples with shared "samples_tbl_row"
 
   mzroll_list_all_samples <- mzroll_list_nest %>%
@@ -434,7 +427,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
   # iterate through mzrollDB
 
   max_groupId <- 0
-  mzroll_indecies <- 1:nrow(mzroll_list_nest)
+  mzroll_indecies <- seq_len(nrow(mzroll_list_nest))
 
   # samples defined upfront as the union of samples from the sample sheet
   # that are observed "samples_tbl_row" will be the new sampleId
@@ -448,14 +441,13 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
   # and sampleId is updated to "samples_tbl_row"
 
   for (a_mzroll_index in mzroll_indecies) {
-    
     one_mzroll_list <- mzroll_list_nest$mzroll_list[[a_mzroll_index]]
     checkmate::assertClass(one_mzroll_list, "tomic")
     checkmate::assertClass(one_mzroll_list, "mzroll")
-    
+
     # update groupId to new unique values
     # temporarily convert from factors -> integers so they can be added
-    
+
     one_mzroll_list[["features"]]$groupId <-
       as.integer(one_mzroll_list[["features"]]$groupId) + max_groupId
     one_mzroll_list[["measurements"]]$groupId <-
@@ -473,9 +465,9 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
       dplyr::mutate(sampleId = factor(
         sampleId,
         levels = levels(consensus_samples$sampleId)
-        )) %>%
+      )) %>%
       dplyr::select(!!!rlang::syms(colnames(one_mzroll_list$measurements)))
-      
+
     updated_mzroll_list$measurements <- dplyr::bind_rows(
       updated_mzroll_list$measurements,
       one_mzroll_list$measurements
@@ -489,7 +481,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
   }
 
   # overwrite one of the original mzrolls to update the romic schema
-  
+
   one_mzroll_list$features <- updated_mzroll_list$features %>%
     dplyr::mutate(groupId = factor(groupId, levels = groupId))
   one_mzroll_list$measurements <- updated_mzroll_list$measurements %>%
@@ -497,15 +489,18 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
       groupId = factor(
         groupId,
         levels = levels(one_mzroll_list$features$groupId)
-        ))
+      )
+    )
   # update values and schema
-  one_mzroll_list <- romic::update_tomic(one_mzroll_list, updated_mzroll_list$samples)
-  
+  one_mzroll_list <- romic::update_tomic(
+    one_mzroll_list,
+    updated_mzroll_list$samples
+    )
+
   return(one_mzroll_list)
 }
 
 mzroll_multi_qc <- function(mzroll_list) {
-  
   mzroll_coverage_table <- mzroll_list$measurements %>%
     dplyr::left_join(
       mzroll_list$features %>%
@@ -525,7 +520,11 @@ mzroll_multi_qc <- function(mzroll_list) {
 
   if (nrow(missed_matches) != 0) {
     missed_matches_warning <- missed_matches %>%
-      tidyr::gather(-samples_tbl_row, key = "method_tag", value = "n_entries") %>%
+      tidyr::gather(
+        -samples_tbl_row,
+        key = "method_tag",
+        value = "n_entries"
+        ) %>%
       dplyr::filter(is.na(n_entries)) %>%
       dplyr::mutate(out = glue::glue(
         "row: {samples_tbl_row}, method_tag: {method_tag}"
@@ -536,7 +535,8 @@ mzroll_multi_qc <- function(mzroll_list) {
 
     stop(
       nrow(missed_matches),
-      " rows only matched a subset of methods; this will cause downstream problems.
+      " rows only matched a subset of methods;
+        this will cause downstream problems.
         Either update your sample sheet or analyze each method separately.
         Details:\n",
       missed_matches_warning
@@ -545,4 +545,3 @@ mzroll_multi_qc <- function(mzroll_list) {
 
   return(invisible(0))
 }
-

@@ -7,12 +7,10 @@
 #' @param invert if TRUE then remove provided groupIds; if FALSE then retain
 #'   provided groupIds
 #'
-#' @examples 
+#' @examples
 #' filter_groupIds(nplug_mzroll_normalized, factor(1:10))
-#'
 #' @export
 filter_groupIds <- function(mzroll_list, groupIds, invert = FALSE) {
-  
   checkmate::assertFactor(groupIds)
   checkmate::assertLogical(invert, len = 1)
 
