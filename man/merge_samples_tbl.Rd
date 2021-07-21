@@ -31,5 +31,4 @@ Merge a table of sample metadata with an existing mzroll_list
 \examples{
 mzroll_list <- process_mzroll(nplug_mzroll())
 merge_samples_tbl(mzroll_list, nplug_samples, "sample_name")
-
 }

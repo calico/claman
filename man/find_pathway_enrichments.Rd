@@ -72,17 +72,17 @@ regression_significance <- diffex_mzroll(
   nplug_mzroll_normalized,
   "normalized_log2_abundance",
   "limitation + limitation:DR + 0"
-  )
+)
 pathway_nest <- nplug_mzroll_normalized$features \%>\%
- dplyr::select(groupId, pathway) \%>\%
- tidyr::nest(pathway_members = groupId)
+  dplyr::select(groupId, pathway) \%>\%
+  tidyr::nest(pathway_members = groupId)
 
 pathway_list <- purrr::map(
- pathway_nest$pathway_members,
- function(x) {
-   as.character(x$groupId)
-   }
- )
+  pathway_nest$pathway_members,
+  function(x) {
+    as.character(x$groupId)
+  }
+)
 names(pathway_list) <- pathway_nest$pathway
 
 find_pathway_enrichments(
@@ -91,6 +91,5 @@ find_pathway_enrichments(
   pathway_list,
   test_absolute_effects = FALSE,
   enrichment_method = "fisher"
-  )
-
+)
 }

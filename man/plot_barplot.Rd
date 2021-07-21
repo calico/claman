@@ -37,6 +37,5 @@ plot_barplot(
   grouping_vars = c("limitation", "DR"),
   value_var = "normalized_log2_abundance",
   fill_var = "limitation"
-  )
-
+)
 }

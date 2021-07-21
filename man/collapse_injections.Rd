@@ -41,5 +41,5 @@ collapse_injections(
   nplug_mzroll_augmented,
   grouping_vars = "condition",
   peak_quant_vars = "log2_abundance"
-  )
+)
 }

@@ -11,7 +11,7 @@ An object of class \code{triple_omic} (inherits from \code{tomic}, \code{mzroll}
 nplug_mzroll_normalized
 }
 \description{
-\link{nplug_mzroll_augmented} with injections collapsed using 
+\link{nplug_mzroll_augmented} with injections collapsed using
   \link{collapse_injections}, followed by reference-sample normalization
   using \link{normalize_peaks}. Finally, reference samples and samples
   extracting using the pellet method were removed and sample names

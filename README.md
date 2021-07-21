@@ -38,4 +38,4 @@ Once claman is installed, run package vignette(s):
 vignette(package = "claman", topic = "metabolomics_example")
 ```
 
-And, check out claman's [https://redesigned-waffle-9a085eb2.pages.github.io/](pkgdown site) for organized documentation.
+And, check out claman's [pkgdown site](https://redesigned-waffle-9a085eb2.pages.github.io/) for organized documentation.

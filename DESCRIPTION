@@ -7,7 +7,8 @@ Authors@R: c(
       given = "Sean",
       family = "Hackett",
       email = "sean@calicolabs.com",
-      role = c("aut", "cre")
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0002-9553-4341")
       ),
     person(
       given = "Phil",
@@ -55,7 +56,6 @@ Suggests: dbplyr,
     plotly,
     qvalue,
     rmarkdown,
-    romic,
     testthat
 Encoding: UTF-8
 LazyData: true
