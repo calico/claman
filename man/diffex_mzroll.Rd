@@ -50,7 +50,7 @@ diffex_mzroll(
   nplug_mzroll_normalized,
   "normalized_log2_abundance",
   "limitation + limitation:DR + 0"
-  )
+)
 
 # separate regression for each feature and limitatioon
 diffex_mzroll(
@@ -58,13 +58,13 @@ diffex_mzroll(
   "normalized_log2_abundance",
   "DR + 0",
   additional_grouping_vars = "limitation"
-  )
-  
+)
+
 # feature-wise ANOVA
 diffex_mzroll(
   nplug_mzroll_normalized,
   "normalized_log2_abundance",
   "limitation + 0",
   "0"
-  )
+)
 }

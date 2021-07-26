@@ -34,6 +34,5 @@ plot_compare_injection(
   nplug_mzroll_augmented,
   grouping_vars = "condition",
   peak_quant_var = "log2_abundance"
-  )
-  
+)
 }

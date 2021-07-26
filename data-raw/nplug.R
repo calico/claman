@@ -14,7 +14,7 @@ if (file.exists(local_save)) {
 } else {
   nplug_raw <- readr::read_tsv(raw_data_url) %>%
     dplyr::rename(sample_name = X1)
-  
+
   saveRDS(nplug_raw, local_save)
 }
 
@@ -37,7 +37,8 @@ nplug_samples <- nplug_raw %>%
   dplyr::mutate(limitation = ifelse(
     limitation %in% c("R", "R2", "R3"),
     "PO4",
-    limitation))
+    limitation
+  ))
 
 # use DR when finding distinct experimental conditions
 distinct_exp_conditions <- nplug_samples %>%
@@ -83,7 +84,7 @@ nplug_raw <- nplug_raw %>%
 abundances <- nplug_raw %>%
   dplyr::select(-c(sample_name:Method)) %>%
   tidyr::gather(compoundName, peakAreaTop, -sampleId)
-  
+
 peakgroups <- abundances %>%
   dplyr::distinct(compoundName) %>%
   dplyr::mutate(
@@ -97,7 +98,7 @@ peaks <- abundances %>%
     peakgroups %>%
       dplyr::select(groupId, compoundName),
     by = "compoundName"
-    ) %>%
+  ) %>%
   dplyr::select(-compoundName) %>%
   dplyr::mutate(peakId = 1:dplyr::n())
 
@@ -128,52 +129,77 @@ purrr::walk2(
   DBI::dbAppendTable,
   conn = mzroll_db_con
 )
-  
+
 DBI::dbDisconnect(mzroll_db_con)
 
 # save compound metadata
 
 pathways <- list(
-  "Pentose Phosphate Pathway" = c("6-phospho-D-gluconate", "Ribose-P",
-                                  "D-erythrose-4-phosphate", "D-gluconate",
-                                  "D-glucono-delta-lactone-6-phosphate",
-                                  "D-sedoheptulose-7-phosphate",
-                                  "pyridoxine", "riboflavin"),
-  "Glycolysis" = c("1,3-diphopshateglycerate", "3-phosphoglycerate",
-                   "D-glyceraldehdye-3-phosphate", "dihydroxy-acetone-phosphate",
-                   "fructose-1,6-bisphosphate", "glycerate", "hexose-phosphate",
-                   "pyruvate", "trehalose/sucrose", "trehalose-6-phosphate",
-                   "Lactate"),
-  "Purine Synthesis" = c("adenosine", "cyclic-AMP", "dATP", "deoxyadenosine",
-                         "deoxyguanosine", "guanine", "guanosine",
-                         "hypoxanthine", "inosine", "thiamine", "xanthine",
-                         "dGDP"),
-  "Pyrimidines" = c("CTP", "CDP", "UTP", "UDP", "OMP", "cytidine", "cytosine",
-                    "dCTP", "dihydroorotate", "dTTP", "N-carbamoyl-L-aspartate",
-                    "orotate", "UDP-D-glucose", "UDP-N-acetyl-glucosamine",
-                    "uridine"),
-  "Amino Acids" = c("alanine", "arginine", "asparagine", "aspartate", "glutamate",
-                    "glutamine", "glycine", "histidine", "leucine/isoleucine",
-                    "lysine", "methionine", "phenylalanine", "proline",
-                    "serine", "threonine", "tryptophan", "tyrosine", "valine"),
-  "Amino Acid Synthesis" = c("citrulline", "cystathionine", "histidinol",
-                             "ornithine", "phenylpyruvate", "Arginino-succinate",
-                             "Carbamyl phosphate", "Homoserine", "Hydroxyphenylpyruvate",
-                             "N-acetyl-glutamate", "Prephenic acid", "PRPP"),
-  "Amino Acid Derived" = c("glutathione", "glutathione disulfide",
-                           "N-acetyl-glucosamine-1-phosphate", "N-acetyl-glutamine",
-                           "nicotinate", "pantothenate", "quinolinate",
-                           "S-adenosyl-L-methionine", "Dimethylglycine"),
-  "TCA cycle" = c("acetyl-CoA", "a-ketoglutarate",  "aconitate", "citrate",
-                  "citrate/isocitrate", "fumarate", "isocitrate",
-                  "malate", "succinate"),
-  "Energetics" = c("ATP", "ADP", "AMP", "GTP", "GDP", "GMP", "FAD", "FMN",
-                   "NAD+", "NADH", "NADP+"),
-  "Lipid metabolism" = c("choline", "3-hydroxy-3-methylglutaryl-CoA",
-                         "trans, trans-farnesyl diphosphate"))
+  "Pentose Phosphate Pathway" = c(
+    "6-phospho-D-gluconate", "Ribose-P",
+    "D-erythrose-4-phosphate", "D-gluconate",
+    "D-glucono-delta-lactone-6-phosphate",
+    "D-sedoheptulose-7-phosphate",
+    "pyridoxine", "riboflavin"
+  ),
+  "Glycolysis" = c(
+    "1,3-diphopshateglycerate", "3-phosphoglycerate",
+    "D-glyceraldehdye-3-phosphate", "dihydroxy-acetone-phosphate",
+    "fructose-1,6-bisphosphate", "glycerate", "hexose-phosphate",
+    "pyruvate", "trehalose/sucrose", "trehalose-6-phosphate",
+    "Lactate"
+  ),
+  "Purine Synthesis" = c(
+    "adenosine", "cyclic-AMP", "dATP", "deoxyadenosine",
+    "deoxyguanosine", "guanine", "guanosine",
+    "hypoxanthine", "inosine", "thiamine", "xanthine",
+    "dGDP"
+  ),
+  "Pyrimidines" = c(
+    "CTP", "CDP", "UTP", "UDP", "OMP", "cytidine", "cytosine",
+    "dCTP", "dihydroorotate", "dTTP", "N-carbamoyl-L-aspartate",
+    "orotate", "UDP-D-glucose", "UDP-N-acetyl-glucosamine",
+    "uridine"
+  ),
+  "Amino Acids" = c(
+    "alanine", "arginine", "asparagine", "aspartate", "glutamate",
+    "glutamine", "glycine", "histidine", "leucine/isoleucine",
+    "lysine", "methionine", "phenylalanine", "proline",
+    "serine", "threonine", "tryptophan", "tyrosine", "valine"
+  ),
+  "Amino Acid Synthesis" = c(
+    "citrulline", "cystathionine", "histidinol",
+    "ornithine", "phenylpyruvate", "Arginino-succinate",
+    "Carbamyl phosphate", "Homoserine", "Hydroxyphenylpyruvate",
+    "N-acetyl-glutamate", "Prephenic acid", "PRPP"
+  ),
+  "Amino Acid Derived" = c(
+    "glutathione", "glutathione disulfide",
+    "N-acetyl-glucosamine-1-phosphate", "N-acetyl-glutamine",
+    "nicotinate", "pantothenate", "quinolinate",
+    "S-adenosyl-L-methionine", "Dimethylglycine"
+  ),
+  "TCA cycle" = c(
+    "acetyl-CoA", "a-ketoglutarate", "aconitate", "citrate",
+    "citrate/isocitrate", "fumarate", "isocitrate",
+    "malate", "succinate"
+  ),
+  "Energetics" = c(
+    "ATP", "ADP", "AMP", "GTP", "GDP", "GMP", "FAD", "FMN",
+    "NAD+", "NADH", "NADP+"
+  ),
+  "Lipid metabolism" = c(
+    "choline", "3-hydroxy-3-methylglutaryl-CoA",
+    "trans, trans-farnesyl diphosphate"
+  )
+)
 
-nplug_compounds <- purrr::map(names(pathways),
-           function(x){tibble::tibble(pathway = x, compoundName = pathways[[x]])}) %>%
+nplug_compounds <- purrr::map(
+  names(pathways),
+  function(x) {
+    tibble::tibble(pathway = x, compoundName = pathways[[x]])
+  }
+) %>%
   dplyr::bind_rows() %>%
   dplyr::select(compoundName, pathway)
 
@@ -233,9 +259,11 @@ renamed_samples <- final_processed_data$samples %>%
   )) %>%
   group_by(name) %>%
   mutate(
-    name = case_when(n() == 1 ~ name,
-                     TRUE ~ paste0(name, "-", 1:n()))
-    ) %>%
+    name = case_when(
+      n() == 1 ~ name,
+      TRUE ~ paste0(name, "-", 1:n())
+    )
+  ) %>%
   ungroup()
 
 nplug_mzroll_normalized <- romic::update_tomic(
@@ -244,4 +272,3 @@ nplug_mzroll_normalized <- romic::update_tomic(
 )
 
 usethis::use_data(nplug_mzroll_normalized, overwrite = TRUE)
-

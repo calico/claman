@@ -27,5 +27,4 @@ Remove all data besides those from provided groupIds
 }
 \examples{
 filter_groupIds(nplug_mzroll_normalized, factor(1:10))
-
 }

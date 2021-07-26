@@ -29,5 +29,4 @@ Merge a table of compound information with an existing mzroll_list
 mzroll_list <- process_mzroll(nplug_mzroll())
 compounds_tbl <- nplug_compounds
 merge_compounds_tbl(mzroll_list, compounds_tbl)
-
 }

@@ -7,7 +7,8 @@ Authors@R: c(
       given = "Sean",
       family = "Hackett",
       email = "sean@calicolabs.com",
-      role = c("aut", "cre")
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0002-9553-4341")
       ),
     person(
       given = "Phil",
@@ -41,6 +42,7 @@ Imports: broom,
     readr,
     reshape2,
     rlang,
+    romic,
     RSQLite,
     stringr,
     tibble,
@@ -48,13 +50,13 @@ Imports: broom,
 Suggests: dbplyr,
     fgsea,
     grDevices,
+    hexbin,
     kableExtra,
     knitr,
     lubridate,
     plotly,
     qvalue,
     rmarkdown,
-    romic,
     testthat
 Encoding: UTF-8
 LazyData: true

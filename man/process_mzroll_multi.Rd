@@ -50,9 +50,8 @@ Aggregate multiple mzrollDB datasets which possess the same sample metadata
 mzroll_paths <- tibble::tribble(
   ~method_tag, ~mzroll_db_path,
   "method1", nplug_mzroll(),
-  "method2", nplug_mzroll()   
-  )
+  "method2", nplug_mzroll()
+)
 
 process_mzroll_multi(mzroll_paths, nplug_samples, "sample_name")
-
 }

@@ -18,10 +18,10 @@ The experiment contains 25 primary experimental conditions:
 \itemize{
   \item{5 limiting nutrients: nitrogen, phosphorous, leucine, uracil and
     glucose (i.e., NPLUG!)}
-  \item{5 dilution rates (growth rate / ln(2)): from 0.05-0.3 1/hrs} 
+  \item{5 dilution rates (growth rate / ln(2)): from 0.05-0.3 1/hrs}
 }
 
-Metabolomics of 
+Metabolomics of
   limited yeast cultures growing at different rates.
 }
 \seealso{

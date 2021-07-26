@@ -45,5 +45,4 @@ Analytes are first aggregated by retaining the maximum
 }
 \examples{
 collapse_metabolites(nplug_mzroll_augmented)
-
 }

@@ -161,7 +161,7 @@ To tackle these obstacles we will:
 
 ## Collapsing Technical Replicates
 
-```{r technical_replicates}
+```{r technical_replicates, fig.height = 8, fig.width = 8, warning = FALSE}
 plot_compare_injection(
   mzroll_list_augmented,
   grouping_vars = "condition",
@@ -202,7 +202,7 @@ mzroll_list_normalized <- normalize_peaks(
   romic::center_tomic(measurement_vars = "normalized_log2_abundance")
 ```
 
-Have normalized for month and extraction method, we can look at the results as another heatmap.
+Having normalized for month and extraction method, we can look at the results as another heatmap.
 
 ```{r post_normalized_heatmap}
 romic::plot_heatmap(
@@ -247,9 +247,9 @@ renamed_samples <- final_processed_data$samples %>%
     "{stringr::str_sub(limitation, 1, 1)}{round(DR,2)}"
   )) %>%
   group_by(name) %>%
-  mutate(
-    name = case_when(n() == 1 ~ name,
-                     TRUE ~ paste0(name, "-", 1:n()))
+  mutate(name = case_when(
+    n() == 1 ~ name,
+    TRUE ~ paste0(name, "-", 1:n()))
     ) %>%
   ungroup()
    
@@ -280,7 +280,7 @@ Our analysis thus far has already corrected for major sources of variation in th
 
 Two visualizations that are particularly useful for EDA are heatmaps (I'm sure you've seen enough of those), and principal components plots which overlay elements of the experimental design on the leading principal components.
 
-```{r static_eda}
+```{r static_eda, fig.height = 8, fig.width = 8}
 samples_with_pcs <- final_processed_data %>%
   romic::add_pca_loadings(value_var = "normalized_log2_abundance", npcs = 5)
 
@@ -310,7 +310,7 @@ $$
 y^{\text{normalized}} \sim \text{lim} + \text{lim} \cdot \text{DR}
 $$
 
-```{r hypothesis_testing}
+```{r hypothesis_testing, fig.height = 8, fig.width = 8}
 regression_significance <- diffex_mzroll(
   final_processed_data,
   "normalized_log2_abundance",
@@ -318,13 +318,12 @@ regression_significance <- diffex_mzroll(
   )
 
 plot_pvalues(regression_significance)
-
 plot_volcano(regression_significance)
 ```
 
 ## Plotting Individual Metabolites
 
-```{r met_examples, fig.width = 6, fig.height = 6}
+```{r met_examples, fig.width = 8, fig.height = 8}
 n_lim_signif <- regression_significance %>%
   filter(term == "limitationNH4") %>%
   arrange(qvalue) %>%
@@ -341,7 +340,7 @@ util_pretty_khead(
 )
 ```
 
-```{r met_examples_barplot}
+```{r met_examples_barplot, fig.height = 8, fig.width = 8}
 plot_barplot(
   mzroll_list = final_processed_data,
   groupIds = n_lim_signif$groupId[1:4],
