@@ -4,7 +4,7 @@
 \alias{floor_peaks}
 \title{Floor Peaks}
 \usage{
-floor_peaks(mzroll_list, log2_floor_value = 12)
+floor_peaks(mzroll_list, log2_floor_value = 12, floor_var = "log2_abundance")
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or
@@ -19,6 +19,8 @@ floor_peaks(mzroll_list, log2_floor_value = 12)
 
 \item{log2_floor_value}{minimum value to set for low abundance or
 missing peaks}
+
+\item{floor_var}{measurement variable to floor to \code{log2_floor_value}.}
 }
 \value{
 \code{\link{process_mzroll}}
