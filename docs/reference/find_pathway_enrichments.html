@@ -214,18 +214,18 @@ to groupby when performing regression in addition to groupId.</p></td>
   <span class='va'>nplug_mzroll_normalized</span>,
   <span class='st'>"normalized_log2_abundance"</span>,
   <span class='st'>"limitation + limitation:DR + 0"</span>
-  <span class='op'>)</span>
+<span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='warning'>Warning: q-value calculation initially failed due to too many small p-values</span>
 #&gt; <span class='warning'>        but claman was able to recover results</span></div><div class='input'><span class='va'>pathway_nest</span> <span class='op'>&lt;-</span> <span class='va'>nplug_mzroll_normalized</span><span class='op'>$</span><span class='va'>features</span> <span class='op'>%&gt;%</span>
- <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='va'>groupId</span>, <span class='va'>pathway</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
- <span class='fu'>tidyr</span><span class='fu'>::</span><span class='fu'><a href='https://tidyr.tidyverse.org/reference/nest.html'>nest</a></span><span class='op'>(</span>pathway_members <span class='op'>=</span> <span class='va'>groupId</span><span class='op'>)</span>
+  <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='va'>groupId</span>, <span class='va'>pathway</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>tidyr</span><span class='fu'>::</span><span class='fu'><a href='https://tidyr.tidyverse.org/reference/nest.html'>nest</a></span><span class='op'>(</span>pathway_members <span class='op'>=</span> <span class='va'>groupId</span><span class='op'>)</span>
 
 <span class='va'>pathway_list</span> <span class='op'>&lt;-</span> <span class='fu'>purrr</span><span class='fu'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span>
- <span class='va'>pathway_nest</span><span class='op'>$</span><span class='va'>pathway_members</span>,
- <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span>
-   <span class='fu'><a href='https://rdrr.io/r/base/character.html'>as.character</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>$</span><span class='va'>groupId</span><span class='op'>)</span>
-   <span class='op'>}</span>
- <span class='op'>)</span>
+  <span class='va'>pathway_nest</span><span class='op'>$</span><span class='va'>pathway_members</span>,
+  <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/character.html'>as.character</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>$</span><span class='va'>groupId</span><span class='op'>)</span>
+  <span class='op'>}</span>
+<span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>pathway_list</span><span class='op'>)</span> <span class='op'>&lt;-</span> <span class='va'>pathway_nest</span><span class='op'>$</span><span class='va'>pathway</span>
 
 <span class='fu'>find_pathway_enrichments</span><span class='op'>(</span>
@@ -234,22 +234,21 @@ to groupby when performing regression in addition to groupId.</p></td>
   <span class='va'>pathway_list</span>,
   test_absolute_effects <span class='op'>=</span> <span class='cn'>FALSE</span>,
   enrichment_method <span class='op'>=</span> <span class='st'>"fisher"</span>
-  <span class='op'>)</span>
-</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 100 x 9</span><span>
+<span class='op'>)</span>
+</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 100 × 9</span>
 #&gt;    term   pathway estimate p.value conf.low conf.high method  alternative qvalue
-#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>        </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> limit… Pentos…    3.85    0.174  0.585         </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.758
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> limit… Pyrimi…    2.04    0.228  0.588         </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.758
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> limit… Glycol…    2.49    0.207  0.582         </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.758
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> limit… Lipid …    0.250   0.963  0.008</span><span style='text-decoration: underline;'>37</span><span>       </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.963
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> limit… TCA cy…    0.380   0.961  0.090</span><span style='text-decoration: underline;'>3</span><span>        </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.963
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> limit… Purine…    0.472   0.939  0.142         </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.963
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> limit… Energe…    1.22    0.541  0.316         </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.963
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> limit… Amino …    1.41    0.376  0.496         </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.940
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> limit… Amino …    0.691   0.823  0.210         </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.963
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span> limit… Amino …    0.618   0.855  0.155         </span><span style='color: #BB0000;'>Inf</span><span> Fisher… greater      0.963
-#&gt; </span><span style='color: #949494;'># … with 90 more rows</span><span></div><div class='input'>
-</div></span></pre>
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>  <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>      <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>     <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>        <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'> 1</span> limit… Pentos…    3.85    0.174  0.585         <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.758
+#&gt; <span style='color: #BCBCBC;'> 2</span> limit… Pyrimi…    2.04    0.228  0.588         <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.758
+#&gt; <span style='color: #BCBCBC;'> 3</span> limit… Glycol…    2.49    0.207  0.582         <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.758
+#&gt; <span style='color: #BCBCBC;'> 4</span> limit… Lipid …    0.250   0.963  0.008<span style='text-decoration: underline;'>37</span>       <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.963
+#&gt; <span style='color: #BCBCBC;'> 5</span> limit… TCA cy…    0.380   0.961  0.090<span style='text-decoration: underline;'>3</span>        <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.963
+#&gt; <span style='color: #BCBCBC;'> 6</span> limit… Purine…    0.472   0.939  0.142         <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.963
+#&gt; <span style='color: #BCBCBC;'> 7</span> limit… Energe…    1.22    0.541  0.316         <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.963
+#&gt; <span style='color: #BCBCBC;'> 8</span> limit… Amino …    1.41    0.376  0.496         <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.940
+#&gt; <span style='color: #BCBCBC;'> 9</span> limit… Amino …    0.691   0.823  0.210         <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.963
+#&gt; <span style='color: #BCBCBC;'>10</span> limit… Amino …    0.618   0.855  0.155         <span style='color: #BB0000;'>Inf</span> Fisher… greater      0.963
+#&gt; <span style='color: #949494;'># … with 90 more rows</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

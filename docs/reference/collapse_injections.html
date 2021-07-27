@@ -170,7 +170,7 @@ average</p></td>
   <span class='va'>nplug_mzroll_augmented</span>,
   grouping_vars <span class='op'>=</span> <span class='st'>"condition"</span>,
   peak_quant_vars <span class='op'>=</span> <span class='st'>"log2_abundance"</span>
-  <span class='op'>)</span>
+<span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='message'>3 sample variables will be dropped since they</span>
 #&gt; <span class='message'>- vary for the same grouping_vars:</span>
 #&gt; <span class='message'>- samples_tbl_row, sample_name, replicate</span></div><div class='output co'>#&gt; <span class='warning'>Warning: `summarise_each_()` was deprecated in dplyr 0.7.0.</span>
@@ -187,95 +187,95 @@ average</p></td>
 #&gt; <span class='warning'></span>
 #&gt; <span class='warning'>  # Using lambdas</span>
 #&gt; <span class='warning'>  list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))</span></div><div class='output co'>#&gt; $features
-#&gt; <span style='color: #949494;'># A tibble: 106 x 13</span><span>
+#&gt; <span style='color: #949494;'># A tibble: 106 × 13</span>
 #&gt;    groupId compoundName       smiles adductName tagString    mz    rt compoundDB
-#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;fct&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>              </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>     
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> 1       Ribose-P           </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> 2       OMP                </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> 3       1,3-diphopshategl… </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> 4       3-hydroxy-3-methy… </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> 5       3-phosphoglycerate </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> 6       6-phospho-D-gluco… </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> 7       acetyl-CoA         </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> 8       aconitate          </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> 9       adenosine          </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span> 10      ADP                </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #949494;'>""</span><span>           </span><span style='color: #BB0000;'>NA</span><span>    </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>        
-#&gt; </span><span style='color: #949494;'># … with 96 more rows, and 5 more variables: searchTableName &lt;chr&gt;,</span><span>
-#&gt; </span><span style='color: #949494;'>#   label &lt;chr&gt;, peak_label &lt;chr&gt;, method_tag &lt;chr&gt;, pathway &lt;chr&gt;</span><span>
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;fct&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>              <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>  <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>      <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>     <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>     
+#&gt; <span style='color: #BCBCBC;'> 1</span> 1       Ribose-P           <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #BCBCBC;'> 2</span> 2       OMP                <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #BCBCBC;'> 3</span> 3       1,3-diphopshategl… <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #BCBCBC;'> 4</span> 4       3-hydroxy-3-methy… <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #BCBCBC;'> 5</span> 5       3-phosphoglycerate <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #BCBCBC;'> 6</span> 6       6-phospho-D-gluco… <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #BCBCBC;'> 7</span> 7       acetyl-CoA         <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #BCBCBC;'> 8</span> 8       aconitate          <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #BCBCBC;'> 9</span> 9       adenosine          <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #BCBCBC;'>10</span> 10      ADP                <span style='color: #BB0000;'>NA</span>     <span style='color: #BB0000;'>NA</span>         <span style='color: #949494;'>""</span>           <span style='color: #BB0000;'>NA</span>    <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>        
+#&gt; <span style='color: #949494;'># … with 96 more rows, and 5 more variables: searchTableName &lt;chr&gt;,</span>
+#&gt; <span style='color: #949494;'>#   label &lt;chr&gt;, peak_label &lt;chr&gt;, method_tag &lt;chr&gt;, pathway &lt;chr&gt;</span>
 #&gt; 
 #&gt; $samples
-#&gt; </span><span style='color: #949494;'># A tibble: 60 x 10</span><span>
+#&gt; <span style='color: #949494;'># A tibble: 60 × 10</span>
 #&gt;    condition filename month    DR limitation exp_ref extraction reference
-#&gt;        </span><span style='color: #949494;font-style: italic;'>&lt;int&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>          </span><span style='color: #949494;font-style: italic;'>&lt;int&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span>         1 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.055 NH4        exp     filter            53
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span>         2 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.055 NH4        exp     pellet            54
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span>         3 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.173 NH4        exp     filter            53
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span>         4 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.173 NH4        exp     pellet            54
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span>         5 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.21  NH4        exp     filter            53
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span>         6 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.21  NH4        exp     pellet            54
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span>         7 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.29  NH4        exp     filter            53
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span>         8 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.29  NH4        exp     pellet            54
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span>         9 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.056 URA        exp     filter            53
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span>        10 </span><span style='color: #BB0000;'>NA</span><span>       Jun   0.056 URA        exp     pellet            54
-#&gt; </span><span style='color: #949494;'># … with 50 more rows, and 2 more variables: sampleId &lt;fct&gt;, name &lt;chr&gt;</span><span>
+#&gt;        <span style='color: #949494; font-style: italic;'>&lt;int&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>    <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>      <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;int&gt;</span>
+#&gt; <span style='color: #BCBCBC;'> 1</span>         1 <span style='color: #BB0000;'>NA</span>       Jun   0.055 NH4        exp     filter            53
+#&gt; <span style='color: #BCBCBC;'> 2</span>         2 <span style='color: #BB0000;'>NA</span>       Jun   0.055 NH4        exp     pellet            54
+#&gt; <span style='color: #BCBCBC;'> 3</span>         3 <span style='color: #BB0000;'>NA</span>       Jun   0.173 NH4        exp     filter            53
+#&gt; <span style='color: #BCBCBC;'> 4</span>         4 <span style='color: #BB0000;'>NA</span>       Jun   0.173 NH4        exp     pellet            54
+#&gt; <span style='color: #BCBCBC;'> 5</span>         5 <span style='color: #BB0000;'>NA</span>       Jun   0.21  NH4        exp     filter            53
+#&gt; <span style='color: #BCBCBC;'> 6</span>         6 <span style='color: #BB0000;'>NA</span>       Jun   0.21  NH4        exp     pellet            54
+#&gt; <span style='color: #BCBCBC;'> 7</span>         7 <span style='color: #BB0000;'>NA</span>       Jun   0.29  NH4        exp     filter            53
+#&gt; <span style='color: #BCBCBC;'> 8</span>         8 <span style='color: #BB0000;'>NA</span>       Jun   0.29  NH4        exp     pellet            54
+#&gt; <span style='color: #BCBCBC;'> 9</span>         9 <span style='color: #BB0000;'>NA</span>       Jun   0.056 URA        exp     filter            53
+#&gt; <span style='color: #BCBCBC;'>10</span>        10 <span style='color: #BB0000;'>NA</span>       Jun   0.056 URA        exp     pellet            54
+#&gt; <span style='color: #949494;'># … with 50 more rows, and 2 more variables: sampleId &lt;fct&gt;, name &lt;chr&gt;</span>
 #&gt; 
 #&gt; $measurements
-#&gt; </span><span style='color: #949494;'># A tibble: 6,360 x 3</span><span>
+#&gt; <span style='color: #949494;'># A tibble: 6,360 × 3</span>
 #&gt;    groupId sampleId log2_abundance
-#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;fct&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;fct&gt;</span><span>             </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> 1       1                  15.0
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> 1       2                  15.4
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> 1       3                  15.5
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> 1       4                  16.0
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> 1       5                  15.5
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> 1       6                  15.8
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> 1       7                  16.1
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> 1       8                  16.4
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> 1       9                  13.8
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span> 1       10                 14.5
-#&gt; </span><span style='color: #949494;'># … with 6,350 more rows</span><span>
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;fct&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;fct&gt;</span>             <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'> 1</span> 1       1                  15.0
+#&gt; <span style='color: #BCBCBC;'> 2</span> 1       2                  15.4
+#&gt; <span style='color: #BCBCBC;'> 3</span> 1       3                  15.5
+#&gt; <span style='color: #BCBCBC;'> 4</span> 1       4                  16.0
+#&gt; <span style='color: #BCBCBC;'> 5</span> 1       5                  15.5
+#&gt; <span style='color: #BCBCBC;'> 6</span> 1       6                  15.8
+#&gt; <span style='color: #BCBCBC;'> 7</span> 1       7                  16.1
+#&gt; <span style='color: #BCBCBC;'> 8</span> 1       8                  16.4
+#&gt; <span style='color: #BCBCBC;'> 9</span> 1       9                  13.8
+#&gt; <span style='color: #BCBCBC;'>10</span> 1       10                 14.5
+#&gt; <span style='color: #949494;'># … with 6,350 more rows</span>
 #&gt; 
 #&gt; $design
 #&gt; $design$features
-#&gt; </span><span style='color: #949494;'># A tibble: 13 x 2</span><span>
+#&gt; <span style='color: #949494;'># A tibble: 13 × 2</span>
 #&gt;    variable        type               
-#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>           </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>              
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> groupId         feature_primary_key
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> compoundName    character          
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> smiles          character          
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> adductName      character          
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> tagString       character          
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> mz              numeric            
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> rt              numeric            
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> compoundDB      character          
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> searchTableName character          
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span> label           character          
-#&gt; </span><span style='color: #BCBCBC;'>11</span><span> peak_label      character          
-#&gt; </span><span style='color: #BCBCBC;'>12</span><span> method_tag      character          
-#&gt; </span><span style='color: #BCBCBC;'>13</span><span> pathway         character          
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>              
+#&gt; <span style='color: #BCBCBC;'> 1</span> groupId         feature_primary_key
+#&gt; <span style='color: #BCBCBC;'> 2</span> compoundName    character          
+#&gt; <span style='color: #BCBCBC;'> 3</span> smiles          character          
+#&gt; <span style='color: #BCBCBC;'> 4</span> adductName      character          
+#&gt; <span style='color: #BCBCBC;'> 5</span> tagString       character          
+#&gt; <span style='color: #BCBCBC;'> 6</span> mz              numeric            
+#&gt; <span style='color: #BCBCBC;'> 7</span> rt              numeric            
+#&gt; <span style='color: #BCBCBC;'> 8</span> compoundDB      character          
+#&gt; <span style='color: #BCBCBC;'> 9</span> searchTableName character          
+#&gt; <span style='color: #BCBCBC;'>10</span> label           character          
+#&gt; <span style='color: #BCBCBC;'>11</span> peak_label      character          
+#&gt; <span style='color: #BCBCBC;'>12</span> method_tag      character          
+#&gt; <span style='color: #BCBCBC;'>13</span> pathway         character          
 #&gt; 
 #&gt; $design$samples
-#&gt; </span><span style='color: #949494;'># A tibble: 10 x 2</span><span>
+#&gt; <span style='color: #949494;'># A tibble: 10 × 2</span>
 #&gt;    variable   type              
-#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>             
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> condition  integer           
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> filename   character         
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> month      character         
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> DR         numeric           
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> limitation character         
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> exp_ref    character         
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> extraction character         
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> reference  integer           
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> sampleId   sample_primary_key
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span> name       character         
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>      <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>             
+#&gt; <span style='color: #BCBCBC;'> 1</span> sampleId   sample_primary_key
+#&gt; <span style='color: #BCBCBC;'> 2</span> name       character         
+#&gt; <span style='color: #BCBCBC;'> 3</span> filename   character         
+#&gt; <span style='color: #BCBCBC;'> 4</span> month      character         
+#&gt; <span style='color: #BCBCBC;'> 5</span> DR         numeric           
+#&gt; <span style='color: #BCBCBC;'> 6</span> limitation character         
+#&gt; <span style='color: #BCBCBC;'> 7</span> exp_ref    character         
+#&gt; <span style='color: #BCBCBC;'> 8</span> extraction character         
+#&gt; <span style='color: #BCBCBC;'> 9</span> condition  integer           
+#&gt; <span style='color: #BCBCBC;'>10</span> reference  integer           
 #&gt; 
 #&gt; $design$measurements
-#&gt; </span><span style='color: #949494;'># A tibble: 3 x 2</span><span>
+#&gt; <span style='color: #949494;'># A tibble: 3 × 2</span>
 #&gt;   variable       type               
-#&gt;   </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>          </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>              
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> groupId        feature_primary_key
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> sampleId       sample_primary_key 
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> log2_abundance numeric            
+#&gt;   <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;chr&gt;</span>              
+#&gt; <span style='color: #BCBCBC;'>1</span> groupId        feature_primary_key
+#&gt; <span style='color: #BCBCBC;'>2</span> sampleId       sample_primary_key 
+#&gt; <span style='color: #BCBCBC;'>3</span> log2_abundance numeric            
 #&gt; 
 #&gt; $design$feature_pk
 #&gt; [1] "groupId"
@@ -285,7 +285,7 @@ average</p></td>
 #&gt; 
 #&gt; 
 #&gt; attr(,"class")
-#&gt; [1] "triple_omic" "tomic"       "mzroll"     </div></span></pre>
+#&gt; [1] "triple_omic" "tomic"       "mzroll"     </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

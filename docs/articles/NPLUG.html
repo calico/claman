@@ -69,7 +69,7 @@
 
       
 
-      </header><script src="NPLUG_files/header-attrs-2.7/header-attrs.js"></script><script src="NPLUG_files/kePrint-0.0.1/kePrint.js"></script><link href="NPLUG_files/lightable-0.0.1/lightable.css" rel="stylesheet">
+      </header><script src="NPLUG_files/accessible-code-block-0.0.1/empty-anchor.js"></script><script src="NPLUG_files/kePrint-0.0.1/kePrint.js"></script><link href="NPLUG_files/lightable-0.0.1/lightable.css" rel="stylesheet">
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
@@ -1331,7 +1331,7 @@ Glycolysis
   change_threshold <span class="op">=</span> <span class="fl">5</span>
   <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html">facet_grid</a></span><span class="op">(</span><span class="op">~</span> <span class="va">exp_ref</span> <span class="op">+</span> <span class="va">limitation</span>, scales <span class="op">=</span> <span class="st">"free_x"</span>, space <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"Metabolites separated by limiting nutrients"</span><span class="op">)</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/bio_heatmap-1.png" width="800"></p>
+<p><img src="NPLUG_files/figure-html/bio_heatmap-1.png" width="500"></p>
 <p>From this plot, its clear that limiting nutrients have a strong role in shaping the metabolome, while dilution rate creates relatively smooth transitions as each limitation progresses from slow growth (left) to fast growth (right).</p>
 </div>
 <div id="extraction-method-and-batch" class="section level2">
@@ -1349,7 +1349,7 @@ Glycolysis
   <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html">facet_grid</a></span><span class="op">(</span><span class="op">~</span> <span class="va">limitation</span> <span class="op">+</span> <span class="va">extraction</span>, scales <span class="op">=</span> <span class="st">"free_x"</span>, space <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"Metabolites separated by extraction"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>strip.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/extraction_heatmap-1.png" width="800"></p>
+<p><img src="NPLUG_files/figure-html/extraction_heatmap-1.png" width="500"></p>
 <p>From this plot, there are clear, but often relatively minor effects of extraction method on metabolite abundances. Large differences in extraction efficiency are generally seen for nucleotides, where using a filter-based extraction results in greater signal than using pellets.</p>
 <p>To look at month-effects, we can take advantage of the fact that in each month two biological replicate reference cultures were generated. These two cultures can be distinguished in the sample meta-data most easily by subtle differences in their dilution rate.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -1369,7 +1369,7 @@ Glycolysis
   <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html">facet_grid</a></span><span class="op">(</span><span class="op">~</span> <span class="va">month</span> <span class="op">+</span> <span class="va">DR</span>, scales <span class="op">=</span> <span class="st">"free_x"</span>, space <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"References separated by month and distinct cultures (by DR)"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>strip.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/month_heatmap-1.png" width="800"></p>
+<p><img src="NPLUG_files/figure-html/month_heatmap-1.png" width="500"></p>
 <p>From this plot, the biological replicate reference cultures are nearly identical (that’s one reason why chemostats are awesome!) while there are subtle differences between months.</p>
 </div>
 </div>
@@ -1395,7 +1395,7 @@ Glycolysis
 <span class="co">#&gt; 3 sample variables will be dropped since they</span>
 <span class="co">#&gt; - vary for the same grouping_vars:</span>
 <span class="co">#&gt; - samples_tbl_row, sample_name, replicate</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/technical_replicates-1.png" width="800"></p>
+<p><img src="NPLUG_files/figure-html/technical_replicates-1.png" width="400"></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R">
 <span class="va">mzroll_list_distinct_conditions</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/collapse_injections.html">collapse_injections</a></span><span class="op">(</span>
@@ -1406,23 +1406,7 @@ Glycolysis
   <span class="op">)</span>
 <span class="co">#&gt; 3 sample variables will be dropped since they</span>
 <span class="co">#&gt; - vary for the same grouping_vars:</span>
-<span class="co">#&gt; - samples_tbl_row, sample_name, replicate</span>
-<span class="co">#&gt; Warning: `summarise_each_()` was deprecated in dplyr 0.7.0.</span>
-<span class="co">#&gt; Please use `across()` instead.</span>
-<span class="co">#&gt; Warning: `funs_()` was deprecated in dplyr 0.7.0.</span>
-<span class="co">#&gt; Please use `funs()` instead.</span>
-<span class="co">#&gt; See vignette('programming') for more help</span>
-<span class="co">#&gt; Warning: `funs()` was deprecated in dplyr 0.8.0.</span>
-<span class="co">#&gt; Please use a list of either functions or lambdas: </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;   # Simple named list: </span>
-<span class="co">#&gt;   list(mean = mean, median = median)</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;   # Auto named with `tibble::lst()`: </span>
-<span class="co">#&gt;   tibble::lst(mean, median)</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;   # Using lambdas</span>
-<span class="co">#&gt;   list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))</span></code></pre></div>
+<span class="co">#&gt; - samples_tbl_row, sample_name, replicate</span></code></pre></div>
 <table class="table table table-striped">
 <caption>
 samples aggregated over injections
@@ -1800,7 +1784,7 @@ URA_0.056_pellet_a
   <span class="co"># having normalized by the common reference, we can re-center the data</span>
   <span class="co">#  since slow-phosphate limited growth is not a biological reference.</span>
   <span class="fu">romic</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/romic/man/center_tomic.html">center_tomic</a></span><span class="op">(</span>measurement_vars <span class="op">=</span> <span class="st">"normalized_log2_abundance"</span><span class="op">)</span></code></pre></div>
-<p>Have normalized for month and extraction method, we can look at the results as another heatmap.</p>
+<p>Having normalized for month and extraction method, we can look at the results as another heatmap.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">romic</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/romic/man/plot_heatmap.html">plot_heatmap</a></span><span class="op">(</span>
   <span class="va">mzroll_list_normalized</span>,
@@ -1812,7 +1796,7 @@ URA_0.056_pellet_a
   <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html">facet_grid</a></span><span class="op">(</span><span class="op">~</span> <span class="va">exp_ref</span> <span class="op">+</span> <span class="va">limitation</span>, scales <span class="op">=</span> <span class="st">"free_x"</span>, space <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"Post-normalization metabolite abundances"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>strip.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/post_normalized_heatmap-1.png" width="800"></p>
+<p><img src="NPLUG_files/figure-html/post_normalized_heatmap-1.png" width="500"></p>
 <p>From this visualization, we can note that the reference chemostats are uniform for a given peakgroup (these were set to zero during normalization and then offset during re-centering). There does seem to be an issue with the attempted extraction normalization though; having compared each experimental sample to its extraction method matched reference, meaningful differences relative abundance associated with extraction remain.</p>
 </div>
 <div id="accounting-for-extraction-method" class="section level2">
@@ -1843,9 +1827,9 @@ URA_0.056_pellet_a
     <span class="st">"{stringr::str_sub(limitation, 1, 1)}{round(DR,2)}"</span>
   <span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">name</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>
-    name <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html">case_when</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html">n</a></span><span class="op">(</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span> <span class="op">~</span> <span class="va">name</span>,
-                     <span class="cn">TRUE</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">name</span>, <span class="st">"-"</span>, <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html">case_when</a></span><span class="op">(</span>
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html">n</a></span><span class="op">(</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span> <span class="op">~</span> <span class="va">name</span>,
+    <span class="cn">TRUE</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">name</span>, <span class="st">"-"</span>, <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
     <span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">ungroup</a></span><span class="op">(</span><span class="op">)</span>
    
@@ -1863,11 +1847,8 @@ URA_0.056_pellet_a
   cluster_dim <span class="op">=</span> <span class="st">"rows"</span>
   <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html">facet_grid</a></span><span class="op">(</span><span class="op">~</span> <span class="va">limitation</span>, scales <span class="op">=</span> <span class="st">"free_x"</span>, space <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"Final processed metabolite abundances across 25 growth conditions"</span><span class="op">)</span> <span class="op">+</span>
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>strip.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; Warning in if (class(distinct_samples[[sample_var]]) %in% c("factor",</span>
-<span class="co">#&gt; "ordered")) {: the condition has length &gt; 1 and only the first element will be</span>
-<span class="co">#&gt; used</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/extraction_correction-1.png" width="800"></p>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>strip.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p><img src="NPLUG_files/figure-html/extraction_correction-1.png" width="500"></p>
 </div>
 </div>
 <div id="differential-abundance-testing" class="section level1">
@@ -1889,7 +1870,7 @@ URA_0.056_pellet_a
   <span class="st">"PC2"</span>,
   color_var <span class="op">=</span> <span class="st">"limitation"</span>
   <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"Top principal components driving metabolomic variation"</span><span class="op">)</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/static_eda-1.png" width="800"></p>
+<p><img src="NPLUG_files/figure-html/static_eda-1.png" width="400"></p>
 <p>One plot doesn’t quite cut it here. Luckily, romic has some powerful methods for shiny-based interactive analysis that we can leverage here to quickly make plots like these.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">romic</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/romic/man/app_flow.html">app_flow</a></span><span class="op">(</span><span class="va">samples_with_pcs</span><span class="op">)</span>
@@ -1914,11 +1895,10 @@ y^{\text{normalized}} \sim \text{lim} + \text{lim} \cdot \text{DR}
 <span class="co">#&gt;         but claman was able to recover results</span>
 
 <span class="fu"><a href="../reference/plot_pvalues.html">plot_pvalues</a></span><span class="op">(</span><span class="va">regression_significance</span><span class="op">)</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/hypothesis_testing-1.png" width="800"></p>
+<p><img src="NPLUG_files/figure-html/hypothesis_testing-1.png" width="400"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R">
-<span class="fu"><a href="../reference/plot_volcano.html">plot_volcano</a></span><span class="op">(</span><span class="va">regression_significance</span><span class="op">)</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/hypothesis_testing-2.png" width="800"></p>
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_volcano.html">plot_volcano</a></span><span class="op">(</span><span class="va">regression_significance</span><span class="op">)</span></code></pre></div>
+<p><img src="NPLUG_files/figure-html/hypothesis_testing-2.png" width="400"></p>
 </div>
 <div id="plotting-individual-metabolites" class="section level2">
 <h2 class="hasAnchor">
@@ -2265,7 +2245,7 @@ citrulline
   value_var <span class="op">=</span> <span class="st">"normalized_log2_abundance"</span>,
   fill_var <span class="op">=</span> <span class="st">"limitation"</span>
   <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html">scale_fill_brewer</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"Set2"</span><span class="op">)</span></code></pre></div>
-<p><img src="NPLUG_files/figure-html/met_examples_barplot-1.png" width="800"></p>
+<p><img src="NPLUG_files/figure-html/met_examples_barplot-1.png" width="400"></p>
 </div>
 <div id="pathway-analysis" class="section level2">
 <h2 class="hasAnchor">
@@ -2331,13 +2311,13 @@ Amino Acids
 0.0000001
 </td>
 <td style="text-align:right;">
-0.0000006
+0.0000008
 </td>
 <td style="text-align:right;">
 0.8716301
 </td>
 <td style="text-align:right;">
-2.108136
+2.100991
 </td>
 <td style="text-align:right;">
 18
@@ -2351,42 +2331,19 @@ limitationNH4
 Amino Acids
 </td>
 <td style="text-align:right;">
-0.0000023
+0.0000058
 </td>
 <td style="text-align:right;">
-0.0000226
+0.0000585
 </td>
 <td style="text-align:right;">
 -0.8381768
 </td>
 <td style="text-align:right;">
--2.043089
+-2.045399
 </td>
 <td style="text-align:right;">
 18
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-limitationNH4
-</td>
-<td style="text-align:left;">
-TCA cycle
-</td>
-<td style="text-align:right;">
-0.0007502
-</td>
-<td style="text-align:right;">
-0.0037511
-</td>
-<td style="text-align:right;">
-0.8410193
-</td>
-<td style="text-align:right;">
-2.017484
-</td>
-<td style="text-align:right;">
-9
 </td>
 </tr>
 <tr>
@@ -2397,19 +2354,42 @@ limitationLEU
 Amino Acids
 </td>
 <td style="text-align:right;">
-0.0007378
+0.0008684
 </td>
 <td style="text-align:right;">
-0.0073784
+0.0086838
 </td>
 <td style="text-align:right;">
 0.7185995
 </td>
 <td style="text-align:right;">
-1.773362
+1.769358
 </td>
 <td style="text-align:right;">
 18
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+limitationNH4
+</td>
+<td style="text-align:left;">
+TCA cycle
+</td>
+<td style="text-align:right;">
+0.0020356
+</td>
+<td style="text-align:right;">
+0.0101778
+</td>
+<td style="text-align:right;">
+0.8410193
+</td>
+<td style="text-align:right;">
+2.019543
+</td>
+<td style="text-align:right;">
+9
 </td>
 </tr>
 <tr>
@@ -2420,16 +2400,16 @@ limitationNH4:DR
 TCA cycle
 </td>
 <td style="text-align:right;">
-0.0025193
+0.0020733
 </td>
 <td style="text-align:right;">
-0.0125966
+0.0103664
 </td>
 <td style="text-align:right;">
 -0.7638691
 </td>
 <td style="text-align:right;">
--1.987874
+-2.017893
 </td>
 <td style="text-align:right;">
 9
@@ -2443,16 +2423,16 @@ limitationNH4
 Glycolysis
 </td>
 <td style="text-align:right;">
-0.0091217
+0.0044125
 </td>
 <td style="text-align:right;">
-0.0304055
+0.0147084
 </td>
 <td style="text-align:right;">
 0.7275549
 </td>
 <td style="text-align:right;">
-1.886448
+1.858343
 </td>
 <td style="text-align:right;">
 11
@@ -2466,16 +2446,39 @@ limitationPO4
 Purine Synthesis
 </td>
 <td style="text-align:right;">
-0.0040686
+0.0036891
 </td>
 <td style="text-align:right;">
-0.0406858
+0.0368910
 </td>
 <td style="text-align:right;">
 0.7323962
 </td>
 <td style="text-align:right;">
-1.738962
+1.733402
+</td>
+<td style="text-align:right;">
+12
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+limitationPO4:DR
+</td>
+<td style="text-align:left;">
+Purine Synthesis
+</td>
+<td style="text-align:right;">
+0.0064981
+</td>
+<td style="text-align:right;">
+0.0649815
+</td>
+<td style="text-align:right;">
+-0.7096962
+</td>
+<td style="text-align:right;">
+-1.669516
 </td>
 <td style="text-align:right;">
 12
@@ -2489,16 +2492,16 @@ limitationNH4:DR
 Purine Synthesis
 </td>
 <td style="text-align:right;">
-0.0193462
+0.0208041
 </td>
 <td style="text-align:right;">
-0.0644873
+0.0693470
 </td>
 <td style="text-align:right;">
 -0.5833708
 </td>
 <td style="text-align:right;">
--1.699125
+-1.712829
 </td>
 <td style="text-align:right;">
 12
@@ -2512,42 +2515,19 @@ limitationPO4:DR
 Glycolysis
 </td>
 <td style="text-align:right;">
-0.0159305
+0.0139581
 </td>
 <td style="text-align:right;">
-0.0796526
+0.0697903
 </td>
 <td style="text-align:right;">
 0.7327704
 </td>
 <td style="text-align:right;">
-1.652984
+1.629088
 </td>
 <td style="text-align:right;">
 11
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-limitationPO4:DR
-</td>
-<td style="text-align:left;">
-Purine Synthesis
-</td>
-<td style="text-align:right;">
-0.0128088
-</td>
-<td style="text-align:right;">
-0.0796526
-</td>
-<td style="text-align:right;">
--0.7096962
-</td>
-<td style="text-align:right;">
--1.692692
-</td>
-<td style="text-align:right;">
-12
 </td>
 </tr>
 </tbody>
@@ -2563,7 +2543,7 @@ Purine Synthesis
     <span class="st">"Amino acids are depleted during nitrogen limitation"</span>,
     <span class="st">"Note that the x-axis is ranks, and negative values have higher ranks"</span>
     <span class="op">)</span> </code></pre></div>
-<p><img src="NPLUG_files/figure-html/top_enrichments-1.png" width="800"></p>
+<p><img src="NPLUG_files/figure-html/top_enrichments-1.png" width="500"></p>
 </div>
 </div>
 </div>
