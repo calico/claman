@@ -4,6 +4,7 @@
 #'   undetected peaks.
 #'
 #' @inheritParams test_mzroll_list
+#' @param floor_var measurement variable to floor to \code{log2_floor_value}.
 #' @param log2_floor_value minimum value to set for low abundance or
 #'   missing peaks
 #'
@@ -12,7 +13,20 @@
 #' @examples
 #' floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
 #' @export
-floor_peaks <- function(mzroll_list, log2_floor_value = 12) {
+floor_peaks <- function(mzroll_list,
+                        floor_var = "log2_abundance",
+                        log2_floor_value = 12) {
+  test_mzroll_list(mzroll_list)
+
+  valid_floor_var <- setdiff(
+    mzroll_list$design$measurements$variable,
+    c(mzroll_list$design$feature_pk, mzroll_list$design$sample_pk)
+  )
+
+  checkmate::assertChoice(floor_var, valid_floor_var)
+  checkmate::assertNumeric(mzroll_list$measurements[[floor_var]])
+  checkmate::assertNumber(log2_floor_value)
+
   # summarize peaks associated with each peakgroup
 
   missing_peaks <- tidyr::expand_grid(
@@ -24,27 +38,22 @@ floor_peaks <- function(mzroll_list, log2_floor_value = 12) {
       by = c("groupId", "sampleId")
       ) %>%
     tibble::as_tibble() %>%
-    dplyr::mutate(log2_abundance = log2_floor_value)
+    dplyr::mutate(!!rlang::sym(floor_var) := log2_floor_value)
 
   # combine detected peaks with peaks that were missing for some samples
   completed_peaks <- dplyr::bind_rows(
     mzroll_list$measurements %>%
-      dplyr::mutate(log2_abundance = dplyr::case_when(
-        is.na(log2_abundance) ~ log2_floor_value,
-        log2_abundance < log2_floor_value ~ log2_floor_value,
-        log2_abundance >= log2_floor_value ~ log2_abundance
+      dplyr::mutate(!!rlang::sym(floor_var) := dplyr::case_when(
+        is.na(!!rlang::sym(floor_var)) ~ log2_floor_value,
+        !!rlang::sym(floor_var) < log2_floor_value ~ log2_floor_value,
+        !!rlang::sym(floor_var) >= log2_floor_value ~ !!rlang::sym(floor_var)
       )),
     missing_peaks
-  ) %>%
-    dplyr::group_by(groupId) %>%
-    dplyr::mutate(
-      centered_log2_abundance = log2_abundance - mean(log2_abundance)
-    ) %>%
-    dplyr::ungroup()
+  )
 
   mzroll_list$measurements <- completed_peaks
 
-  mzroll_list
+  return(mzroll_list)
 }
 
 #' Normalize Peaks
@@ -138,12 +147,12 @@ normalize_peaks <- function(mzroll_list,
 
   normalization_methods <- tibble::tribble(
     ~method_name, ~function_name,
-    "median polish", "normalize_peaks_median_polish",
-    "loading value", "normalize_peaks_loading_value",
-    "center batches", "normalize_peaks_batch_center",
-    "reference sample", "normalize_peaks_reference_sample",
-    "reference condition", "normalize_peaks_reference_condition",
-    "loess", "normalize_peaks_loess"
+    "median polish", "normalize_peaks.median_polish",
+    "loading value", "normalize_peaks.loading_value",
+    "center batches", "normalize_peaks.batch_center",
+    "reference sample", "normalize_peaks.reference_sample",
+    "reference condition", "normalize_peaks.reference_condition",
+    "loess", "normalize_peaks.loess"
   )
 
   checkmate::assertChoice(
@@ -195,7 +204,7 @@ normalize_peaks <- function(mzroll_list,
 #' @inheritParams floor_peaks
 #'
 #' @rdname normalize_peaks
-normalize_peaks_median_polish <- function(mzroll_list,
+normalize_peaks.median_polish <- function(mzroll_list,
                                           quant_peak_varname,
                                           norm_peak_varname,
                                           log2_floor_value = NA) {
@@ -296,7 +305,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
 #' @param loading_varname sample variable used for adjustment
 #'
 #' @rdname normalize_peaks
-normalize_peaks_loading_value <- function(mzroll_list,
+normalize_peaks.loading_value <- function(mzroll_list,
                                           quant_peak_varname,
                                           norm_peak_varname,
                                           loading_varname,
@@ -384,7 +393,7 @@ normalize_peaks_loading_value <- function(mzroll_list,
 #' @param centering_fxn function to use when centering (mean, median, ...)
 #'
 #' @rdname normalize_peaks
-normalize_peaks_batch_center <- function(mzroll_list,
+normalize_peaks.batch_center <- function(mzroll_list,
                                          quant_peak_varname,
                                          norm_peak_varname,
                                          batch_varnames,
@@ -435,13 +444,13 @@ normalize_peaks_batch_center <- function(mzroll_list,
 #'
 #' Compare each sample to the reference samples within the same batch
 #'
-#' @inheritParams normalize_peaks_batch_center
+#' @inheritParams normalize_peaks.batch_center
 #' @param reference_varname variable specifying which samples are references
 #' @param reference_values values of \code{reference_varname} indicating
 #'   reference samples
 #'
 #' @rdname normalize_peaks
-normalize_peaks_reference_sample <- function(mzroll_list,
+normalize_peaks.reference_sample <- function(mzroll_list,
                                              quant_peak_varname,
                                              norm_peak_varname,
                                              batch_varnames,
@@ -519,16 +528,16 @@ normalize_peaks_reference_sample <- function(mzroll_list,
 #'
 #' Compare each sample to the reference samples within the same batch
 #'
-#' @inheritParams normalize_peaks_batch_center
+#' @inheritParams normalize_peaks.batch_center
 #' @param condition_varname variable specifying each sample's condition
-#' @inheritParams normalize_peaks_reference_sample
+#' @inheritParams normalize_peaks.reference_sample
 #'
 #' @details
 #' reference_varname specifies which condition to contrast a given sample to
 #'   (using the condition values from condition_varname)
 #'
 #' @rdname normalize_peaks
-normalize_peaks_reference_condition <- function(mzroll_list,
+normalize_peaks.reference_condition <- function(mzroll_list,
                                                 quant_peak_varname,
                                                 norm_peak_varname,
                                                 condition_varname = "condition #",
@@ -647,12 +656,12 @@ normalize_peaks_reference_condition <- function(mzroll_list,
   return(mzroll_list)
 }
 
-#' @inheritParams normalize_peaks_batch_center
+#' @inheritParams normalize_peaks.batch_center
 #' @param weights_tribble a table containing weights and sample variables to
 #'   match them to.
 #'
 #' @rdname normalize_peaks
-normalize_peaks_loess <- function(mzroll_list,
+normalize_peaks.loess <- function(mzroll_list,
                                   quant_peak_varname,
                                   norm_peak_varname,
                                   weights_tribble = NULL,

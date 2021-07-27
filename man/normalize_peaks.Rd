@@ -2,12 +2,12 @@
 % Please edit documentation in R/mutate_mzroll_list.R
 \name{normalize_peaks}
 \alias{normalize_peaks}
-\alias{normalize_peaks_median_polish}
-\alias{normalize_peaks_loading_value}
-\alias{normalize_peaks_batch_center}
-\alias{normalize_peaks_reference_sample}
-\alias{normalize_peaks_reference_condition}
-\alias{normalize_peaks_loess}
+\alias{normalize_peaks.median_polish}
+\alias{normalize_peaks.loading_value}
+\alias{normalize_peaks.batch_center}
+\alias{normalize_peaks.reference_sample}
+\alias{normalize_peaks.reference_condition}
+\alias{normalize_peaks.loess}
 \title{Normalize Peaks}
 \usage{
 normalize_peaks(
@@ -18,14 +18,14 @@ normalize_peaks(
   ...
 )
 
-normalize_peaks_median_polish(
+normalize_peaks.median_polish(
   mzroll_list,
   quant_peak_varname,
   norm_peak_varname,
   log2_floor_value = NA
 )
 
-normalize_peaks_loading_value(
+normalize_peaks.loading_value(
   mzroll_list,
   quant_peak_varname,
   norm_peak_varname,
@@ -33,7 +33,7 @@ normalize_peaks_loading_value(
   log2_floor_value = NA
 )
 
-normalize_peaks_batch_center(
+normalize_peaks.batch_center(
   mzroll_list,
   quant_peak_varname,
   norm_peak_varname,
@@ -42,7 +42,7 @@ normalize_peaks_batch_center(
   centering_fxn = mean
 )
 
-normalize_peaks_reference_sample(
+normalize_peaks.reference_sample(
   mzroll_list,
   quant_peak_varname,
   norm_peak_varname,
@@ -52,7 +52,7 @@ normalize_peaks_reference_sample(
   log2_floor_value = NA
 )
 
-normalize_peaks_reference_condition(
+normalize_peaks.reference_condition(
   mzroll_list,
   quant_peak_varname,
   norm_peak_varname,
@@ -61,7 +61,7 @@ normalize_peaks_reference_condition(
   log2_floor_value = NA
 )
 
-normalize_peaks_loess(
+normalize_peaks.loess(
   mzroll_list,
   quant_peak_varname,
   norm_peak_varname,
@@ -162,7 +162,7 @@ normalize_peaks(
   quant_peak_varname = "log2_abundance",
   norm_peak_varname = "normalized_log2_abundance",
   loading_varname = "DR"
-)
+  )
 
 normalize_peaks(
   nplug_mzroll_augmented,
@@ -191,4 +191,5 @@ normalize_peaks(
   reference_varname = "exp_ref",
   reference_values = "ref"
 )
+
 }

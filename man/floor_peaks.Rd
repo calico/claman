@@ -4,7 +4,7 @@
 \alias{floor_peaks}
 \title{Floor Peaks}
 \usage{
-floor_peaks(mzroll_list, log2_floor_value = 12)
+floor_peaks(mzroll_list, floor_var = "log2_abundance", log2_floor_value = 12)
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or
@@ -16,6 +16,8 @@ floor_peaks(mzroll_list, log2_floor_value = 12)
   \item{samples: one row per unique sample (defined by a unique sampleId)},
   \item{measurements: one row per peak (samples x peakgroups)}
   }}
+
+\item{floor_var}{measurement variable to floor to \code{log2_floor_value}.}
 
 \item{log2_floor_value}{minimum value to set for low abundance or
 missing peaks}
@@ -29,4 +31,5 @@ Set a minimum peak abundance of floor_value for low abundance and
 }
 \examples{
 floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
+
 }
