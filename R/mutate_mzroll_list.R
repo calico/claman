@@ -4,9 +4,9 @@
 #'   undetected peaks.
 #'
 #' @inheritParams test_mzroll_list
-#' @param floor_var measurement variable to floor to \code{log2_floor_value}.
 #' @param log2_floor_value minimum value to set for low abundance or
 #'   missing peaks
+#' @param floor_var measurement variable to floor to \code{log2_floor_value}.
 #'
 #' @return \code{\link{process_mzroll}}
 #'
@@ -14,8 +14,8 @@
 #' floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
 #' @export
 floor_peaks <- function(mzroll_list,
-                        floor_var = "log2_abundance",
-                        log2_floor_value = 12) {
+                        log2_floor_value = 12,
+                        floor_var = "log2_abundance") {
   test_mzroll_list(mzroll_list)
 
   valid_floor_var <- setdiff(

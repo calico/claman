@@ -81,8 +81,33 @@ test_that("Test reference samples and reference conditions", {
   )
 })
 
+test_that("Flooring adds missing peaks", {
+  
+  # discard random measurements representing peaks that weren't
+  # picked due to being below the limit of detection
+  
+  nplug_with_missing_values <- nplug_mzroll_augmented
+  nplug_with_missing_values$measurements <- nplug_mzroll_augmented$measurements %>%
+    dplyr::anti_join(
+      nplug_mzroll_augmented$measurements %>%
+        dplyr::sample_n(100),
+      by = c("groupId", "sampleId")
+    )
+  
+  floored_nplug <- floor_peaks(nplug_with_missing_values)
+  
+  peakgroups_with_missing_vals <- floored_nplug$measurements %>%
+    dplyr::count(groupId) %>%
+    dplyr::filter(n != max(n))
+  
+  expect_equal(nrow(peakgroups_with_missing_vals), 0)
+})
+
 test_that("Flooring works and is maintained", {
-  floored_peaks <- claman::floor_peaks(nplug_mzroll_augmented, 12)
+  floored_peaks <- claman::floor_peaks(
+    nplug_mzroll_augmented,
+    log2_floor_value = 12
+    )
 
   expect_equal(
     floored_peaks$measurements$log2_abundance >= 12,
