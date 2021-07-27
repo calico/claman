@@ -293,7 +293,6 @@ normalize_peaks_median_polish <- function(mzroll_list,
   return(mzroll_list)
 }
 
-
 #' Normalize Peaks - Loading Value
 #'
 #' Using a sample-level summary, such as number of cells, adjust all values.
