@@ -427,7 +427,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
   # iterate through mzrollDB
 
   max_groupId <- 0
-  mzroll_indecies <- seq_len(nrow(mzroll_list_nest))
+  mzroll_indices <- seq_len(nrow(mzroll_list_nest))
 
   # samples defined upfront as the union of samples from the sample sheet
   # that are observed "samples_tbl_row" will be the new sampleId
@@ -440,7 +440,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
   # peaks and peakgroups are updated to unique values across each method
   # and sampleId is updated to "samples_tbl_row"
 
-  for (a_mzroll_index in mzroll_indecies) {
+  for (a_mzroll_index in mzroll_indices) {
     one_mzroll_list <- mzroll_list_nest$mzroll_list[[a_mzroll_index]]
     checkmate::assertClass(one_mzroll_list, "tomic")
     checkmate::assertClass(one_mzroll_list, "mzroll")
