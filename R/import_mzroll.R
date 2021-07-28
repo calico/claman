@@ -7,16 +7,13 @@
 #'   features which were manually validated.
 #' @param method_tag what method was run (for the purpose of matching
 #'   meta-data and aggregating).
-#' @param sample_metadata (optional) table of metadata to associate
-#'   with particular samples
 #'
 #' @return a **triple_omic** from **romic** containing three tibbles:
 #' \itemize{
 #'   \item{features: one row per unique analyte (defined by a unique
 #'     groupId)},
 #'   \item{samples: one row per unique sample (defined by a unique sampleId)},
-#'   \item{measurements: one row per peak (samples x peakgroups)},
-#'   \item{sample_metadata: table of additional information associated with each sample}
+#'   \item{measurements: one row per peak (samples x peakgroups)}
 #'   }
 #'  And, a design list which tracks the variables in each table.
 #'
@@ -27,14 +24,11 @@
 process_mzroll <- function(mzroll_db_path,
                            only_identified = TRUE,
                            validate = FALSE,
-                           method_tag = "",
-                           sample_metadata = tibble::tibble()) {
-  
+                           method_tag = "") {
   checkmate::assertFileExists(mzroll_db_path)
   checkmate::assertLogical(only_identified, len = 1)
   checkmate::assertLogical(validate, len = 1)
   checkmate::assertString(method_tag)
-  checkmate::assertDataFrame(sample_metadata)
 
   # connect to SQLite .mzrollDB database
   mzroll_db_con <- create_sqlite_con(mzroll_db_path)
@@ -169,15 +163,7 @@ process_mzroll <- function(mzroll_db_path,
     "number of samples in mzroll_list$samples: {nrow(mzroll_list$samples)}"
   ))
 
-  if (nrow(sample_metadata) > 0) {
-    samples_w_metadata <- augment_samples_with_metadata(mzroll_list$samples, sample_metadata)
-    if (!is.null(samples_w_metadata)){
-      mzroll_list$samples <- samples_w_metadata
-    }
-  } else {
-    # if no metadata is added to the samples table, this test can be run
-    test_mzroll_list(mzroll_list) 
-  }
+  test_mzroll_list(mzroll_list)
 
   return(mzroll_list)
 }
@@ -559,119 +545,3 @@ mzroll_multi_qc <- function(mzroll_list) {
 
   return(invisible(0))
 }
-
-#' Augment Samples with Metadata
-#'
-#' @param samples samples table generated within \link{process_mzroll}.
-#' @param metadata_table sample metadata table
-#'
-#' @return samples with added metadata from sample_sheet_list
-augment_samples_with_metadata <- function(samples, metadata_table) {
-  
-  metadata_table_cols <- colnames(metadata_table)
-  
-  is_has_columns = ("tube label" %in% metadata_table_cols &&
-      "MS ID string" %in% metadata_table_cols &&
-      "MS ID string alternative" %in% metadata_table_cols
-      ) 
-  
-  if (!is_has_columns) {
-    cat("supplied metadata_table is missing one or more of required `tube label`, `MS ID string`, and `MS ID string alternative` columns.")
-    return(NULL)
-  }
-  
-  ms_id_strings <- metadata_table %>%
-    dplyr::select(`tube label`, `MS ID string`, `MS ID string alternative`) %>%
-    dplyr::mutate(
-      `MS ID string` = as.character(`MS ID string`),
-      `MS ID string alternative` = as.character(`MS ID string alternative`)
-    ) %>%
-    tidyr::gather("ID string column", "ID string entry", -`tube label`) %>%
-    dplyr::filter(!is.na(`ID string entry`))
-  
-  # check for sample duplication
-  duplicated_samples <- samples %>%
-    dplyr::count(name) %>%
-    dplyr::filter(n > 1)
-  
-  if (nrow(duplicated_samples) != 0) {
-    stop(nrow(duplicated_samples), " samples were duplicated likely due to
-         https://github.com/calico/mass_spec/issues/348, please patch your dataset
-         with calicomics::issue_348_patch(mzroll_db_path)")
-  }
-  
-  sample_ms_id_string_matches <- samples %>%
-    tidyr::crossing(ms_id_strings) %>%
-    dplyr::filter(stringr::str_detect(name, `ID string entry`))
-  
-  sample_multimatch <- sample_ms_id_string_matches %>%
-    dplyr::count(name) %>%
-    dplyr::filter(n > 1)
-  
-  if (nrow(sample_multimatch) != 0) {
-    multimatch_details <- sample_ms_id_string_matches %>%
-      dplyr::semi_join(sample_multimatch, by = "name") %>%
-      dplyr::arrange(name) %>%
-      dplyr::mutate(out_string = glue::glue(
-        "name: {name}, match_tube: {`tube label`}, id string column: {`ID string column`}, id string entry: {`ID string entry`}"
-      )) %>%
-      {
-        paste(.$out_string, collapse = "\n")
-      }
-    
-    stop(
-      nrow(sample_multimatch),
-      " experimental samples matched multiple MS ID strings: ",
-      paste(sample_multimatch$name, collapse = ", "),
-      "\nDetails:\n",
-      multimatch_details
-    )
-  }
-  
-  condition_multimatch <- sample_ms_id_string_matches %>%
-    dplyr::count(`tube label`) %>%
-    dplyr::filter(n > 1)
-  
-  if (nrow(condition_multimatch) != 0) {
-    multimatch_details <- sample_ms_id_string_matches %>%
-      dplyr::semi_join(condition_multimatch, by = "tube label") %>%
-      dplyr::arrange(`tube label`) %>%
-      dplyr::mutate(out_string = glue::glue(
-        "tube: {`tube label`}, name_match: {name}, id string column: {`ID string column`}, id string entry: {`ID string entry`}"
-      )) %>%
-      {
-        paste(.$out_string, collapse = "\n")
-      }
-    
-    stop(
-      nrow(sample_multimatch),
-      " tubes matched multiple experimental samples: ",
-      paste(condition_multimatch$`tube label`, collapse = ", "),
-      "\nDetails:\n",
-      multimatch_details
-    )
-  }
-  
-  # add sample fields for matching ID strings
-  
-  matched_augmented_samples <- samples %>%
-    dplyr::inner_join(sample_ms_id_string_matches %>%
-                        dplyr::select(sampleId, `tube label`) %>%
-                        dplyr::left_join(metadata_table, by = "tube label"),
-                      by = "sampleId"
-    )
-  
-  unmatched_samples <- samples %>%
-    dplyr::anti_join(sample_ms_id_string_matches, by = "sampleId")
-  
-  if (nrow(unmatched_samples) != 0) {
-    warning(
-      nrow(unmatched_samples),
-      " experimental samples were not matched to MS ID strings. Their measurements will be discarded.:\n  ",
-      paste(unmatched_samples$name, collapse = "\n  ")
-    )
-  }
-  
-  matched_augmented_samples
-  }
-
