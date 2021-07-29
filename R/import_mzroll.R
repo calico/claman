@@ -519,6 +519,20 @@ mzroll_multi_qc <- function(mzroll_list) {
     dplyr::filter_all(dplyr::any_vars(is.na(.)))
 
   if (nrow(missed_matches) != 0) {
+
+    missed_matches_data <- mzroll_list$samples %>%
+      dplyr::filter(samples_tbl_row %in% missed_matches$samples_tbl_row)
+
+    missed_matches_w_data <- dplyr::inner_join(missed_matches, missed_matches_data,
+                                               by = c("samples_tbl_row")) %>%
+      dplyr::mutate(out = paste0("Sample Description: '",
+                                 `sample description`,
+                                 "', Sample Variable 1: '",
+                                 `sample variable 1`,
+                                 "', Sample Variable 2: '",
+                                 `sample variable 2`,
+                                 "'\n"))
+
     missed_matches_warning <- missed_matches %>%
       tidyr::gather(
         -samples_tbl_row,
@@ -539,7 +553,9 @@ mzroll_multi_qc <- function(mzroll_list) {
         this will cause downstream problems.
         Either update your sample sheet or analyze each method separately.
         Details:\n",
-      missed_matches_warning
+      missed_matches_warning,"\n",
+      "Metadata associated with samples missing matches:\n",
+      missed_matches_w_data$out
     )
   }
 
