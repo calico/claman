@@ -16,7 +16,7 @@
 merge_samples_tbl <- function(mzroll_list,
                               samples_tbl,
                               id_strings,
-                              exact = TRUE) {
+                              exact = FALSE) {
   checkmate::assertClass(mzroll_list, "tomic")
   checkmate::assertClass(mzroll_list, "mzroll")
   checkmate::assertDataFrame(samples_tbl)

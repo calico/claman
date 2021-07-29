@@ -346,7 +346,7 @@ process_mzroll_multi <- function(mzroll_paths,
                                  id_strings,
                                  only_identified = TRUE,
                                  validate = FALSE,
-                                 exact = TRUE) {
+                                 exact = FALSE) {
   checkmate::assertDataFrame(mzroll_paths, min.rows = 2)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
     stop("mzroll_paths must contain two columns: method_tag & mnzroll_db_path")
