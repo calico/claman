@@ -123,7 +123,8 @@ merge_samples_tbl <- function(mzroll_list,
     warning(
       nrow(unmatched_samples),
       " experimental samples were not matched to ID strings. Their measurements will be discarded.:\n  ",
-      paste(unmatched_samples$name, collapse = "\n  ")
+      paste(unmatched_samples$name, collapse = "\n  "),
+      "\n"
     )
   }
 
