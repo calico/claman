@@ -16,7 +16,7 @@
 merge_samples_tbl <- function(mzroll_list,
                               samples_tbl,
                               id_strings,
-                              exact = TRUE) {
+                              exact = FALSE) {
   checkmate::assertClass(mzroll_list, "tomic")
   checkmate::assertClass(mzroll_list, "mzroll")
   checkmate::assertDataFrame(samples_tbl)
@@ -123,7 +123,8 @@ merge_samples_tbl <- function(mzroll_list,
     warning(
       nrow(unmatched_samples),
       " experimental samples were not matched to ID strings. Their measurements will be discarded.:\n  ",
-      paste(unmatched_samples$name, collapse = "\n  ")
+      paste(unmatched_samples$name, collapse = "\n  "),
+      "\n"
     )
   }
 

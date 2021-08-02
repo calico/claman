@@ -4,7 +4,7 @@
 \alias{merge_samples_tbl}
 \title{Merge Samples Table}
 \usage{
-merge_samples_tbl(mzroll_list, samples_tbl, id_strings, exact = TRUE)
+merge_samples_tbl(mzroll_list, samples_tbl, id_strings, exact = FALSE)
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or

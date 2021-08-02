@@ -10,7 +10,7 @@ process_mzroll_multi(
   id_strings,
   only_identified = TRUE,
   validate = FALSE,
-  exact = TRUE
+  exact = FALSE
 )
 }
 \arguments{

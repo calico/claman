@@ -346,7 +346,7 @@ process_mzroll_multi <- function(mzroll_paths,
                                  id_strings,
                                  only_identified = TRUE,
                                  validate = FALSE,
-                                 exact = TRUE) {
+                                 exact = FALSE) {
   checkmate::assertDataFrame(mzroll_paths, min.rows = 2)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
     stop("mzroll_paths must contain two columns: method_tag & mnzroll_db_path")
@@ -427,7 +427,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
   # iterate through mzrollDB
 
   max_groupId <- 0
-  mzroll_indecies <- seq_len(nrow(mzroll_list_nest))
+  mzroll_indices <- seq_len(nrow(mzroll_list_nest))
 
   # samples defined upfront as the union of samples from the sample sheet
   # that are observed "samples_tbl_row" will be the new sampleId
@@ -440,7 +440,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
   # peaks and peakgroups are updated to unique values across each method
   # and sampleId is updated to "samples_tbl_row"
 
-  for (a_mzroll_index in mzroll_indecies) {
+  for (a_mzroll_index in mzroll_indices) {
     one_mzroll_list <- mzroll_list_nest$mzroll_list[[a_mzroll_index]]
     checkmate::assertClass(one_mzroll_list, "tomic")
     checkmate::assertClass(one_mzroll_list, "mzroll")
@@ -519,6 +519,20 @@ mzroll_multi_qc <- function(mzroll_list) {
     dplyr::filter_all(dplyr::any_vars(is.na(.)))
 
   if (nrow(missed_matches) != 0) {
+
+    missed_matches_data <- mzroll_list$samples %>%
+      dplyr::filter(samples_tbl_row %in% missed_matches$samples_tbl_row)
+
+    missed_matches_w_data <- dplyr::inner_join(missed_matches, missed_matches_data,
+                                               by = c("samples_tbl_row")) %>%
+      dplyr::mutate(out = paste0("Sample Description: '",
+                                 `sample description`,
+                                 "', Sample Variable 1: '",
+                                 `sample variable 1`,
+                                 "', Sample Variable 2: '",
+                                 `sample variable 2`,
+                                 "'\n"))
+
     missed_matches_warning <- missed_matches %>%
       tidyr::gather(
         -samples_tbl_row,
@@ -539,7 +553,9 @@ mzroll_multi_qc <- function(mzroll_list) {
         this will cause downstream problems.
         Either update your sample sheet or analyze each method separately.
         Details:\n",
-      missed_matches_warning
+      missed_matches_warning,"\n",
+      "Metadata associated with samples missing matches:\n",
+      missed_matches_w_data$out
     )
   }
 
