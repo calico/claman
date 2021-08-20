@@ -1,0 +1,64 @@
+Package: claman
+Type: Package
+Title: Streamlined Analysis of Metabolomics and Lipidomics Data
+Version: 1.0.0
+Authors@R: c(
+    person(
+      given = "Sean",
+      family = "Hackett",
+      email = "sean@calicolabs.com",
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0002-9553-4341")
+      ),
+    person(
+      given = "Phil",
+      family = "Seitzer",
+      email = "phillipseitzer@calicolabs.com",
+      role = "aut"
+      ),
+    person(
+      given = "Calico Life Sciences LLC",
+      role = c("cph", "fnd")
+      )
+    )
+Maintainer: Sean Hackett <sean@calicolabs.com>
+Description: Provides a suite of methods for processing and visualizing LC-MS data.
+    (1) Converting mzrollDB SQL objects into mzroll_list summaries of peaks (measurements), samples and peakgroups (features).
+    (2) Adding metadata about experimental design to samples.
+    (3) Normalizing and filtering abundances.
+    (4) Exploratory visualization using heatmaps.
+    (5) Basic feature-wise statistical analysis using regression.
+    (6) Summary plots of metabolite/lipids of interest.
+License: MIT + file LICENSE
+Depends: R (>= 3.1.0)
+Imports: broom,
+    checkmate,
+    DBI,
+    debugr,
+    dplyr,
+    ggplot2,
+    glue,
+    purrr,
+    readr,
+    reshape2,
+    rlang,
+    romic,
+    RSQLite,
+    stringr,
+    tibble,
+    tidyr (>= 1.0.0)
+Suggests: dbplyr,
+    fgsea,
+    grDevices,
+    hexbin,
+    kableExtra,
+    knitr,
+    lubridate,
+    plotly,
+    qvalue,
+    rmarkdown,
+    testthat
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+VignetteBuilder: knitr
