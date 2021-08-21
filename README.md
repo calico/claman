@@ -4,6 +4,11 @@
 
 <img src="/assets/logo/clam_logo-01.png" width="300">
 
+<!-- badges: start -->
+[![R build status](https://github.com/calico/claman/workflows/R-CMD-check/badge.svg)](https://github.com/calico/claman/actions)
+<!-- badges: end -->
+
+
 # Overview
 
 Claman provides methods for analyzing mzroll metabolomics/lipidomics datasets generated using [MAVEN](https://github.com/eugenemel/maven).
