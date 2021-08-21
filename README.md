@@ -8,7 +8,6 @@
 [![R build status](https://github.com/calico/claman/workflows/R-CMD-check/badge.svg)](https://github.com/calico/claman/actions)
 <!-- badges: end -->
 
-
 # Overview
 
 Claman provides methods for analyzing mzroll metabolomics/lipidomics datasets generated using [MAVEN](https://github.com/eugenemel/maven).
@@ -29,8 +28,7 @@ remotes::install_github('calico/claman', dependencies = TRUE)
 remotes::install_github(
   'calico/claman',
   dependencies = TRUE,
-  build = TRUE,
-  build_opts = c("--no-resave-data", "--no-manual")
+  build_vignettes = TRUE
   )
 ```
 
@@ -45,7 +43,7 @@ library(claman)
 Once claman is installed, run package vignette(s):
 
 ```r
-vignette(package = "claman", topic = "metabolomics_example")
+vignette(package = "claman", topic = "NPLUG")
 ```
 
 And, check out claman's [pkgdown site](https://calico.github.io/claman/) for organized documentation.
