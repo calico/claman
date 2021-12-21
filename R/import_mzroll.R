@@ -195,14 +195,15 @@ process_metabolon <- function(peak_areas_path,
   anno <- read.csv(file=chem_anno_path)
   metadata <- read.csv(file=metadata_path)
   
-  columns_to_pivot <- columns.to.pivot[2:length(columns.to.pivot)]
+  columns_to_pivot <- colnames(peaks)
+  columns_to_pivot <- columns_to_pivot[2:length(columns_to_pivot)]
   samples <- metadata %>%
     select(PARENT_SAMPLE_NAME,CLIENT_SAMPLE_NUMBER) %>%
     rename(sampleName=PARENT_SAMPLE_NAME,sampleId=CLIENT_SAMPLE_NUMBER) %>%
     mutate(sampleId = factor(sampleId, levels = sampleId))
   
   peaks_updated_noIds <- peaks %>% 
-    pivot_longer(cols = columns_to_pivot) %>% 
+    pivot_longer(cols = all_of(columns_to_pivot)) %>% 
     mutate(groupId = as.integer(name),
            sampleName = PARENT_SAMPLE_NAME,
            peakAreaTop = value) %>% # claman is hard-coded to use peakAreaTop as quant method from mzrolldb files
@@ -252,9 +253,9 @@ process_metabolon <- function(peak_areas_path,
   
   # combine metabolon data into mzroll_list with added metadata
   mzroll_list <- romic::create_triple_omic(
-    measurement_df = peaks.updated,
-    feature_df = peakgroups.updated,
-    sample_df = samples.updated,
+    measurement_df = peaks_updated,
+    feature_df = peakgroups_updated,
+    sample_df = samples_updated,
     feature_pk = "groupId",
     sample_pk = "sampleId",
     omic_type_tag = "mzroll"
