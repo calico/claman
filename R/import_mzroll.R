@@ -192,8 +192,7 @@ process_metabolon <- function(peak_areas,
                               metadata_info,
                               peak_floor_intensity = 4096
                               ) {
-  library(tidyverse)
-  
+
   checkmate::assertNumeric(peak_floor_intensity)
   
   # data tables
@@ -222,15 +221,15 @@ process_metabolon <- function(peak_areas,
     }
     
     if(!"SMILES" %in% colnames(anno)) {
-      anno <- anno %>%  mutate(SMILES = "")
+      anno <- anno %>% mutate(SMILES = "")
     }
     
     if(!"PLATFORM" %in% colnames(anno)) {
-      anno <- anno %>%  mutate(PLATFORM = "")
+      anno <- anno %>% mutate(PLATFORM = "")
     }
     
     if(!"TYPE" %in% colnames(anno)) {
-      anno <- anno %>%  mutate(TYPE = "")
+      anno <- anno %>% mutate(TYPE = "")
     }
     
     
@@ -252,30 +251,30 @@ process_metabolon <- function(peak_areas,
   columns_to_pivot <- colnames(peaks)
   columns_to_pivot <- columns_to_pivot[2:length(columns_to_pivot)]
   samples <- metadata %>%
-    select(PARENT_SAMPLE_NAME,CLIENT_SAMPLE_NUMBER) %>%
-    rename(sampleName=PARENT_SAMPLE_NAME,sampleId=CLIENT_SAMPLE_NUMBER) %>%
-    mutate(sampleId = factor(sampleId, levels = sampleId))
+    dplyr::select(PARENT_SAMPLE_NAME,CLIENT_SAMPLE_NUMBER) %>%
+    dplyr::rename(sampleName=PARENT_SAMPLE_NAME,sampleId=CLIENT_SAMPLE_NUMBER) %>%
+    dplyr::mutate(sampleId = factor(sampleId, levels = sampleId))
   
   peaks_updated_noIds <- peaks %>% 
-    pivot_longer(cols = all_of(columns_to_pivot)) %>% 
-    mutate(groupId = as.integer(gsub("[^0-9.-]", "",name)), # some versions of Metabolon include non-numeric characters for groupId
+    tidyr::pivot_longer(cols = all_of(columns_to_pivot)) %>% 
+    dplyr::mutate(groupId = as.integer(gsub("[^0-9.-]", "",name)), # some versions of Metabolon include non-numeric characters for groupId
            sampleName = PARENT_SAMPLE_NAME,
            peakAreaTop = value) %>% # claman is hard-coded to use peakAreaTop as quant method from mzrolldb files
-    select(-name, -PARENT_SAMPLE_NAME, -value) %>%
-    left_join(samples, by="sampleName") %>%
-    mutate(peakAreaTop = ifelse(is.na(peakAreaTop), peak_floor_intensity, peakAreaTop)) %>%
+    dplyr::select(-name, -PARENT_SAMPLE_NAME, -value) %>%
+    dplyr::left_join(samples, by="sampleName") %>%
+    dplyr::mutate(peakAreaTop = ifelse(is.na(peakAreaTop), peak_floor_intensity, peakAreaTop)) %>%
     dplyr::group_by(groupId) %>%
     dplyr::mutate(
       log2_abundance = log2(peakAreaTop),
       centered_log2_abundance = log2_abundance - mean(log2_abundance)) %>%
-    ungroup()
+    dplyr::ungroup()
   
   peakId <- seq(length = nrow(peaks_updated_noIds))
   peaks_updated <- cbind(peakId, peaks_updated_noIds)
   
   peakgroups <- anno %>%
-    select(CHEM_ID, CHEMICAL_NAME, SMILES, PLATFORM, TYPE) %>%
-    rename(
+    dplyr::select(CHEM_ID, CHEMICAL_NAME, SMILES, PLATFORM, TYPE) %>%
+    dplyr::rename(
       groupId=CHEM_ID,
       compoundName=CHEMICAL_NAME,
       smiles=SMILES,
@@ -283,7 +282,7 @@ process_metabolon <- function(peak_areas,
     )
   
   peakgroups_updated <- peakgroups %>%
-    mutate(tagString = " ",
+    dplyr::mutate(tagString = " ",
            mz= 100, # dummy value
            rt = 10, # dummy value
            compoundDB = "Metabolon",
@@ -293,7 +292,7 @@ process_metabolon <- function(peak_areas,
     )
   
   samples_updated<- samples %>%
-    rename(name=sampleName)
+    dplyr::rename(name=sampleName)
   
   peaks_updated$groupId <- factor(
     peaks_updated$groupId,
