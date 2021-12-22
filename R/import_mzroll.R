@@ -206,32 +206,32 @@ process_metabolon <- function(peak_areas,
     
     # rename columns to handle different versions of Metabolon
     if(!"PARENT_SAMPLE_NAME" %in% colnames(peaks) && "SAMPLE_NAME" %in% colnames(peaks)) {
-      peaks <- peaks %>% rename(PARENT_SAMPLE_NAME = SAMPLE_NAME)
+      peaks <- peaks %>% dplyr::rename(PARENT_SAMPLE_NAME = SAMPLE_NAME)
     }
     
     if(!"PARENT_SAMPLE_NAME" %in% colnames(metadata) && "SAMPLE_NAME" %in% colnames(metadata)) {
-      metadata <- metadata %>% rename(PARENT_SAMPLE_NAME = SAMPLE_NAME)
+      metadata <- metadata %>% dplyr::rename(PARENT_SAMPLE_NAME = SAMPLE_NAME)
     }
     
     if(!"CLIENT_SAMPLE_NUMBER" %in% colnames(metadata) && "METAB" %in% colnames(metadata)) {
-      metadata <- metadata %>% rename(CLIENT_SAMPLE_NUMBER = METAB)
+      metadata <- metadata %>% dplyr::rename(CLIENT_SAMPLE_NUMBER = METAB)
     }
     
     if(!"CHEM_ID" %in% colnames(anno) && "METABOLITE_NAME" %in% colnames(anno)) {
       anno <- anno %>% 
-        mutate(CHEM_ID = as.integer(gsub("[^0-9.-]", "", METABOLITE_NAME)))
+        dplyr::mutate(CHEM_ID = as.integer(gsub("[^0-9.-]", "", METABOLITE_NAME)))
     }
     
     if(!"SMILES" %in% colnames(anno)) {
-      anno <- anno %>% mutate(SMILES = "")
+      anno <- anno %>% dplyr::mutate(SMILES = "")
     }
     
     if(!"PLATFORM" %in% colnames(anno)) {
-      anno <- anno %>% mutate(PLATFORM = "")
+      anno <- anno %>% dplyr::mutate(PLATFORM = "")
     }
     
     if(!"TYPE" %in% colnames(anno)) {
-      anno <- anno %>% mutate(TYPE = "")
+      anno <- anno %>% dplyr::mutate(TYPE = "")
     }
     
     
@@ -258,7 +258,7 @@ process_metabolon <- function(peak_areas,
     dplyr::mutate(sampleId = factor(sampleId, levels = sampleId))
   
   peaks_updated_noIds <- peaks %>% 
-    tidyr::pivot_longer(cols = all_of(columns_to_pivot)) %>% 
+    tidyr::pivot_longer(cols = dplyr::all_of(columns_to_pivot)) %>% 
     dplyr::mutate(groupId = as.integer(gsub("[^0-9.-]", "",name)), # some versions of Metabolon include non-numeric characters for groupId
            sampleName = PARENT_SAMPLE_NAME,
            peakAreaTop = value) %>% # claman is hard-coded to use peakAreaTop as quant method from mzrolldb files
