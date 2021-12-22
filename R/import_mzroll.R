@@ -191,9 +191,9 @@ process_metabolon <- function(peak_areas_path,
   checkmate::assertNumeric(peak_floor_intensity)
   
   # import metabolon results as CSV files
-  peaks <- read.csv(file=peak_areas_path, check.names = FALSE)
-  anno <- read.csv(file=chem_anno_path)
-  metadata <- read.csv(file=metadata_path)
+  peaks <- readr::read_csv(peak_areas_path, col_types = readr::cols(.default = "c"))
+  anno <- readr::read_csv(chem_anno_path, col_types = readr::cols(.default = "c"))
+  metadata <- readr::read_csv(metadata_path, col_types = readr::cols(.default = "c"))
   
   columns_to_pivot <- colnames(peaks)
   columns_to_pivot <- columns_to_pivot[2:length(columns_to_pivot)]
