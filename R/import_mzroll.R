@@ -283,8 +283,8 @@ process_metabolon <- function(peak_areas,
   
   peakgroups_updated <- peakgroups %>%
     dplyr::mutate(tagString = " ",
-           mz= 100, # dummy value
-           rt = 10, # dummy value
+           mz= NA,
+           rt = NA,
            compoundDB = "Metabolon",
            searchTableName = " ",
            label = "g", # assume all Metabolon IDs are good
@@ -314,7 +314,7 @@ process_metabolon <- function(peak_areas,
     omic_type_tag = "mzroll"
   )
   
-  mzroll_list<-claman::merge_samples_tbl(
+  mzroll_list <- merge_samples_tbl(
     mzroll_list = mzroll_list,
     samples_tbl = metadata,
     id_strings = c("PARENT_SAMPLE_NAME"),
