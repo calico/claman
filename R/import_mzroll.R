@@ -182,12 +182,16 @@ process_mzroll <- function(mzroll_db_path,
 #' 
 #' @param peak_floor_intensity value to use to replace NA peak measurements (missing values)
 #' 
-#' @examples
-#' #install MetabolonR via remotes::install_github("miepstei/MetabolonR")
-#' if ("MetabolonR" %in% rownames(installed.packages())) {
-#'     data <- process_metabolon(MetabolonR::metaboliteDataWide, MetabolonR::metaboliteInfo, MetabolonR::sampleInfo)
-#' }
+#' @details
+#' An example dataset is available in the \code{MetabolonR} package,\cr
+#' which may be installed via \code{remotes::install_github("miepstei/MetabolonR")}\cr
 #' 
+#' Once installed, execute the function via\cr\cr
+#' \code{data <- process_metabolon(}\cr
+#' \code{MetabolonR::metaboliteDataWide,}\cr
+#' \code{MetabolonR::metaboliteInfo,}\cr
+#' \code{MetabolonR::sampleInfo}\cr
+#' \code{)}\cr
 #' @export
 process_metabolon <- function(peak_areas,
                               chem_anno,
