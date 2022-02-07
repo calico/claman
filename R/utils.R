@@ -89,6 +89,8 @@ test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
       stop(glue::glue("{nrow(duplicated_names)} sample names were duplicated"))
     }
     
+  } else {
+    check_required_variables(mzroll_list, "samples", c("sampleId"))
   }
 
   return(invisible(0))
