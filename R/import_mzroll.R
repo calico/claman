@@ -553,6 +553,15 @@ process_mzroll_multi <- function(
   )
 
   mzroll_multi_qc(aggregate_mzroll_list)
+  
+  # Issue 7: remove name and samples_tbl_row columns to mimic calicomics output
+  aggregate_mzroll_list$samples <- aggregate_mzroll_list$samples %>%
+    dplyr::select(-name, -samples_tbl_row)
+  
+  aggregate_mzroll_list <- romic::update_tomic(
+    aggregate_mzroll_list,
+    aggregate_mzroll_list$samples
+  )
 
   return(aggregate_mzroll_list)
 }
