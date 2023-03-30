@@ -10,7 +10,9 @@ process_mzroll_multi(
   id_strings,
   only_identified = TRUE,
   validate = FALSE,
-  exact = FALSE
+  exact = FALSE,
+  peakgroup_labels_to_keep = "*",
+  peakgroup_labels_to_exclude = ""
 )
 }
 \arguments{
@@ -33,6 +35,14 @@ features which were manually validated.}
 
 \item{exact}{if true, an exact match between mzroll names and id_strings
 will be found; if false, then substring matches will be used.}
+
+\item{peakgroup_labels_to_keep}{Peak groups containing any one of the
+  characters in this string are retained.
+\code{default = "*"} (retain all peak groups)}
+
+\item{peakgroup_labels_to_exclude}{Peak groups containing any one of
+the characters in this string are excluded.  Exclusion takes precedence
+over inclusion. \code{default = ""} (do not exclude any peak groups).}
 }
 \value{
 an mzroll_list containing three tibbles:

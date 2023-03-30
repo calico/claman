@@ -9,7 +9,8 @@ process_mzroll(
   only_identified = TRUE,
   validate = FALSE,
   method_tag = "",
-  peakgroup_labels_filter = NULL
+  peakgroup_labels_to_keep = "*",
+  peakgroup_labels_to_exclude = ""
 )
 }
 \arguments{
@@ -24,8 +25,13 @@ features which were manually validated.}
 \item{method_tag}{what method was run (for the purpose of matching
 meta-data and aggregating).}
 
-\item{peakgroup_labels_filter}{vector of labels, if a peakgroup contains
-any of these labels, it is retained. Otherwise, it is discarded.}
+\item{peakgroup_labels_to_keep}{Peak groups containing any one of the
+  characters in this string are retained.
+\code{default = "*"} (retain all peak groups)}
+
+\item{peakgroup_labels_to_exclude}{Peak groups containing any one of
+the characters in this string are excluded.  Exclusion takes precedence
+over inclusion. \code{default = ""} (do not exclude any peak groups).}
 }
 \value{
 a **triple_omic** from **romic** containing three tibbles:
