@@ -7,8 +7,12 @@
 #'   features which were manually validated.
 #' @param method_tag what method was run (for the purpose of matching
 #'   meta-data and aggregating).
-#' @param peakgroup_labels_filter vector of labels, if a peakgroup contains
-#'   any of these labels, it is retained. Otherwise, it is discarded.
+#' @param peakgroup_labels_to_keep Peak groups containing any one of the
+#'   characters in this string are retained.
+#' \code{default = "*"} (retain all peak groups)
+#' @param peakgroup_labels_to_exclude Peak groups containing any one of
+#'   the characters in this string are excluded.  Exclusion takes precedence
+#'   over inclusion. \code{default = ""} (do not exclude any peak groups).
 #' 
 #' @return a **triple_omic** from **romic** containing three tibbles:
 #' \itemize{
@@ -27,7 +31,8 @@ process_mzroll <- function(mzroll_db_path,
                            only_identified = TRUE,
                            validate = FALSE,
                            method_tag = "",
-                           peakgroup_labels_filter = NULL) {
+                           peakgroup_labels_to_keep="*",
+                           peakgroup_labels_to_exclude="") {
   
   checkmate::assertFileExists(mzroll_db_path)
   checkmate::assertLogical(only_identified, len = 1)
@@ -90,6 +95,12 @@ process_mzroll <- function(mzroll_db_path,
       dplyr::mutate(groupId = factor(groupId, levels = groupId))
   }
 
+  # Issue 13: Filter Peak groups based on provided labels
+  reduced_peakgroups <- reduced_peakgroups %>%
+    dplyr::rowwise() %>%
+    dplyr::filter(is_has_label(label, peakgroup_labels_to_keep, peakgroup_labels_to_exclude)) %>%
+    dplyr::ungroup()
+  
   debugr::dwatch(
     msg = "Before summarizing distinct peaks and samples...[calicomics<import_mzroll.R>::process_mzroll]\n"
   )
