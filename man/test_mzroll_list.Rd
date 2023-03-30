@@ -16,9 +16,6 @@ test_mzroll_list(mzroll_list, fast_check = TRUE)
   \item{samples: one row per unique sample (defined by a unique sampleId)},
   \item{measurements: one row per peak (samples x peakgroups)}
   }}
-
-\item{fast_check}{if TRUE then skip some checks which are slow and that are
-generally only needed when a \code{tomic} object is first created.}
 }
 \description{
 Test MzRoll List

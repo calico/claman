@@ -152,15 +152,15 @@ util_pretty_khead <- function(tbl, nrows = 10, caption = NULL) {
 #'   This filter operates as an "or" filter on both the set of labels to keep or exclude.
 #'   To specify a peakgroup that has no labels, use a single white space in the string (\code{' '}).
 #'   
-#' @param peakgroup_labels
-#'   String encoding of labels. Each character in the string corresponds to a different label.
-#' @param labels_to_keep
-#'   Retain the peakgroup if any character in the string matches to any character in this string.
-#'   [default = "*"] (aretain all labels)
-#' @inheritParams labels_to_exclude
-#'   Discard the peakgroup if any character in the string matches to any character in this string.
-#'   If a label is both flagged for inclusion and exclusion, it is excluded.
-#'   [default = ""] (do not exclude any labels)
+#' @param peakgroup_labels String encoding of labels.
+#'    Each character in the string corresponds to a different label.
+#' @param labels_to_keep Retain the peakgroup if any 
+#'    character in the string matches to any character in this string.
+#'    \code{default = "*"} (retain all labels)
+#' @param labels_to_exclude Discard the peakgroup if any 
+#'    character in the string matches to any character in this string. 
+#'    If a label is both flagged for inclusion and exclusion, it is excluded.
+#'    \code{default = ""} (do not exclude any labels)
 #'
 #' @return TRUE or FALSE, if the peakgroup label matches the criteria.
 #'

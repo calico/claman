@@ -7,7 +7,9 @@
 #'   features which were manually validated.
 #' @param method_tag what method was run (for the purpose of matching
 #'   meta-data and aggregating).
-#'
+#' @param peakgroup_labels_filter vector of labels, if a peakgroup contains
+#'   any of these labels, it is retained. Otherwise, it is discarded.
+#' 
 #' @return a **triple_omic** from **romic** containing three tibbles:
 #' \itemize{
 #'   \item{features: one row per unique analyte (defined by a unique
@@ -24,7 +26,9 @@
 process_mzroll <- function(mzroll_db_path,
                            only_identified = TRUE,
                            validate = FALSE,
-                           method_tag = "") {
+                           method_tag = "",
+                           peakgroup_labels_filter = NULL) {
+  
   checkmate::assertFileExists(mzroll_db_path)
   checkmate::assertLogical(only_identified, len = 1)
   checkmate::assertLogical(validate, len = 1)

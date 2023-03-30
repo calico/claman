@@ -8,7 +8,8 @@ process_mzroll(
   mzroll_db_path,
   only_identified = TRUE,
   validate = FALSE,
-  method_tag = ""
+  method_tag = "",
+  peakgroup_labels_filter = NULL
 )
 }
 \arguments{
@@ -22,6 +23,9 @@ features which were manually validated.}
 
 \item{method_tag}{what method was run (for the purpose of matching
 meta-data and aggregating).}
+
+\item{peakgroup_labels_filter}{vector of labels, if a peakgroup contains
+any of these labels, it is retained. Otherwise, it is discarded.}
 }
 \value{
 a **triple_omic** from **romic** containing three tibbles:
