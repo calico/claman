@@ -530,7 +530,9 @@ process_mzroll_multi <- function(
   id_strings,
   only_identified = TRUE,
   validate = FALSE,
-  exact = FALSE
+  exact = FALSE,
+  peakgroup_labels_to_keep = "*",
+  peakgroup_labels_to_exclude = ""
   ) {
   checkmate::assertDataFrame(mzroll_paths, min.rows = 2)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
@@ -550,7 +552,9 @@ process_mzroll_multi <- function(
         method_tag,
         process_mzroll,
         only_identified = only_identified,
-        validate = validate
+        validate = validate,
+        peakgroup_labels_to_keep = peakgroup_labels_to_keep,
+        peakgroup_labels_to_exclude = peakgroup_labels_to_exclude
       ),
       # add sample meta-data
       mzroll_list = purrr::map(
