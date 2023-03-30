@@ -10,7 +10,8 @@ process_mzroll(
   validate = FALSE,
   method_tag = "",
   peakgroup_labels_to_keep = "*",
-  peakgroup_labels_to_exclude = ""
+  peakgroup_labels_to_exclude = "",
+  quant_col = "peakAreaTop"
 )
 }
 \arguments{
@@ -32,6 +33,10 @@ meta-data and aggregating).}
 \item{peakgroup_labels_to_exclude}{Peak groups containing any one of
 the characters in this string are excluded.  Exclusion takes precedence
 over inclusion. \code{default = ""} (do not exclude any peak groups).}
+
+\item{quant_col}{name of quant column to use for standardization from the
+  peaks table.
+\code{default = "peakAreaTop"}}
 }
 \value{
 a **triple_omic** from **romic** containing three tibbles:
