@@ -139,7 +139,7 @@ process_mzroll <- function(mzroll_db_path,
     dplyr::group_by(groupId) %>%
     dplyr::mutate(
       log2_abundance = log2(quant_value),
-      centered_log2_abundance = log2_abundance - mean(quant_value)
+      centered_log2_abundance = log2_abundance - mean(log2_abundance)
     ) %>%
     dplyr::select(
       groupId,
