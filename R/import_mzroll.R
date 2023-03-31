@@ -47,12 +47,21 @@ process_mzroll <- function(mzroll_db_path,
   mzroll_db_con <- create_sqlite_con(mzroll_db_path)
 
   # add peakgroup m/z and rt
-  peakgroups <- process_mzroll_load_peakgroups(mzroll_db_con)
+  # Issue 14: option to specify quant type other than peakAreaTop
+  peakgroups <- process_mzroll_load_peakgroups(mzroll_db_con, quant_col)
+  
   # if validate is true, use peakgroup labels to rename unknowns
   peakgroups <- process_mzroll_validate_peakgroups(peakgroups, validate)
+  
   # if only_identified is true, only named compounds are retained, if false
   #   unknowns are labeled by m/z and rt
   peakgroups <- process_mzroll_identify_peakgroups(peakgroups, only_identified)
+  
+  # Issue 13: filter list based on peak group labels
+  peakgroups <- peakgroups %>%
+    dplyr::rowwise() %>%
+    dplyr::filter(is_has_label(label, peakgroup_labels_to_keep, peakgroup_labels_to_exclude)) %>%
+    dplyr::ungroup()
 
   # reduce to smaller number of peakgroups features
 
@@ -98,12 +107,6 @@ process_mzroll <- function(mzroll_db_path,
       dplyr::arrange(groupId) %>%
       dplyr::mutate(groupId = factor(groupId, levels = groupId))
   }
-
-  # Issue 13: Filter Peak groups based on provided labels
-  reduced_peakgroups <- reduced_peakgroups %>%
-    dplyr::rowwise() %>%
-    dplyr::filter(is_has_label(label, peakgroup_labels_to_keep, peakgroup_labels_to_exclude)) %>%
-    dplyr::ungroup()
   
   debugr::dwatch(
     msg = "Before summarizing distinct peaks and samples...[calicomics<import_mzroll.R>::process_mzroll]\n"
