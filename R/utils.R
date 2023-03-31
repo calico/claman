@@ -143,3 +143,47 @@ util_pretty_khead <- function(tbl, nrows = 10, caption = NULL) {
       bootstrap_options = "striped"
     )
 }
+
+#' Util - Check if Peak Group matches label filters
+#'
+#' @description 
+#'   Filter peak groups based on matching labels.
+#'   Labels are encoded as string, but each character corresponds to a different label.
+#'   This filter operates as an "or" filter on both the set of labels to keep or exclude.
+#'   To specify a peakgroup that has no labels, use a single white space in the string (\code{' '}).
+#'   
+#' @param peakgroup_labels String encoding of labels.
+#'    Each character in the string corresponds to a different label.
+#' @param labels_to_keep Retain the peakgroup if any 
+#'    character in the string matches to any character in this string.
+#'    \code{default = "*"} (retain all labels)
+#' @param labels_to_exclude Discard the peakgroup if any 
+#'    character in the string matches to any character in this string. 
+#'    If a label is both flagged for inclusion and exclusion, it is excluded.
+#'    \code{default = ""} (do not exclude any labels)
+#'
+#' @return TRUE or FALSE, if the peakgroup label matches the criteria.
+#'
+#' @export
+is_has_label <- function(peakgroup_labels, labels_to_keep="*", labels_to_exclude="") {
+  
+  labels_to_keep_chars <- unlist(strsplit(labels_to_keep, ""))
+  labels_to_exclude_chars <- unlist(strsplit(labels_to_exclude, ""))
+  
+  # explicitly excluded takes precedence over explicitly included
+  for (label in labels_to_exclude_chars) {
+    if (grepl(label, peakgroup_labels) || (label == " " && peakgroup_labels == "")) {
+      return(FALSE)
+    }
+  }
+  
+  # explicitly included
+  for (label in labels_to_keep_chars) {
+    if (grepl(label, peakgroup_labels) || (label == " " && peakgroup_labels == "")){
+      return(TRUE)
+    }
+  }
+  
+  # if not explicitly included, discard
+  return(FALSE)
+}

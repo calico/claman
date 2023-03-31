@@ -8,7 +8,10 @@ process_mzroll(
   mzroll_db_path,
   only_identified = TRUE,
   validate = FALSE,
-  method_tag = ""
+  method_tag = "",
+  peakgroup_labels_to_keep = "*",
+  peakgroup_labels_to_exclude = "",
+  quant_col = "peakAreaTop"
 )
 }
 \arguments{
@@ -22,6 +25,18 @@ features which were manually validated.}
 
 \item{method_tag}{what method was run (for the purpose of matching
 meta-data and aggregating).}
+
+\item{peakgroup_labels_to_keep}{Peak groups containing any one of the
+  characters in this string are retained.
+\code{default = "*"} (retain all peak groups)}
+
+\item{peakgroup_labels_to_exclude}{Peak groups containing any one of
+the characters in this string are excluded.  Exclusion takes precedence
+over inclusion. \code{default = ""} (do not exclude any peak groups).}
+
+\item{quant_col}{name of quant column to use for standardization from the
+  peaks table.
+\code{default = "peakAreaTop"}}
 }
 \value{
 a **triple_omic** from **romic** containing three tibbles:

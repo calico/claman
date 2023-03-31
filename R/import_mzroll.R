@@ -7,7 +7,16 @@
 #'   features which were manually validated.
 #' @param method_tag what method was run (for the purpose of matching
 #'   meta-data and aggregating).
-#'
+#' @param peakgroup_labels_to_keep Peak groups containing any one of the
+#'   characters in this string are retained.
+#' \code{default = "*"} (retain all peak groups)
+#' @param peakgroup_labels_to_exclude Peak groups containing any one of
+#'   the characters in this string are excluded.  Exclusion takes precedence
+#'   over inclusion. \code{default = ""} (do not exclude any peak groups).
+#' @param quant_col name of quant column to use for standardization from the
+#'   peaks table.
+#' \code{default = "peakAreaTop"}
+#' 
 #' @return a **triple_omic** from **romic** containing three tibbles:
 #' \itemize{
 #'   \item{features: one row per unique analyte (defined by a unique
@@ -24,7 +33,11 @@
 process_mzroll <- function(mzroll_db_path,
                            only_identified = TRUE,
                            validate = FALSE,
-                           method_tag = "") {
+                           method_tag = "",
+                           peakgroup_labels_to_keep="*",
+                           peakgroup_labels_to_exclude="",
+                           quant_col = "peakAreaTop") {
+  
   checkmate::assertFileExists(mzroll_db_path)
   checkmate::assertLogical(only_identified, len = 1)
   checkmate::assertLogical(validate, len = 1)
@@ -34,12 +47,21 @@ process_mzroll <- function(mzroll_db_path,
   mzroll_db_con <- create_sqlite_con(mzroll_db_path)
 
   # add peakgroup m/z and rt
-  peakgroups <- process_mzroll_load_peakgroups(mzroll_db_con)
+  # Issue 14: option to specify quant type other than peakAreaTop
+  peakgroups <- process_mzroll_load_peakgroups(mzroll_db_con, quant_col)
+  
   # if validate is true, use peakgroup labels to rename unknowns
   peakgroups <- process_mzroll_validate_peakgroups(peakgroups, validate)
+  
   # if only_identified is true, only named compounds are retained, if false
   #   unknowns are labeled by m/z and rt
   peakgroups <- process_mzroll_identify_peakgroups(peakgroups, only_identified)
+  
+  # Issue 13: filter list based on peak group labels
+  peakgroups <- peakgroups %>%
+    dplyr::rowwise() %>%
+    dplyr::filter(is_has_label(label, peakgroup_labels_to_keep, peakgroup_labels_to_exclude)) %>%
+    dplyr::ungroup()
 
   # reduce to smaller number of peakgroups features
 
@@ -85,7 +107,7 @@ process_mzroll <- function(mzroll_db_path,
       dplyr::arrange(groupId) %>%
       dplyr::mutate(groupId = factor(groupId, levels = groupId))
   }
-
+  
   debugr::dwatch(
     msg = "Before summarizing distinct peaks and samples...[calicomics<import_mzroll.R>::process_mzroll]\n"
   )
@@ -108,13 +130,15 @@ process_mzroll <- function(mzroll_db_path,
 
   peaks <- dplyr::tbl(
     mzroll_db_con,
-    dbplyr::sql("SELECT groupId, sampleId, peakAreaTop FROM peaks")
+    dbplyr::sql(paste0("SELECT groupId, sampleId, ", quant_col, " FROM peaks"))
   ) %>%
     dplyr::collect() %>%
+    dplyr::mutate(quant_value = !! sym(quant_col)) %>%
+    dplyr::mutate(quant_value = as.numeric(quant_value)) %>%
     dplyr::semi_join(peakgroups, by = "groupId") %>%
     dplyr::group_by(groupId) %>%
     dplyr::mutate(
-      log2_abundance = log2(peakAreaTop),
+      log2_abundance = log2(quant_value),
       centered_log2_abundance = log2_abundance - mean(log2_abundance)
     ) %>%
     dplyr::select(
@@ -357,15 +381,20 @@ create_sqlite_con <- function(sqlite_path) {
 #'   peak-level data.
 #'
 #' @param mzroll_db_con an SQLite connection to an mzrollDB database
-#'
+#' @param quant_col name of quant column to use for standardization from the
+#'   peaks table.
+#' \code{default = "peakAreaTop"}
+#' 
 #' @return a table of peakgroups
-process_mzroll_load_peakgroups <- function(mzroll_db_con) {
+process_mzroll_load_peakgroups <- function(mzroll_db_con, quant_col = "peakAreaTop") {
   peakgroup_positions <- dplyr::tbl(mzroll_db_con, "peaks") %>%
     dplyr::collect() %>%
     dplyr::group_by(groupId) %>%
+    dplyr::mutate(quant_value := !! sym(quant_col)) %>%
+    dplyr::mutate(quant_value = as.numeric(quant_value)) %>%
     dplyr::summarize(
-      mz = sum(peakMz * peakAreaTop) / sum(peakAreaTop),
-      rt = sum(rt * peakAreaTop) / sum(peakAreaTop)
+      mz = sum(peakMz * quant_value) / sum(quant_value),
+      rt = sum(rt * quant_value) / sum(quant_value)
     )
 
   peakgroups <- dplyr::tbl(mzroll_db_con, "peakgroups") %>%
@@ -515,7 +544,10 @@ process_mzroll_multi <- function(
   id_strings,
   only_identified = TRUE,
   validate = FALSE,
-  exact = FALSE
+  exact = FALSE,
+  peakgroup_labels_to_keep = "*",
+  peakgroup_labels_to_exclude = "",
+  quant_col = "peakAreaTop"
   ) {
   checkmate::assertDataFrame(mzroll_paths, min.rows = 2)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
@@ -535,7 +567,10 @@ process_mzroll_multi <- function(
         method_tag,
         process_mzroll,
         only_identified = only_identified,
-        validate = validate
+        validate = validate,
+        peakgroup_labels_to_keep = peakgroup_labels_to_keep,
+        peakgroup_labels_to_exclude = peakgroup_labels_to_exclude,
+        quant_col = quant_col
       ),
       # add sample meta-data
       mzroll_list = purrr::map(
