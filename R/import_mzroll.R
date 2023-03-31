@@ -133,7 +133,7 @@ process_mzroll <- function(mzroll_db_path,
     dbplyr::sql(paste0("SELECT groupId, sampleId, ", quant_col, " FROM peaks"))
   ) %>%
     dplyr::collect() %>%
-    dplyr::mutate(quant_value := !! sym(quant_col)) %>%
+    dplyr::mutate(quant_value = !! sym(quant_col)) %>%
     dplyr::mutate(quant_value = as.numeric(quant_value)) %>%
     dplyr::semi_join(peakgroups, by = "groupId") %>%
     dplyr::group_by(groupId) %>%
