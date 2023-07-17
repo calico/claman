@@ -274,6 +274,7 @@ diffex_fdr <- function(term_data) {
 #'   a tibble of tests performed.
 #' @param max_p_trans maximum value of -log10 pvalues to plot
 #' @param FDR_cutoff FDR cutoff to label for significance
+#' @param feature_labels compound names from compoundName column to label on the plot
 #'
 #' @returns a grob
 #'
