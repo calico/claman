@@ -17,6 +17,12 @@ Authors@R: c(
       role = "aut"
       ),
     person(
+      given = "Alireza",
+      family = "Delfarah",
+      email = "delfarah@calicolabs.com",
+      role = "aut"
+      ),
+    person(
       given = "Calico Life Sciences LLC",
       role = c("cph", "fnd")
       )
