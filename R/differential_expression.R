@@ -294,31 +294,33 @@ plot_volcano <- function(
   
   checkmate::assertDataFrame(regression_significance)
   stopifnot("term" %in% colnames(regression_significance))
-
+  
   effect_var <- dplyr::case_when(
     "estimate" %in% colnames(regression_significance) ~ "estimate",
     "sumsq" %in% colnames(regression_significance) ~ "sumsq",
     TRUE ~ NA_character_
   )
-
+  
   if (is.na(effect_var)) {
     stop("volcano plot cannot be generated due to unknown test")
   }
-
+  
   regression_significance %>%
     dplyr::filter(!is.na(p.value)) %>%
     dplyr::mutate(
-      p.value.trans = trans_pvalues(p.value, max_p_trans = max_p_trans),
+      p.value.trans = trans_pvalues_local(p.value, max_p_trans = max_p_trans),
       is_discovery = qvalue < FDR_cutoff
     ) %>%
     ggplot(aes_string(x = effect_var)) +
-    geom_point(aes(y = p.value.trans, color = is_discovery)) +
+    {if ("compoundName" %in% colnames(regression_significance))
+    {geom_point(aes(y = p.value.trans, color = is_discovery, name = compoundName))} 
+      else {geom_point(aes(y = p.value.trans, color = is_discovery))} 
+    } +
     facet_wrap(~term, scales = "free_x") +
     scale_x_continuous("Effect size") +
-    scale_y_continuous(expression(-log[10] ~ "pvalue")) +
     scale_color_manual(values = c("FALSE" = "gray50", "TRUE" = "RED")) +
     theme_bw() +
-    ggtitle("Volcano plot")
+    ylab("-log10 p-value")
 }
 
 trans_pvalues <- function(p, max_p_trans = 10) {
