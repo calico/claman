@@ -318,9 +318,9 @@ plot_volcano <- function(
     } +
     facet_wrap(~term, scales = "free_x") +
     scale_x_continuous("Effect size") +
+    scale_y_continuous(expression(-log[10] ~ "pvalue")) +
     scale_color_manual(values = c("FALSE" = "gray50", "TRUE" = "RED")) +
-    theme_bw() +
-    ylab("-log10 p-value")
+    theme_bw()
 }
 
 trans_pvalues <- function(p, max_p_trans = 10) {
