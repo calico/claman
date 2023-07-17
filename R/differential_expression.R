@@ -289,7 +289,8 @@ diffex_fdr <- function(term_data) {
 plot_volcano <- function(
   regression_significance,
   max_p_trans = 10,
-  FDR_cutoff = 0.1
+  FDR_cutoff = 0.1,
+  feature_labels = NULL
   ) {
   
   checkmate::assertDataFrame(regression_significance)
@@ -316,6 +317,7 @@ plot_volcano <- function(
     {geom_point(aes(y = p.value.trans, color = is_discovery, name = compoundName))} 
       else {geom_point(aes(y = p.value.trans, color = is_discovery))} 
     } +
+    geom_text(aes(label = ifelse(compoundName %in% feature_labels, compoundName, ""), y = p.value.trans)) +
     facet_wrap(~term, scales = "free_x") +
     scale_x_continuous("Effect size") +
     scale_y_continuous(expression(-log[10] ~ "pvalue")) +
