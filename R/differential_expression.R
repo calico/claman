@@ -320,7 +320,7 @@ plot_volcano <- function(
     {geom_point(aes(y = p.value.trans, color = is_discovery, name = compoundName))} 
       else {geom_point(aes(y = p.value.trans, color = is_discovery))} 
     } +
-    geom_text(aes(label = ifelse(compoundName %in% feature_labels, compoundName, ""), y = p.value.trans)) +
+    geom_text(aes(label = ifelse(compoundName %in% feature_labels, compoundName, ""), y = p.value.trans, vjust = -0.75)) +
     facet_wrap(~term, scales = "free_x") +
     scale_x_continuous("Effect size") +
     scale_y_continuous(expression(-log[10] ~ "pvalue")) +
