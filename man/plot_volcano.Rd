@@ -4,7 +4,12 @@
 \alias{plot_volcano}
 \title{Volcano plot}
 \usage{
-plot_volcano(regression_significance, max_p_trans = 10, FDR_cutoff = 0.1)
+plot_volcano(
+  regression_significance,
+  max_p_trans = 10,
+  FDR_cutoff = 0.1,
+  feature_labels = NULL
+)
 }
 \arguments{
 \item{regression_significance}{returned by \code{\link{diffex_mzroll}};
@@ -13,6 +18,8 @@ a tibble of tests performed.}
 \item{max_p_trans}{maximum value of -log10 pvalues to plot}
 
 \item{FDR_cutoff}{FDR cutoff to label for significance}
+
+\item{feature_labels}{list of compound names from compoundName column to label on the plot}
 }
 \value{
 a grob
@@ -24,7 +31,9 @@ Volcano plot
 regression_significance <- diffex_mzroll(
   nplug_mzroll_normalized,
   "normalized_log2_abundance",
-  "limitation + limitation:DR + 0"
+  "limitation + limitation:DR + 0",
+  FDR_cutoff = 0.01,
+  feature_labels = c("UDP", "Lactate", "Serine")
 )
 
 plot_volcano(regression_significance, 10, 0.1)

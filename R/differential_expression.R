@@ -274,6 +274,7 @@ diffex_fdr <- function(term_data) {
 #'   a tibble of tests performed.
 #' @param max_p_trans maximum value of -log10 pvalues to plot
 #' @param FDR_cutoff FDR cutoff to label for significance
+#' @param feature_labels list of compound names from compoundName column to label on the plot
 #'
 #' @returns a grob
 #'
@@ -281,7 +282,9 @@ diffex_fdr <- function(term_data) {
 #' regression_significance <- diffex_mzroll(
 #'   nplug_mzroll_normalized,
 #'   "normalized_log2_abundance",
-#'   "limitation + limitation:DR + 0"
+#'   "limitation + limitation:DR + 0",
+#'   FDR_cutoff = 0.01,
+#'   feature_labels = c("UDP", "Lactate", "Serine")
 #' )
 #'
 #' plot_volcano(regression_significance, 10, 0.1)
@@ -289,22 +292,23 @@ diffex_fdr <- function(term_data) {
 plot_volcano <- function(
   regression_significance,
   max_p_trans = 10,
-  FDR_cutoff = 0.1
+  FDR_cutoff = 0.1,
+  feature_labels = NULL
   ) {
   
   checkmate::assertDataFrame(regression_significance)
   stopifnot("term" %in% colnames(regression_significance))
-
+  
   effect_var <- dplyr::case_when(
     "estimate" %in% colnames(regression_significance) ~ "estimate",
     "sumsq" %in% colnames(regression_significance) ~ "sumsq",
     TRUE ~ NA_character_
   )
-
+  
   if (is.na(effect_var)) {
     stop("volcano plot cannot be generated due to unknown test")
   }
-
+  
   regression_significance %>%
     dplyr::filter(!is.na(p.value)) %>%
     dplyr::mutate(
@@ -312,13 +316,16 @@ plot_volcano <- function(
       is_discovery = qvalue < FDR_cutoff
     ) %>%
     ggplot(aes_string(x = effect_var)) +
-    geom_point(aes(y = p.value.trans, color = is_discovery)) +
+    {if ("compoundName" %in% colnames(regression_significance))
+    {geom_point(aes(y = p.value.trans, color = is_discovery, name = compoundName))} 
+      else {geom_point(aes(y = p.value.trans, color = is_discovery))} 
+    } +
+    geom_text(aes(label = ifelse(compoundName %in% feature_labels, compoundName, ""), y = p.value.trans)) +
     facet_wrap(~term, scales = "free_x") +
     scale_x_continuous("Effect size") +
     scale_y_continuous(expression(-log[10] ~ "pvalue")) +
     scale_color_manual(values = c("FALSE" = "gray50", "TRUE" = "RED")) +
-    theme_bw() +
-    ggtitle("Volcano plot")
+    theme_bw()
 }
 
 trans_pvalues <- function(p, max_p_trans = 10) {
