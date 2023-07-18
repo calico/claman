@@ -19,7 +19,7 @@ a tibble of tests performed.}
 
 \item{FDR_cutoff}{FDR cutoff to label for significance}
 
-\item{feature_labels}{compound names from compoundName column to label on the plot}
+\item{feature_labels}{list of compound names from compoundName column to label on the plot}
 }
 \value{
 a grob
@@ -31,7 +31,9 @@ Volcano plot
 regression_significance <- diffex_mzroll(
   nplug_mzroll_normalized,
   "normalized_log2_abundance",
-  "limitation + limitation:DR + 0"
+  "limitation + limitation:DR + 0",
+  FDR_cutoff = 0.01,
+  feature_labels = c("UDP", "Lactate", "Serine")
 )
 
 plot_volcano(regression_significance, 10, 0.1)

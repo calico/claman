@@ -274,7 +274,7 @@ diffex_fdr <- function(term_data) {
 #'   a tibble of tests performed.
 #' @param max_p_trans maximum value of -log10 pvalues to plot
 #' @param FDR_cutoff FDR cutoff to label for significance
-#' @param feature_labels compound names from compoundName column to label on the plot
+#' @param feature_labels list of compound names from compoundName column to label on the plot
 #'
 #' @returns a grob
 #'
@@ -282,7 +282,9 @@ diffex_fdr <- function(term_data) {
 #' regression_significance <- diffex_mzroll(
 #'   nplug_mzroll_normalized,
 #'   "normalized_log2_abundance",
-#'   "limitation + limitation:DR + 0"
+#'   "limitation + limitation:DR + 0",
+#'   FDR_cutoff = 0.01,
+#'   feature_labels = c("UDP", "Lactate", "Serine")
 #' )
 #'
 #' plot_volcano(regression_significance, 10, 0.1)
