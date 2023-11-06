@@ -4,55 +4,96 @@
 #'   undetected peaks.
 #'
 #' @inheritParams test_mzroll_list
-#' @param log2_floor_value minimum value to set for low abundance or
-#'   missing peaks
+#' @param floor_value minimum value to set for low abundance or missing peaks
 #' @param floor_var measurement variable to floor to \code{log2_floor_value}.
+#' @param mzrolldb_file_path (optional) path to mzrollDB file, only used for QQQ datasets.
+#' @param data_type parameter to differentiate data types.
 #'
 #' @return \code{\link{process_mzroll}}
 #'
 #' @examples
 #' floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
+#' floored_peaks <- floor_peaks(mzroll_list, 100, "log2_abundance", "QQQ")
+
 #' @export
 floor_peaks <- function(mzroll_list,
-                        log2_floor_value = 12,
-                        floor_var = "log2_abundance") {
-  test_mzroll_list(mzroll_list)
-
+                         floor_value = 12,
+                         floor_var = "log2_abundance",
+                         mzrolldb_file_path = NULL,
+                         data_type = "QE") {
+  test_mzroll_list_local(mzroll_list)
+  
   valid_floor_var <- setdiff(
     mzroll_list$design$measurements$variable,
     c(mzroll_list$design$feature_pk, mzroll_list$design$sample_pk)
   )
-
+  
   checkmate::assertChoice(floor_var, valid_floor_var)
   checkmate::assertNumeric(mzroll_list$measurements[[floor_var]])
-  checkmate::assertNumber(log2_floor_value)
-
-  # summarize peaks associated with each peakgroup
-
-  missing_peaks <- tidyr::expand_grid(
-    groupId = mzroll_list$features$groupId,
-    sampleId = mzroll_list$samples$sampleId
-  ) %>%
-    dplyr::anti_join(
+  checkmate::assertNumber(floor_value)
+  
+  if (data_type == "QQQ") {
+    ## find missing peaks
+    missing_peaks <- tidyr::expand_grid(
+      groupId = mzroll_list$features$groupId,
+      sampleId = mzroll_list$samples$sampleId) %>%
+      dplyr::anti_join (
+        mzroll_list$measurements,
+        by = c("groupId", "sampleId")
+      )
+    
+    ## find groupBackground for missing peaks
+    ## assign 100 if the groupBackground is zero
+    group_background <- PDB_import(mzrolldb_file_path) %>%
+      group_by(groupId) %>%
+      distinct(groupId, .keep_all = TRUE) %>%
+      mutate(groupBackground = dplyr::case_when(
+        groupBackground < floor_value ~ floor_value,
+        TRUE ~ groupBackground)) %>%
+      mutate(log2_abundance = log2(groupBackground)) %>%
+      mutate(groupId = factor(groupId)) %>%
+      select(groupId, log2_abundance)
+    
+    ## impute missing peaks
+    missing_peaks_imputed <- left_join(
+      missing_peaks, 
+      group_background, 
+      by = c("groupId")) %>%
+      rowwise() %>%
+      mutate(!!rlang::sym(imputation_var) := rnorm(1, mean = !!rlang::sym(imputation_var)+1, sd = 0.1))
+    
+    ## merge measured peaks with imputed peaks
+    completed_peaks <- dplyr::bind_rows(
       mzroll_list$measurements,
-      by = c("groupId", "sampleId")
+      missing_peaks_imputed
+    )
+  } 
+  else {
+    missing_peaks <- tidyr::expand_grid(
+      groupId = mzroll_list$features$groupId,
+      sampleId = mzroll_list$samples$sampleId
+    ) %>%
+      dplyr::anti_join(
+        mzroll_list$measurements,
+        by = c("groupId", "sampleId")
       ) %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(!!rlang::sym(floor_var) := log2_floor_value)
-
-  # combine detected peaks with peaks that were missing for some samples
-  completed_peaks <- dplyr::bind_rows(
-    mzroll_list$measurements %>%
-      dplyr::mutate(!!rlang::sym(floor_var) := dplyr::case_when(
-        is.na(!!rlang::sym(floor_var)) ~ log2_floor_value,
-        !!rlang::sym(floor_var) < log2_floor_value ~ log2_floor_value,
-        !!rlang::sym(floor_var) >= log2_floor_value ~ !!rlang::sym(floor_var)
-      )),
-    missing_peaks
-  )
-
+      tibble::as_tibble() %>%
+      dplyr::mutate(!!rlang::sym(floor_var) := floor_value)
+    
+    # combine detected peaks with peaks that were missing for some samples
+    completed_peaks <- dplyr::bind_rows(
+      mzroll_list$measurements %>%
+        dplyr::mutate(!!rlang::sym(floor_var) := dplyr::case_when(
+          is.na(!!rlang::sym(floor_var)) ~ floor_value,
+          !!rlang::sym(floor_var) < floor_value ~ floor_value,
+          !!rlang::sym(floor_var) >= floor_value ~ !!rlang::sym(floor_var)
+        )),
+      missing_peaks
+    )
+  }
+  
   mzroll_list$measurements <- completed_peaks
-
+  
   return(mzroll_list)
 }
 
