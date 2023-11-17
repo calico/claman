@@ -131,7 +131,7 @@ fill_in_missing_peaks <- function(mzroll_list,
                                   imputation_sd = 0.15) {
   if (is.data.frame(fill_values)) {
     stopifnot(colnames(fill_values) %in% c("groupId", rlang::sym(quant_var)))
-    output <- temp_impute(mzroll_list, lod_values, quant_var, imputation_sd)
+    output <- impute_missing_peaks(mzroll_list, lod_values, quant_var, imputation_sd)
   } else if (is.numeric(fill_values)) {
     output <- floor_peaks(mzroll_list, fill_values, quant_var)
   } else {
