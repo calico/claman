@@ -24,7 +24,8 @@ fill_in_missing_peaks(
 triple omic data with imputed missing peaks
 }
 \description{
-Fill in missing peaks
+If \code{fill_values} is a data frame, this function calls \code{impute_missing_peaks()}.
+If it is a numeric vector, 'this function calls \code{floor_peaks()}. Other types are not currently supported
 }
 \examples{
 mzroll_list_imputed <- fill_in_missing_peaks(mzroll_list, lod_values, "log2_abundance", 0.15)
