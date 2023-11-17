@@ -96,7 +96,7 @@ impute_missing_peaks <- function(mzroll_list,
   ## impute missing peaks
   missing_peaks_imputed <- left_join(
     missing_peaks, 
-    group_background, 
+    lod_values, 
     by = c("groupId")) %>%
     rowwise() %>%
     mutate(!!rlang::sym(quant_var) := rnorm(1, mean = !!rlang::sym(quant_var)+1, sd = imputation_sd))
