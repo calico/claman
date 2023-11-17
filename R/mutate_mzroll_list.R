@@ -4,24 +4,19 @@
 #'   undetected peaks.
 #'
 #' @inheritParams test_mzroll_list
-#' @param floor_value minimum value to set for low abundance or missing peaks
+#' @param log2_floor_value minimum value to set for low abundance or
+#'   missing peaks
 #' @param floor_var measurement variable to floor to \code{log2_floor_value}.
-#' @param mzrolldb_file_path (optional) path to mzrollDB file, only used for QQQ datasets.
-#' @param data_type parameter to differentiate data types.
 #'
 #' @return \code{\link{process_mzroll}}
 #'
 #' @examples
 #' floored_peaks <- floor_peaks(nplug_mzroll_augmented, 12)
-#' floored_peaks <- floor_peaks(mzroll_list, 100, "log2_abundance", "QQQ")
-
 #' @export
 floor_peaks <- function(mzroll_list,
-                         floor_value = 12,
-                         floor_var = "log2_abundance",
-                         mzrolldb_file_path = NULL,
-                         data_type = "QE") {
-  test_mzroll_list_local(mzroll_list)
+                        log2_floor_value = 12,
+                        floor_var = "log2_abundance") {
+  test_mzroll_list(mzroll_list)
   
   valid_floor_var <- setdiff(
     mzroll_list$design$measurements$variable,
@@ -30,73 +25,120 @@ floor_peaks <- function(mzroll_list,
   
   checkmate::assertChoice(floor_var, valid_floor_var)
   checkmate::assertNumeric(mzroll_list$measurements[[floor_var]])
-  checkmate::assertNumber(floor_value)
+  checkmate::assertNumber(log2_floor_value)
   
-  if (data_type == "QQQ") {
-    ## find missing peaks
-    missing_peaks <- tidyr::expand_grid(
-      groupId = mzroll_list$features$groupId,
-      sampleId = mzroll_list$samples$sampleId) %>%
-      dplyr::anti_join (
-        mzroll_list$measurements,
-        by = c("groupId", "sampleId")
-      )
-    
-    ## find groupBackground for missing peaks
-    ## assign 100 if the groupBackground is zero
-    group_background <- PDB_import(mzrolldb_file_path) %>%
-      group_by(groupId) %>%
-      distinct(groupId, .keep_all = TRUE) %>%
-      mutate(groupBackground = dplyr::case_when(
-        groupBackground < floor_value ~ floor_value,
-        TRUE ~ groupBackground)) %>%
-      mutate(log2_abundance = log2(groupBackground)) %>%
-      mutate(groupId = factor(groupId)) %>%
-      select(groupId, log2_abundance)
-    
-    ## impute missing peaks
-    missing_peaks_imputed <- left_join(
-      missing_peaks, 
-      group_background, 
-      by = c("groupId")) %>%
-      rowwise() %>%
-      mutate(!!rlang::sym(imputation_var) := rnorm(1, mean = !!rlang::sym(imputation_var)+1, sd = 0.1))
-    
-    ## merge measured peaks with imputed peaks
-    completed_peaks <- dplyr::bind_rows(
+  # summarize peaks associated with each peakgroup
+  
+  missing_peaks <- tidyr::expand_grid(
+    groupId = mzroll_list$features$groupId,
+    sampleId = mzroll_list$samples$sampleId
+  ) %>%
+    dplyr::anti_join(
       mzroll_list$measurements,
-      missing_peaks_imputed
-    )
-  } 
-  else {
-    missing_peaks <- tidyr::expand_grid(
-      groupId = mzroll_list$features$groupId,
-      sampleId = mzroll_list$samples$sampleId
+      by = c("groupId", "sampleId")
     ) %>%
-      dplyr::anti_join(
-        mzroll_list$measurements,
-        by = c("groupId", "sampleId")
-      ) %>%
-      tibble::as_tibble() %>%
-      dplyr::mutate(!!rlang::sym(floor_var) := floor_value)
-    
-    # combine detected peaks with peaks that were missing for some samples
-    completed_peaks <- dplyr::bind_rows(
-      mzroll_list$measurements %>%
-        dplyr::mutate(!!rlang::sym(floor_var) := dplyr::case_when(
-          is.na(!!rlang::sym(floor_var)) ~ floor_value,
-          !!rlang::sym(floor_var) < floor_value ~ floor_value,
-          !!rlang::sym(floor_var) >= floor_value ~ !!rlang::sym(floor_var)
-        )),
-      missing_peaks
-    )
-  }
+    tibble::as_tibble() %>%
+    dplyr::mutate(!!rlang::sym(floor_var) := log2_floor_value)
+  
+  # combine detected peaks with peaks that were missing for some samples
+  completed_peaks <- dplyr::bind_rows(
+    mzroll_list$measurements %>%
+      dplyr::mutate(!!rlang::sym(floor_var) := dplyr::case_when(
+        is.na(!!rlang::sym(floor_var)) ~ log2_floor_value,
+        !!rlang::sym(floor_var) < log2_floor_value ~ log2_floor_value,
+        !!rlang::sym(floor_var) >= log2_floor_value ~ !!rlang::sym(floor_var)
+      )),
+    missing_peaks
+  )
   
   mzroll_list$measurements <- completed_peaks
   
   return(mzroll_list)
 }
 
+#' Impute missing peaks with provided feature-level imputation values
+#'
+#'@param mzroll_list: data in triple omic structure
+#'@param lod_values: a tibble that maps groupId to log2 feature-level imputation values
+#'@param quant_var: column to use for peak values
+#'@param imputation_sd: standard deviation of Gaussian distribution to use for missing peak imputation
+#'
+#'@return triple omic data with imputed missing peaks
+#'
+#' @examples
+#' mzroll_list_imputed <- impute_missing_peaks(mzroll_list, lod_values, "log2_abundance", 0.15)
+#'
+#'@export
+impute_missing_peaks <- function(mzroll_list,
+                                 lod_values,
+                                 quant_var = "log2_abundance",
+                                 imputation_sd = 0.15) {
+  
+  test_mzroll_list(mzroll_list)
+  
+  valid_quant_var <- setdiff(
+    mzroll_list$design$measurements$variable,
+    c(mzroll_list$design$feature_pk, mzroll_list$design$sample_pk)
+  )
+  
+  checkmate::assertChoice(quant_var, valid_quant_var)
+  checkmate::assertNumeric(mzroll_list$measurements[[quant_var]])
+  
+  ## find missing peaks
+  missing_peaks <- tidyr::expand_grid(
+    groupId = mzroll_list$features$groupId,
+    sampleId = mzroll_list$samples$sampleId) %>%
+    dplyr::anti_join (
+      mzroll_list$measurements,
+      by = c("groupId", "sampleId")
+    )
+  
+  ## impute missing peaks
+  missing_peaks_imputed <- left_join(
+    missing_peaks, 
+    group_background, 
+    by = c("groupId")) %>%
+    rowwise() %>%
+    mutate(!!rlang::sym(quant_var) := rnorm(1, mean = !!rlang::sym(quant_var)+1, sd = imputation_sd))
+  
+  ## merge measured peaks with imputed peaks
+  completed_peaks <- dplyr::bind_rows(
+    mzroll_list$measurements,
+    missing_peaks_imputed
+  )
+  
+  mzroll_list$measurements <- completed_peaks
+  return(mzroll_list)
+}
+
+#' Fill in missing peaks
+#'
+#'@param mzroll_list: data in triple omic structure
+#'@param fill_values: either a numeric constant or a tibble that maps groupId to log2 feature-level imputation values
+#'@param quant_var: column to use for peak values
+#'@param imputation_sd: standard deviation of Gaussian distribution to use for missing peak imputation
+#'
+#'@return triple omic data with imputed missing peaks
+#'
+#' @examples
+#' mzroll_list_imputed <- fill_in_missing_peaks(mzroll_list, lod_values, "log2_abundance", 0.15)
+#' mzroll_list_imputed <- fill_in_missing_peaks(mzroll_list, 12, "log2_abundance")
+#'
+#'@export
+fill_in_missing_peaks <- function(mzroll_list,
+                                  fill_values,
+                                  quant_var = "log2_abundance",
+                                  imputation_sd = 0.15) {
+  if (is.data.frame(fill_values)) {
+    stopifnot(colnames(fill_values) %in% c("groupId", rlang::sym(quant_var)))
+    output <- temp_impute(mzroll_list, lod_values, quant_var, imputation_sd)
+  } else if (is.numeric(fill_values)) {
+    output <- floor_peaks(mzroll_list, fill_values, quant_var)
+  } else {
+    stop("fill_values should either be a single numeric value or a tibble that maps groupId to feature-level imputation values")
+  }
+  return(output)
+}
 
 #' Normalize Peaks
 #'
