@@ -93,7 +93,7 @@ impute_missing_peaks <- function(mzroll_list,
   
   features <- mzroll_list$features %>% dplyr::select(groupId)
   
-  if(!all(features$groupId %in% lod_values$groupId) | nrow(features) != nrow(lod_values)) {
+  if(!all(features$groupId %in% lod_values$groupId)) {
     stop("groupId values of lod_value table and feature table of triple omic data must match")
   }
   
