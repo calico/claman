@@ -28,13 +28,15 @@ a grob
 Volcano plot
 }
 \examples{
+library(dplyr)
 regression_significance <- diffex_mzroll(
-  nplug_mzroll_normalized,
-  "normalized_log2_abundance",
-  "limitation + limitation:DR + 0",
-  FDR_cutoff = 0.01,
-  feature_labels = c("UDP", "Lactate", "Serine")
-)
+nplug_mzroll_normalized,
+"normalized_log2_abundance",
+"limitation + limitation:DR + 0") \%>\%
+dplyr::left_join(
+nplug_mzroll_normalized$features \%>\% select(groupId, compoundName),
+by = "groupId")
 
-plot_volcano(regression_significance, 10, 0.1)
+plot_volcano(regression_significance, 10, 0.1, c("Ribose-P", "acetyl-CoA", "ATP"))
+
 }
