@@ -287,7 +287,7 @@ Two visualizations that are particularly useful for EDA are heatmaps (I'm sure y
 
 ```{r static_eda, fig.height = 8, fig.width = 8}
 samples_with_pcs <- final_processed_data %>%
-  romic::add_pca_loadings(value_var = "normalized_log2_abundance", npcs = 5)
+  romic::add_pcs(value_var = "normalized_log2_abundance", npcs = 5)
 
 romic::plot_bivariate(
   samples_with_pcs$samples,

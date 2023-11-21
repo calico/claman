@@ -28,6 +28,15 @@ If \code{fill_values} is a data frame, this function calls \code{impute_missing_
 If it is a numeric vector, 'this function calls \code{floor_peaks()}. Other types are not currently supported
 }
 \examples{
+library(dplyr)
+
+lod_values <- nplug_mzroll_augmented[["measurements"]] \%>\%
+dplyr::select(groupId, log2_abundance) \%>\%
+dplyr::distinct(groupId, .keep_all = TRUE)
+
+mzroll_list <- nplug_mzroll_augmented
+mzroll_list$measurements <- mzroll_list$measurements \%>\% filter(groupId != 2 & sampleId != 1)
+
 mzroll_list_imputed <- fill_in_missing_peaks(mzroll_list, lod_values, "log2_abundance", 0.15)
 mzroll_list_imputed <- fill_in_missing_peaks(mzroll_list, 12, "log2_abundance")
 

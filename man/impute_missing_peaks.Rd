@@ -27,6 +27,15 @@ triple omic data with imputed missing peaks
 Impute missing peaks with provided feature-level imputation values
 }
 \examples{
+library(dplyr)
+
+lod_values <- nplug_mzroll_augmented[["measurements"]] \%>\%
+dplyr::select(groupId, log2_abundance) \%>\%
+dplyr::distinct(groupId, .keep_all = TRUE)
+
+mzroll_list <- nplug_mzroll_augmented
+mzroll_list$measurements <- mzroll_list$measurements \%>\% filter(groupId != 2 & sampleId != 1)
+
 mzroll_list_imputed <- impute_missing_peaks(mzroll_list, lod_values, "log2_abundance", 0.15)
 
 }

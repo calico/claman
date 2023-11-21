@@ -279,15 +279,17 @@ diffex_fdr <- function(term_data) {
 #' @returns a grob
 #'
 #' @examples
+#' library(dplyr)
 #' regression_significance <- diffex_mzroll(
-#'   nplug_mzroll_normalized,
-#'   "normalized_log2_abundance",
-#'   "limitation + limitation:DR + 0",
-#'   FDR_cutoff = 0.01,
-#'   feature_labels = c("UDP", "Lactate", "Serine")
-#' )
-#'
-#' plot_volcano(regression_significance, 10, 0.1)
+#' nplug_mzroll_normalized,
+#' "normalized_log2_abundance",
+#' "limitation + limitation:DR + 0") %>%
+#' dplyr::left_join(
+#' nplug_mzroll_normalized$features %>% select(groupId, compoundName),
+#' by = "groupId")
+#' 
+#' plot_volcano(regression_significance, 10, 0.1, c("Ribose-P", "acetyl-CoA", "ATP"))
+#' 
 #' @export
 plot_volcano <- function(
   regression_significance,
@@ -316,11 +318,12 @@ plot_volcano <- function(
       is_discovery = qvalue < FDR_cutoff
     ) %>%
     ggplot(aes_string(x = effect_var)) +
-    {if ("compoundName" %in% colnames(regression_significance))
-    {geom_point(aes(y = p.value.trans, color = is_discovery, name = compoundName))} 
-      else {geom_point(aes(y = p.value.trans, color = is_discovery))} 
-    } +
-    geom_text(aes(label = ifelse(compoundName %in% feature_labels, compoundName, ""), y = p.value.trans, vjust = -0.75)) +
+    {if ("compoundName" %in% colnames(regression_significance)) {
+      geom_point(aes(y = p.value.trans, color = is_discovery, name = compoundName)) +
+        geom_text(aes(label = ifelse(compoundName %in% feature_labels, compoundName, ""), y = p.value.trans, vjust = -0.75))
+      } 
+      else {geom_point(aes(y = p.value.trans, color = is_discovery))}
+      } +
     facet_wrap(~term, scales = "free_x") +
     scale_x_continuous("Effect size") +
     scale_y_continuous(expression(-log[10] ~ "pvalue")) +

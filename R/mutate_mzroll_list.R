@@ -66,6 +66,15 @@ floor_peaks <- function(mzroll_list,
 #'@return triple omic data with imputed missing peaks
 #'
 #' @examples
+#' library(dplyr)
+#' 
+#' lod_values <- nplug_mzroll_augmented[["measurements"]] %>%
+#' dplyr::select(groupId, log2_abundance) %>%
+#' dplyr::distinct(groupId, .keep_all = TRUE)
+#' 
+#' mzroll_list <- nplug_mzroll_augmented
+#' mzroll_list$measurements <- mzroll_list$measurements %>% filter(groupId != 2 & sampleId != 1)
+#' 
 #' mzroll_list_imputed <- impute_missing_peaks(mzroll_list, lod_values, "log2_abundance", 0.15)
 #'
 #'@export
@@ -75,6 +84,18 @@ impute_missing_peaks <- function(mzroll_list,
                                  imputation_sd = 0.15) {
   
   test_mzroll_list(mzroll_list)
+  
+  stopifnot(colnames(lod_values) %in% c("groupId", rlang::sym(quant_var)))
+  
+  if (nrow(lod_values) > nrow(lod_values %>% dplyr::distinct(groupId, .keep_all = TRUE))) {
+    stop("only one value per feature must be provided to impute missing peaks")
+  }
+  
+  features <- mzroll_list$features %>% dplyr::select(groupId)
+  
+  if(!all(features$groupId %in% lod_values$groupId) | nrow(features) != nrow(lod_values)) {
+    stop("groupId values of lod_value table and feature table of triple omic data must match")
+  }
   
   valid_quant_var <- setdiff(
     mzroll_list$design$measurements$variable,
@@ -94,12 +115,12 @@ impute_missing_peaks <- function(mzroll_list,
     )
   
   ## impute missing peaks
-  missing_peaks_imputed <- left_join(
+  missing_peaks_imputed <- dplyr::left_join(
     missing_peaks, 
     lod_values, 
     by = c("groupId")) %>%
-    rowwise() %>%
-    mutate(!!rlang::sym(quant_var) := rnorm(1, mean = !!rlang::sym(quant_var)+1, sd = imputation_sd))
+    dplyr::rowwise() %>%
+    dplyr::mutate(!!rlang::sym(quant_var) := stats::rnorm(1, mean = !!rlang::sym(quant_var)+1, sd = imputation_sd))
   
   ## merge measured peaks with imputed peaks
   completed_peaks <- dplyr::bind_rows(
@@ -125,6 +146,15 @@ impute_missing_peaks <- function(mzroll_list,
 #'@return triple omic data with imputed missing peaks
 #'
 #' @examples
+#' library(dplyr)
+#' 
+#' lod_values <- nplug_mzroll_augmented[["measurements"]] %>%
+#' dplyr::select(groupId, log2_abundance) %>%
+#' dplyr::distinct(groupId, .keep_all = TRUE)
+#' 
+#' mzroll_list <- nplug_mzroll_augmented
+#' mzroll_list$measurements <- mzroll_list$measurements %>% filter(groupId != 2 & sampleId != 1)
+#' 
 #' mzroll_list_imputed <- fill_in_missing_peaks(mzroll_list, lod_values, "log2_abundance", 0.15)
 #' mzroll_list_imputed <- fill_in_missing_peaks(mzroll_list, 12, "log2_abundance")
 #'
@@ -134,8 +164,7 @@ fill_in_missing_peaks <- function(mzroll_list,
                                   quant_var = "log2_abundance",
                                   imputation_sd = 0.15) {
   if (is.data.frame(fill_values)) {
-    stopifnot(colnames(fill_values) %in% c("groupId", rlang::sym(quant_var)))
-    output <- impute_missing_peaks(mzroll_list, lod_values, quant_var, imputation_sd)
+    output <- impute_missing_peaks(mzroll_list, fill_values, quant_var, imputation_sd)
   } else if (is.numeric(fill_values)) {
     output <- floor_peaks(mzroll_list, fill_values, quant_var)
   } else {
