@@ -314,7 +314,7 @@ plot_volcano <- function(
   regression_significance %>%
     dplyr::filter(!is.na(p.value)) %>%
     dplyr::mutate(
-      p.value.trans = trans_pvalues_temp(p.value, max_p_trans = max_p_trans),
+      p.value.trans = trans_pvalues(p.value, max_p_trans = max_p_trans),
       is_discovery = qvalue < FDR_cutoff
     ) %>%
     ggplot(aes_string(x = effect_var)) + 
