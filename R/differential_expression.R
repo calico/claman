@@ -292,11 +292,11 @@ diffex_fdr <- function(term_data) {
 #' 
 #' @export
 plot_volcano <- function(
-  regression_significance,
-  max_p_trans = 10,
-  FDR_cutoff = 0.1,
-  feature_labels = NULL
-  ) {
+    regression_significance,
+    max_p_trans = 10,
+    FDR_cutoff = 0.1,
+    feature_labels = NULL
+) {
   
   checkmate::assertDataFrame(regression_significance)
   stopifnot("term" %in% colnames(regression_significance))
@@ -314,16 +314,20 @@ plot_volcano <- function(
   regression_significance %>%
     dplyr::filter(!is.na(p.value)) %>%
     dplyr::mutate(
-      p.value.trans = trans_pvalues(p.value, max_p_trans = max_p_trans),
+      p.value.trans = trans_pvalues_temp(p.value, max_p_trans = max_p_trans),
       is_discovery = qvalue < FDR_cutoff
     ) %>%
-    ggplot(aes_string(x = effect_var)) +
+    ggplot(aes_string(x = effect_var)) + 
     {if ("compoundName" %in% colnames(regression_significance)) {
-      geom_point(aes(y = p.value.trans, color = is_discovery, name = compoundName)) +
-        geom_text(aes(label = ifelse(compoundName %in% feature_labels, compoundName, ""), y = p.value.trans, vjust = -0.75))
-      } 
-      else {geom_point(aes(y = p.value.trans, color = is_discovery))}
-      } +
+      geom_point(aes(y = p.value.trans, color = is_discovery, name = compoundName))
+    } else {
+      geom_point(aes(y = p.value.trans, color = is_discovery))
+    }
+    } +
+    {if ("compoundName" %in% colnames(regression_significance)) {
+      geom_text(aes(label = ifelse(compoundName %in% feature_labels, compoundName, ""), y = p.value.trans, vjust = -0.75))
+    }
+    } +
     facet_wrap(~term, scales = "free_x") +
     scale_x_continuous("Effect size") +
     scale_y_continuous(expression(-log[10] ~ "pvalue")) +
