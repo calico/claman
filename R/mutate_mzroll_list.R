@@ -183,11 +183,15 @@ fill_in_missing_peaks <- function(mzroll_list,
 #'     value
 #'     }
 #'   \item{\code{center batches}: batch centering}
+#'   \item{\code{center}: zero-center each compound}
 #'   \item{\code{reference sample}: compare to reference sample}
 #'   \item{\code{reference condition}: compare each sample to its specified
 #'     reference sample}
 #'   \item{\code{loess}: weighted smoothing of IC over time (adds
 #'     \code{.loess_fit} as a peaks variable in addition to
+#'     \code{norm_peak_varname})}
+#'   \item{\code{lm}: linear regression smoothing of IC over time (adds
+#'     \code{lm_estimate} as feature variable in addition to
 #'     \code{norm_peak_varname})}
 #'   }
 #' @param quant_peak_varname variable in measurements to use for abundance
@@ -269,7 +273,9 @@ normalize_peaks <- function(mzroll_list,
     "center batches", "normalize_peaks_batch_center",
     "reference sample", "normalize_peaks_reference_sample",
     "reference condition", "normalize_peaks_reference_condition",
-    "loess", "normalize_peaks_loess"
+    "loess", "normalize_peaks_loess",
+    "lm", "normalize_peaks_lm",
+    "center","normalize_peaks_center"
   )
   
   checkmate::assertChoice(
@@ -901,4 +907,94 @@ normalization_refloor <- function(normalized_peaks,
   }
   
   return(normalized_peaks)
+}
+
+#' @inheritParams normalize_peaks_batch_center
+#' @param time_col_varname variable in samples table to use for linear 
+#' correction
+#'
+#' @rdname normalize_peaks
+normalize_peaks_lm <- function (mzroll_list,
+                                quant_peak_varname,
+                                norm_peak_varname, 
+                                time_col_varname) 
+{
+  stopifnot(time_col_varname %in% colnames(mzroll_list$samples))
+  
+  time_col_varname_add <- mzroll_list$samples %>%
+    dplyr::select(c("sampleId", time_col_varname))
+  
+  lm_fit <- mzroll_list$measurements %>% 
+    dplyr::left_join(., time_col_varname_add, by = "sampleId") %>%
+    tidyr::nest(groupData = -groupId) %>% 
+    dplyr::mutate(lm_fits = purrr::map(groupData,
+                                       fit_lm, 
+                                       quant_peak_varname = quant_peak_varname, 
+                                       norm_peak_varname = norm_peak_varname,
+                                       time_col_varname = time_col_varname)) %>% 
+    dplyr::select(-groupData) %>% 
+    tidyr::unnest(lm_fits)
+  
+  lm_fit_measurements <- lm_fit %>% 
+    dplyr::select(!!!rlang::syms(c(colnames(mzroll_list$measurements), norm_peak_varname)))
+  
+  lm_fit_features <- lm_fit %>%
+    dplyr::select(groupId, lm_estimate) %>%
+    unique() %>%
+    dplyr::left_join(mzroll_list$features, ., by = "groupId")
+  
+  mzroll_list <- romic::update_tomic(mzroll_list, lm_fit_measurements)
+  mzroll_list <- romic::update_tomic(mzroll_list, lm_fit_features)
+  
+  return(mzroll_list)
+  
+}
+
+fit_lm <- function (groupData, 
+                    time_col_varname,
+                    quant_peak_varname, 
+                    norm_peak_varname,
+                    order = 1) 
+{
+  
+  lm_data <- groupData %>%
+    dplyr::mutate(val_var = !!rlang::sym(quant_peak_varname),
+                  dri_var = !!rlang::sym(time_col_varname)) 
+  
+  lm_predict <- lm_data %>%
+    tidyr::drop_na(val_var)
+  
+  # Run model
+  lm_model <- stats::lm(val_var ~ poly(dri_var, degree = order), data = lm_predict)
+  
+  # Compute corrected values
+  lm_apply <- lm_data %>%
+    dplyr::mutate(median_value = median(.data$val_var, na.rm = T)) %>%
+    dplyr::mutate(`:=`(!!rlang::sym(norm_peak_varname), 
+                       .data$val_var - .env$predict(lm_model, newdata = lm_data) + .data$median_value)) %>%
+                    dplyr::mutate(lm_estimate = summary(.env$lm_model)$coefficient[2,1]) %>%
+                    dplyr::select(-c(val_var, dri_var, median_value))
+                  
+  return(lm_apply)
+  
+}
+
+
+#' @inheritParams normalize_peaks_center
+#'
+#' @rdname normalize_peaks
+normalize_peaks_center <- function(mzroll_list,
+                                   quant_peak_varname,
+                                   norm_peak_varname) 
+{
+  
+  updated_measurements <- mzroll_list$measurements %>%
+    dplyr::group_by(groupId) %>%
+    dplyr::mutate(!!rlang::sym(norm_peak_varname) :=
+        scale(!!rlang::sym(quant_peak_varname), scale = F, center = T))
+  
+  mzroll_list <- romic::update_tomic(mzroll_list, updated_measurements)
+  
+  return(mzroll_list)
+  
 }

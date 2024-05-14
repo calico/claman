@@ -2,6 +2,8 @@
 % Please edit documentation in R/claman.R
 \docType{package}
 \name{calicomics}
+\alias{claman}
+\alias{claman-package}
 \alias{calicomics}
 \title{\code{claman} package}
 \description{
@@ -10,4 +12,19 @@ files created using MAVEN or Quahog into an mzroll_list. These lists
 can then be modified through normalization, signal flooring, and filtering.
 Differential abundance analysis of metabolites can then be performed along
 with a variety of visualizations.
+}
+\author{
+\strong{Maintainer}: Sean Hackett \email{sean@calicolabs.com} (\href{https://orcid.org/0000-0002-9553-4341}{ORCID})
+
+Authors:
+\itemize{
+  \item Phil Seitzer \email{phillipseitzer@calicolabs.com}
+  \item Alireza Delfarah \email{delfarah@calicolabs.com}
+}
+
+Other contributors:
+\itemize{
+  \item Calico Life Sciences LLC [copyright holder, funder]
+}
+
 }
