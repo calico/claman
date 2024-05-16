@@ -24,6 +24,7 @@ normalize_peaks_median_polish(
   mzroll_list,
   quant_peak_varname,
   norm_peak_varname,
+  filter_values = NULL,
   log2_floor_value = NA
 )
 
@@ -116,6 +117,9 @@ normalize_peaks_center(mzroll_list, quant_peak_varname, norm_peak_varname)
 abundance}
 
 \item{...}{additional arguments to pass to normalization methods}
+
+\item{filter_values}{groupIds on which to calculate the median polish scaling
+factor}
 
 \item{log2_floor_value}{minimum value to set for low abundance or
 missing peaks}

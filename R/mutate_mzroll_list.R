@@ -325,12 +325,16 @@ normalize_peaks <- function(mzroll_list,
 #'
 #' @inheritParams normalize_peaks
 #' @inheritParams floor_peaks
+#' @param filter_values groupIds on which to calculate the median polish scaling
+#' factor
 #'
 #' @rdname normalize_peaks
 normalize_peaks_median_polish <- function(mzroll_list,
                                           quant_peak_varname,
                                           norm_peak_varname,
+                                          filter_values = NULL,
                                           log2_floor_value = NA) {
+  
   stopifnot(length(log2_floor_value) == 1)
   if (!is.na(log2_floor_value)) {
     stopifnot(class(log2_floor_value) == "numeric")
@@ -351,7 +355,27 @@ normalize_peaks_median_polish <- function(mzroll_list,
     )
   }
   
-  sample_scaling_factors <- normalization_peaks %>%
+  if (!is.null(filter_values)){
+    if (!any(filter_values %in% unique(mzroll_list$features$groupId))){
+      
+      # If groupId filter values not in design,
+      # perform median polish on all compounds
+      warning("groupId filter values not found in design; performing median polish on all groupIds")
+      sample_scaling_factors <- normalization_peaks
+    } else {
+      
+      # If they are present, filter on these compounds
+      sample_scaling_factors <- normalization_peaks %>%
+        dplyr::filter(groupId %in% filter_values)
+    }
+  } else {
+    
+    # If not groupId filter values provided, 
+    # calculate scaling factor on all compounds
+    sample_scaling_factors <- normalization_peaks
+  }
+  
+  sample_scaling_factors <- sample_scaling_factors %>%
     dplyr::group_by(groupId) %>%
     dplyr::mutate(
       median_abund = stats::median(!!rlang::sym(quant_peak_varname))
@@ -361,7 +385,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
       diff_to_median = !!rlang::sym(quant_peak_varname) - median_abund
     ) %>%
     dplyr::group_by(sampleId) %>%
-    dplyr::summarize(scaling_factor = stats::median(diff_to_median))
+    dplyr::summarize(median_polish_scaling_factor = stats::median(diff_to_median))
   
   missing_sample_scaling_factors <- mzroll_list$samples %>%
     dplyr::anti_join(sample_scaling_factors, by = "sampleId")
@@ -382,7 +406,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
       dplyr::left_join(sample_scaling_factors, by = "sampleId") %>%
       dplyr::mutate(
         !!rlang::sym(norm_peak_varname) :=
-          !!rlang::sym(quant_peak_varname) - scaling_factor
+          !!rlang::sym(quant_peak_varname) - median_polish_scaling_factor
       ) %>%
       # measurements starting at limit of detection are reset to
       #   log2_floor_value
@@ -393,7 +417,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
           ) %>%
           dplyr::mutate(!!rlang::sym(norm_peak_varname) := log2_floor_value)
       ) %>%
-      dplyr::select(-scaling_factor) %>%
+      dplyr::select(-median_polish_scaling_factor) %>%
       # measurements pushed below limit of detection are reset to
       #   log2_floor_value
       dplyr::mutate(
@@ -405,12 +429,17 @@ normalize_peaks_median_polish <- function(mzroll_list,
       dplyr::left_join(sample_scaling_factors, by = "sampleId") %>%
       dplyr::mutate(
         !!rlang::sym(norm_peak_varname) :=
-          !!rlang::sym(quant_peak_varname) - scaling_factor
+          !!rlang::sym(quant_peak_varname) - median_polish_scaling_factor
       ) %>%
-      dplyr::select(-scaling_factor)
+      dplyr::select(-median_polish_scaling_factor)
   }
   
   mzroll_list <- romic::update_tomic(mzroll_list, updated_measurements)
+  
+  updated_samples <- mzroll_list$samples %>%
+    dplyr::left_join(., sample_scaling_factors, by = "sampleId")
+  
+  mzroll_list <- romic::update_tomic(mzroll_list, updated_samples)
   
   return(mzroll_list)
 }
@@ -980,12 +1009,12 @@ fit_lm <- function (groupData,
 }
 
 
-#' @inheritParams normalize_peaks_center
+#' @inheritParams normalize_peaks_batch_center
 #'
 #' @rdname normalize_peaks
-normalize_peaks_center <- function(mzroll_list,
-                                   quant_peak_varname,
-                                   norm_peak_varname) 
+normalize_peaks_center <- function (mzroll_list,
+                                    quant_peak_varname,
+                                    norm_peak_varname) 
 {
   
   updated_measurements <- mzroll_list$measurements %>%
