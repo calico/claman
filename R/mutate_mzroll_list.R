@@ -58,10 +58,10 @@ floor_peaks <- function(mzroll_list,
 
 #' Impute missing peaks with provided feature-level imputation values
 #'
-#'@param mzroll_list: data in triple omic structure
-#'@param lod_values: a tibble that maps groupId to log2 feature-level imputation values
-#'@param quant_var: column to use for peak values
-#'@param imputation_sd: standard deviation of Gaussian distribution to use for missing peak imputation
+#'@param mzroll_list data in triple omic structure
+#'@param lod_values a tibble that maps groupId to log2 feature-level imputation values
+#'@param quant_var column to use for peak values
+#'@param imputation_sd standard deviation of Gaussian distribution to use for missing peak imputation
 #'
 #'@return triple omic data with imputed missing peaks
 #'
@@ -138,10 +138,10 @@ impute_missing_peaks <- function(mzroll_list,
 #'If \code{fill_values} is a data frame, this function calls \code{impute_missing_peaks()}.
 #'If it is a numeric vector, 'this function calls \code{floor_peaks()}. Other types are not currently supported
 #'
-#'@param mzroll_list: data in triple omic structure
-#'@param fill_values: either a numeric constant or a tibble that maps groupId to log2 feature-level imputation values
-#'@param quant_var: column to use for peak values
-#'@param imputation_sd: standard deviation of Gaussian distribution to use for missing peak imputation
+#'@param mzroll_list data in triple omic structure
+#'@param fill_values either a numeric constant or a tibble that maps groupId to log2 feature-level imputation values
+#'@param quant_var column to use for peak values
+#'@param imputation_sd standard deviation of Gaussian distribution to use for missing peak imputation
 #'
 #'@return triple omic data with imputed missing peaks
 #'
