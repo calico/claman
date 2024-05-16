@@ -178,7 +178,9 @@ fill_in_missing_peaks <- function(mzroll_list,
 #' @inheritParams test_mzroll_list
 #' @param normalization_method Normalization method to apply
 #' \itemize{
-#'   \item{\code{median polish}: column normalization based on average signal}
+#'   \item{\code{median polish}: column normalization based on average signal
+#'   (adds \code{median_polish_scaling_factor} as feature variable in addition to
+#'     \code{norm_peak_varname})}
 #'   \item{\code{loading value}: column normalization using a sample-level
 #'     value
 #'     }
@@ -442,6 +444,72 @@ normalize_peaks_median_polish <- function(mzroll_list,
   mzroll_list <- romic::update_tomic(mzroll_list, updated_samples)
   
   return(mzroll_list)
+  
+}
+
+
+#' Predict Dilutions from Median Polish Scaling Factor
+#' 
+#' Using `median_polish_scaling_factor` output from `normalize_peaks_median_polish`,
+#' predict sample-wise dilutions
+#' 
+#' @details This function performs an inverse-normalization on the scaling factors,
+#' and scales the samples based on the observed maximum scaling factor. Assumes that
+#' median polish is perform on log2 transformed data
+#' 
+#' @param mzroll_list data in triple omic structure
+#' @param scaling_factor scaling factor, defaults to `median_polish_scaling_factor`
+#' and must be a `samples` column in `mzroll_list`
+#' @param norm_scale_varname variable in samples to add for dilution predictions
+#' @param group_var optional grouping variable on which to calculate maximum dilution
+#' 
+#' @return a \code{mzroll_list} with \code{norm_scale_varname} variable added to 
+#' samples
+#'   
+#' @export
+median_polish_predict_dilutions <- function (mzroll_list,
+                                             scaling_factor = "median_polish_scaling_factor",
+                                             norm_scale_varname = "median_polish_predicted_dilutions",
+                                             group_vars = NULL) {
+  test_mzroll_list(mzroll_list)
+  
+  checkmate::assertString(scaling_factor)
+  if (!(scaling_factor %in% colnames(mzroll_list$samples))) {
+    stop(
+      "\"scaling_factor\":",
+      scaling_factor,
+      ", not present in samples table"
+    )
+  }
+  checkmate::assertString(norm_scale_varname)
+  
+  updated_samples <- mzroll_list$samples %>%
+    dplyr::mutate(temp_scaling_factor = !!rlang::sym(scaling_factor)) %>%
+    dplyr::mutate(inverse_log_scaling_factor = 2^temp_scaling_factor) 
+  
+  if(!is.null(group_var) && any(group_vars %in% colnames(mzroll_list$samples))) {
+    
+    updated_samples <- updated_samples %>%
+      dplyr::group_by(group_vars) %>%
+      dplyr::mutate(m = max(inverse_log_scaling_factor)) %>%
+      dplyr::ungroup()
+    
+  } else {
+    
+    updated_samples <- updated_samples %>%
+      dplyr::mutate(m = max(inverse_log_scaling_factor))
+    
+  }
+  
+  updated_samples <- updated_samples %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(`:=`(!!rlang::sym(norm_scale_varname), 
+                       inverse_log_scaling_factor/m)) %>%
+    dplyr::select(-temp_scaling_factor, -inverse_log_scaling_factor, -m)
+                    
+  mzroll_list <- romic::update_tomic(mzroll_list, updated_samples)
+  return(mzroll_list)
+
 }
 
 #' Normalize Peaks - Loading Value
