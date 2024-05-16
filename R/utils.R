@@ -2,6 +2,8 @@
 #'
 #' @param mzroll_list output of \link{process_mzroll} or
 #'   \link{process_mzroll_multi}
+#' @param fast_check if `TRUE` then skip some checks which are slow and that are 
+#' generally only needed when a `tomic` object is first created
 #'
 #' \itemize{
 #'   \item{features: one row per unique analyte (defined by a
@@ -9,8 +11,6 @@
 #'   \item{samples: one row per unique sample (defined by a unique sampleId)},
 #'   \item{measurements: one row per peak (samples x peakgroups)}
 #'   }
-#'
-#' @inheritParams romic:::check_triple_omic
 #'
 test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
   checkmate::assertClass(mzroll_list, "tomic")
