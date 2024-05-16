@@ -999,6 +999,11 @@ fit_lm <- function (groupData,
   # Compute corrected values
   lm_apply <- lm_data %>%
     dplyr::mutate(median_value = median(.data$val_var, na.rm = T)) %>%
+    
+    # Assign new normalized variable norm_peak_varname:
+    # Predict values from linear fit are subtracted from quant_peak_varname,
+    # which centers the data around zero
+    # Median value from quant_peak_varname is added back to maintain abundance value
     dplyr::mutate(`:=`(!!rlang::sym(norm_peak_varname), 
                        .data$val_var - .env$predict(lm_model, newdata = lm_data) + .data$median_value)) %>%
                     dplyr::mutate(lm_estimate = summary(.env$lm_model)$coefficient[2,1]) %>%
