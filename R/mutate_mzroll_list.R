@@ -453,7 +453,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
 #' Using `median_polish_scaling_factor` output from `normalize_peaks_median_polish`,
 #' predict sample-wise dilutions
 #' 
-#' @details This function performs an inverse-normalization on the scaling factors,
+#' @details This function performs an inverse-log transformation on the scaling factors,
 #' and scales the samples based on the observed maximum scaling factor. Assumes that
 #' median polish is perform on log2 transformed data
 #' 
@@ -461,16 +461,18 @@ normalize_peaks_median_polish <- function(mzroll_list,
 #' @param scaling_factor scaling factor, defaults to `median_polish_scaling_factor`
 #' and must be a `samples` column in `mzroll_list`
 #' @param norm_scale_varname variable in samples to add for dilution predictions
-#' @param group_var optional grouping variable on which to calculate maximum dilution
+#' @param group_var optional grouping variable on which to calculate maximum dilution,
+#' must be a `samples` column in `mzroll_list`
 #' 
 #' @return a \code{mzroll_list} with \code{norm_scale_varname} variable added to 
 #' samples
 #'   
 #' @export
-median_polish_predict_dilutions <- function (mzroll_list,
-                                             scaling_factor = "median_polish_scaling_factor",
-                                             norm_scale_varname = "median_polish_predicted_dilutions",
-                                             group_vars = NULL) {
+median_polish_predict_dilutions <- function(mzroll_list,
+                                            scaling_factor = "median_polish_scaling_factor",
+                                            norm_scale_varname = "median_polish_predicted_dilutions",
+                                            group_vars = NULL) {
+  
   test_mzroll_list(mzroll_list)
   
   checkmate::assertString(scaling_factor)
@@ -487,21 +489,22 @@ median_polish_predict_dilutions <- function (mzroll_list,
     dplyr::mutate(temp_scaling_factor = !!rlang::sym(scaling_factor)) %>%
     dplyr::mutate(inverse_log_scaling_factor = 2^temp_scaling_factor) 
   
-  if(!is.null(group_var) && any(group_vars %in% colnames(mzroll_list$samples))) {
+  if(!is.null(group_vars) && any(group_vars %in% colnames(mzroll_list$samples))) {
     
     updated_samples <- updated_samples %>%
-      dplyr::group_by(group_vars) %>%
-      dplyr::mutate(m = max(inverse_log_scaling_factor)) %>%
-      dplyr::ungroup()
+      dplyr::group_by_at(group_vars) %>%
+      dplyr::mutate(m = max(inverse_log_scaling_factor))
     
   } else {
     
+    max_temp <- max(updated_samples$inverse_log_scaling_factor, na.rm = T)
     updated_samples <- updated_samples %>%
-      dplyr::mutate(m = max(inverse_log_scaling_factor))
+      dplyr::mutate(m = .env$max_temp)
     
   }
   
   updated_samples <- updated_samples %>%
+    dplyr::ungroup() %>%
     dplyr::rowwise() %>%
     dplyr::mutate(`:=`(!!rlang::sym(norm_scale_varname), 
                        inverse_log_scaling_factor/m)) %>%

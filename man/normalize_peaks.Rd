@@ -87,7 +87,9 @@ normalize_peaks_center(mzroll_list, quant_peak_varname, norm_peak_varname)
 
 \item{normalization_method}{Normalization method to apply
 \itemize{
-  \item{\code{median polish}: column normalization based on average signal}
+  \item{\code{median polish}: column normalization based on average signal
+  (adds \code{median_polish_scaling_factor} as feature variable in addition to
+    \code{norm_peak_varname})}
   \item{\code{loading value}: column normalization using a sample-level
     value
     }
