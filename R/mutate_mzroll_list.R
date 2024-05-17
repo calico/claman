@@ -471,7 +471,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
 median_polish_predict_dilutions <- function(mzroll_list,
                                             scaling_factor = "median_polish_scaling_factor",
                                             norm_scale_varname = "median_polish_predicted_dilutions",
-                                            group_vars = NULL) {
+                                            group_var = NULL) {
   
   test_mzroll_list(mzroll_list)
   
@@ -489,10 +489,10 @@ median_polish_predict_dilutions <- function(mzroll_list,
     dplyr::mutate(temp_scaling_factor = !!rlang::sym(scaling_factor)) %>%
     dplyr::mutate(inverse_log_scaling_factor = 2^temp_scaling_factor) 
   
-  if(!is.null(group_vars) && any(group_vars %in% colnames(mzroll_list$samples))) {
+  if(!is.null(group_var) && any(group_var %in% colnames(mzroll_list$samples))) {
     
     updated_samples <- updated_samples %>%
-      dplyr::group_by_at(group_vars) %>%
+      dplyr::group_by_at(group_var) %>%
       dplyr::mutate(m = max(inverse_log_scaling_factor))
     
   } else {
@@ -1096,7 +1096,8 @@ normalize_peaks_center <- function (mzroll_list,
   updated_measurements <- mzroll_list$measurements %>%
     dplyr::group_by(groupId) %>%
     dplyr::mutate(!!rlang::sym(norm_peak_varname) :=
-        scale(!!rlang::sym(quant_peak_varname), scale = F, center = T))
+        scale(!!rlang::sym(quant_peak_varname), scale = F, center = T)) %>%
+    dplyr::ungroup()
   
   mzroll_list <- romic::update_tomic(mzroll_list, updated_measurements)
   

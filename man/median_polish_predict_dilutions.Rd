@@ -8,7 +8,7 @@ median_polish_predict_dilutions(
   mzroll_list,
   scaling_factor = "median_polish_scaling_factor",
   norm_scale_varname = "median_polish_predicted_dilutions",
-  group_vars = NULL
+  group_var = NULL
 )
 }
 \arguments{
