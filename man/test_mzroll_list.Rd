@@ -8,7 +8,10 @@ test_mzroll_list(mzroll_list, fast_check = TRUE)
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or
-  \link{process_mzroll_multi}
+\link{process_mzroll_multi}}
+
+\item{fast_check}{if `TRUE` then skip some checks which are slow and that are 
+generally only needed when a `tomic` object is first created
 
 \itemize{
   \item{features: one row per unique analyte (defined by a

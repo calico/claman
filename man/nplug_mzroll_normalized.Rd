@@ -20,8 +20,8 @@ nplug_mzroll_normalized
 \seealso{
 Other nplug: 
 \code{\link{nplug_compounds}},
-\code{\link{nplug_mzroll_augmented}},
 \code{\link{nplug_mzroll}()},
+\code{\link{nplug_mzroll_augmented}},
 \code{\link{nplug_samples}}
 }
 \concept{nplug}

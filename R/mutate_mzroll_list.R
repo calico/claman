@@ -58,10 +58,10 @@ floor_peaks <- function(mzroll_list,
 
 #' Impute missing peaks with provided feature-level imputation values
 #'
-#'@param mzroll_list: data in triple omic structure
-#'@param lod_values: a tibble that maps groupId to log2 feature-level imputation values
-#'@param quant_var: column to use for peak values
-#'@param imputation_sd: standard deviation of Gaussian distribution to use for missing peak imputation
+#'@param mzroll_list data in triple omic structure
+#'@param lod_values a tibble that maps groupId to log2 feature-level imputation values
+#'@param quant_var column to use for peak values
+#'@param imputation_sd standard deviation of Gaussian distribution to use for missing peak imputation
 #'
 #'@return triple omic data with imputed missing peaks
 #'
@@ -138,10 +138,10 @@ impute_missing_peaks <- function(mzroll_list,
 #'If \code{fill_values} is a data frame, this function calls \code{impute_missing_peaks()}.
 #'If it is a numeric vector, 'this function calls \code{floor_peaks()}. Other types are not currently supported
 #'
-#'@param mzroll_list: data in triple omic structure
-#'@param fill_values: either a numeric constant or a tibble that maps groupId to log2 feature-level imputation values
-#'@param quant_var: column to use for peak values
-#'@param imputation_sd: standard deviation of Gaussian distribution to use for missing peak imputation
+#'@param mzroll_list data in triple omic structure
+#'@param fill_values either a numeric constant or a tibble that maps groupId to log2 feature-level imputation values
+#'@param quant_var column to use for peak values
+#'@param imputation_sd standard deviation of Gaussian distribution to use for missing peak imputation
 #'
 #'@return triple omic data with imputed missing peaks
 #'
@@ -178,16 +178,22 @@ fill_in_missing_peaks <- function(mzroll_list,
 #' @inheritParams test_mzroll_list
 #' @param normalization_method Normalization method to apply
 #' \itemize{
-#'   \item{\code{median polish}: column normalization based on average signal}
+#'   \item{\code{median polish}: column normalization based on average signal
+#'   (adds \code{median_polish_scaling_factor} as feature variable in addition to
+#'     \code{norm_peak_varname})}
 #'   \item{\code{loading value}: column normalization using a sample-level
 #'     value
 #'     }
 #'   \item{\code{center batches}: batch centering}
+#'   \item{\code{center}: zero-center each compound}
 #'   \item{\code{reference sample}: compare to reference sample}
 #'   \item{\code{reference condition}: compare each sample to its specified
 #'     reference sample}
 #'   \item{\code{loess}: weighted smoothing of IC over time (adds
 #'     \code{.loess_fit} as a peaks variable in addition to
+#'     \code{norm_peak_varname})}
+#'   \item{\code{lm}: linear regression smoothing of IC over time (adds
+#'     \code{lm_estimate} as feature variable in addition to
 #'     \code{norm_peak_varname})}
 #'   }
 #' @param quant_peak_varname variable in measurements to use for abundance
@@ -269,7 +275,9 @@ normalize_peaks <- function(mzroll_list,
     "center batches", "normalize_peaks_batch_center",
     "reference sample", "normalize_peaks_reference_sample",
     "reference condition", "normalize_peaks_reference_condition",
-    "loess", "normalize_peaks_loess"
+    "loess", "normalize_peaks_loess",
+    "lm", "normalize_peaks_lm",
+    "center","normalize_peaks_center"
   )
   
   checkmate::assertChoice(
@@ -319,12 +327,16 @@ normalize_peaks <- function(mzroll_list,
 #'
 #' @inheritParams normalize_peaks
 #' @inheritParams floor_peaks
+#' @param filter_values groupIds on which to calculate the median polish scaling
+#' factor
 #'
 #' @rdname normalize_peaks
 normalize_peaks_median_polish <- function(mzroll_list,
                                           quant_peak_varname,
                                           norm_peak_varname,
+                                          filter_values = NULL,
                                           log2_floor_value = NA) {
+  
   stopifnot(length(log2_floor_value) == 1)
   if (!is.na(log2_floor_value)) {
     stopifnot(class(log2_floor_value) == "numeric")
@@ -345,7 +357,27 @@ normalize_peaks_median_polish <- function(mzroll_list,
     )
   }
   
-  sample_scaling_factors <- normalization_peaks %>%
+  if (!is.null(filter_values)){
+    if (!any(filter_values %in% unique(mzroll_list$features$groupId))){
+      
+      # If groupId filter values not in design,
+      # perform median polish on all compounds
+      warning("groupId filter values not found in design; performing median polish on all groupIds")
+      sample_scaling_factors <- normalization_peaks
+    } else {
+      
+      # If they are present, filter on these compounds
+      sample_scaling_factors <- normalization_peaks %>%
+        dplyr::filter(groupId %in% filter_values)
+    }
+  } else {
+    
+    # If not groupId filter values provided, 
+    # calculate scaling factor on all compounds
+    sample_scaling_factors <- normalization_peaks
+  }
+  
+  sample_scaling_factors <- sample_scaling_factors %>%
     dplyr::group_by(groupId) %>%
     dplyr::mutate(
       median_abund = stats::median(!!rlang::sym(quant_peak_varname))
@@ -355,7 +387,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
       diff_to_median = !!rlang::sym(quant_peak_varname) - median_abund
     ) %>%
     dplyr::group_by(sampleId) %>%
-    dplyr::summarize(scaling_factor = stats::median(diff_to_median))
+    dplyr::summarize(median_polish_scaling_factor = stats::median(diff_to_median))
   
   missing_sample_scaling_factors <- mzroll_list$samples %>%
     dplyr::anti_join(sample_scaling_factors, by = "sampleId")
@@ -376,7 +408,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
       dplyr::left_join(sample_scaling_factors, by = "sampleId") %>%
       dplyr::mutate(
         !!rlang::sym(norm_peak_varname) :=
-          !!rlang::sym(quant_peak_varname) - scaling_factor
+          !!rlang::sym(quant_peak_varname) - median_polish_scaling_factor
       ) %>%
       # measurements starting at limit of detection are reset to
       #   log2_floor_value
@@ -387,7 +419,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
           ) %>%
           dplyr::mutate(!!rlang::sym(norm_peak_varname) := log2_floor_value)
       ) %>%
-      dplyr::select(-scaling_factor) %>%
+      dplyr::select(-median_polish_scaling_factor) %>%
       # measurements pushed below limit of detection are reset to
       #   log2_floor_value
       dplyr::mutate(
@@ -399,14 +431,89 @@ normalize_peaks_median_polish <- function(mzroll_list,
       dplyr::left_join(sample_scaling_factors, by = "sampleId") %>%
       dplyr::mutate(
         !!rlang::sym(norm_peak_varname) :=
-          !!rlang::sym(quant_peak_varname) - scaling_factor
+          !!rlang::sym(quant_peak_varname) - median_polish_scaling_factor
       ) %>%
-      dplyr::select(-scaling_factor)
+      dplyr::select(-median_polish_scaling_factor)
   }
   
   mzroll_list <- romic::update_tomic(mzroll_list, updated_measurements)
   
+  updated_samples <- mzroll_list$samples %>%
+    dplyr::left_join(., sample_scaling_factors, by = "sampleId")
+  
+  mzroll_list <- romic::update_tomic(mzroll_list, updated_samples)
+  
   return(mzroll_list)
+  
+}
+
+
+#' Predict Dilutions from Median Polish Scaling Factor
+#' 
+#' @description
+#' Using `median_polish_scaling_factor` output from `normalize_peaks_median_polish`,
+#' predict sample-wise dilutions
+#' 
+#' @details This function performs an inverse-log transformation on the scaling factors,
+#' and scales the samples based on the observed maximum scaling factor. Assumes that
+#' median polish is perform on log2 transformed data
+#' 
+#' @param mzroll_list data in triple omic structure
+#' @param scaling_factor scaling factor, defaults to `median_polish_scaling_factor`
+#' and must be a `samples` column in `mzroll_list`
+#' @param norm_scale_varname variable in samples to add for dilution predictions
+#' @param group_var optional grouping variable on which to calculate maximum dilution,
+#' must be a `samples` column in `mzroll_list`
+#' 
+#' @return a \code{mzroll_list} with \code{norm_scale_varname} variable added to 
+#' samples
+#'   
+#' @export
+median_polish_predict_dilutions <- function(mzroll_list,
+                                            scaling_factor = "median_polish_scaling_factor",
+                                            norm_scale_varname = "median_polish_predicted_dilutions",
+                                            group_var = NULL) {
+  
+  test_mzroll_list(mzroll_list)
+  
+  checkmate::assertString(scaling_factor)
+  if (!(scaling_factor %in% colnames(mzroll_list$samples))) {
+    stop(
+      "\"scaling_factor\":",
+      scaling_factor,
+      ", not present in samples table"
+    )
+  }
+  checkmate::assertString(norm_scale_varname)
+  
+  updated_samples <- mzroll_list$samples %>%
+    dplyr::mutate(temp_scaling_factor = !!rlang::sym(scaling_factor)) %>%
+    dplyr::mutate(inverse_log_scaling_factor = 2^temp_scaling_factor) 
+  
+  if(!is.null(group_var) && any(group_var %in% colnames(mzroll_list$samples))) {
+    
+    updated_samples <- updated_samples %>%
+      dplyr::group_by_at(group_var) %>%
+      dplyr::mutate(m = max(inverse_log_scaling_factor))
+    
+  } else {
+    
+    max_temp <- max(updated_samples$inverse_log_scaling_factor, na.rm = T)
+    updated_samples <- updated_samples %>%
+      dplyr::mutate(m = .env$max_temp)
+    
+  }
+  
+  updated_samples <- updated_samples %>%
+    dplyr::ungroup() %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(`:=`(!!rlang::sym(norm_scale_varname), 
+                       inverse_log_scaling_factor/m)) %>%
+    dplyr::select(-temp_scaling_factor, -inverse_log_scaling_factor, -m)
+                    
+  mzroll_list <- romic::update_tomic(mzroll_list, updated_samples)
+  return(mzroll_list)
+
 }
 
 #' Normalize Peaks - Loading Value
@@ -901,4 +1008,100 @@ normalization_refloor <- function(normalized_peaks,
   }
   
   return(normalized_peaks)
+}
+
+#' @inheritParams normalize_peaks_batch_center
+#' @param time_col_varname variable in samples table to use for linear 
+#' correction
+#'
+#' @rdname normalize_peaks
+normalize_peaks_lm <- function (mzroll_list,
+                                quant_peak_varname,
+                                norm_peak_varname, 
+                                time_col_varname) 
+{
+  stopifnot(time_col_varname %in% colnames(mzroll_list$samples))
+  
+  time_col_varname_add <- mzroll_list$samples %>%
+    dplyr::select(c("sampleId", time_col_varname))
+  
+  lm_fit <- mzroll_list$measurements %>% 
+    dplyr::left_join(., time_col_varname_add, by = "sampleId") %>%
+    tidyr::nest(groupData = -groupId) %>% 
+    dplyr::mutate(lm_fits = purrr::map(groupData,
+                                       fit_lm, 
+                                       quant_peak_varname = quant_peak_varname, 
+                                       norm_peak_varname = norm_peak_varname,
+                                       time_col_varname = time_col_varname)) %>% 
+    dplyr::select(-groupData) %>% 
+    tidyr::unnest(lm_fits)
+  
+  lm_fit_measurements <- lm_fit %>% 
+    dplyr::select(!!!rlang::syms(c(colnames(mzroll_list$measurements), norm_peak_varname)))
+  
+  lm_fit_features <- lm_fit %>%
+    dplyr::select(groupId, lm_estimate) %>%
+    unique() %>%
+    dplyr::left_join(mzroll_list$features, ., by = "groupId")
+  
+  mzroll_list <- romic::update_tomic(mzroll_list, lm_fit_measurements)
+  mzroll_list <- romic::update_tomic(mzroll_list, lm_fit_features)
+  
+  return(mzroll_list)
+  
+}
+
+fit_lm <- function (groupData, 
+                    time_col_varname,
+                    quant_peak_varname, 
+                    norm_peak_varname,
+                    order = 1) 
+{
+  
+  lm_data <- groupData %>%
+    dplyr::mutate(val_var = !!rlang::sym(quant_peak_varname),
+                  dri_var = !!rlang::sym(time_col_varname)) 
+  
+  lm_predict <- lm_data %>%
+    tidyr::drop_na(val_var)
+  
+  # Run model
+  lm_model <- stats::lm(val_var ~ poly(dri_var, degree = order), data = lm_predict)
+  
+  # Compute corrected values
+  lm_apply <- lm_data %>%
+    dplyr::mutate(median_value = median(.data$val_var, na.rm = T)) %>%
+    
+    # Assign new normalized variable norm_peak_varname:
+    # Predict values from linear fit are subtracted from quant_peak_varname,
+    # which centers the data around zero
+    # Median value from quant_peak_varname is added back to maintain abundance value
+    dplyr::mutate(`:=`(!!rlang::sym(norm_peak_varname), 
+                       .data$val_var - .env$predict(lm_model, newdata = lm_data) + .data$median_value)) %>%
+                    dplyr::mutate(lm_estimate = summary(.env$lm_model)$coefficient[2,1]) %>%
+                    dplyr::select(-c(val_var, dri_var, median_value))
+                  
+  return(lm_apply)
+  
+}
+
+
+#' @inheritParams normalize_peaks_batch_center
+#'
+#' @rdname normalize_peaks
+normalize_peaks_center <- function (mzroll_list,
+                                    quant_peak_varname,
+                                    norm_peak_varname) 
+{
+  
+  updated_measurements <- mzroll_list$measurements %>%
+    dplyr::group_by(groupId) %>%
+    dplyr::mutate(!!rlang::sym(norm_peak_varname) :=
+        scale(!!rlang::sym(quant_peak_varname), scale = F, center = T)) %>%
+    dplyr::ungroup()
+  
+  mzroll_list <- romic::update_tomic(mzroll_list, updated_measurements)
+  
+  return(mzroll_list)
+  
 }

@@ -12,13 +12,13 @@ fill_in_missing_peaks(
 )
 }
 \arguments{
-\item{mzroll_list:}{data in triple omic structure}
+\item{mzroll_list}{data in triple omic structure}
 
-\item{fill_values:}{either a numeric constant or a tibble that maps groupId to log2 feature-level imputation values}
+\item{fill_values}{either a numeric constant or a tibble that maps groupId to log2 feature-level imputation values}
 
-\item{quant_var:}{column to use for peak values}
+\item{quant_var}{column to use for peak values}
 
-\item{imputation_sd:}{standard deviation of Gaussian distribution to use for missing peak imputation}
+\item{imputation_sd}{standard deviation of Gaussian distribution to use for missing peak imputation}
 }
 \value{
 triple omic data with imputed missing peaks

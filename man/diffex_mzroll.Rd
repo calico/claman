@@ -15,14 +15,7 @@ diffex_mzroll(
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or
-  \link{process_mzroll_multi}
-
-\itemize{
-  \item{features: one row per unique analyte (defined by a
-    unique groupId)},
-  \item{samples: one row per unique sample (defined by a unique sampleId)},
-  \item{measurements: one row per peak (samples x peakgroups)}
-  }}
+\link{process_mzroll_multi}}
 
 \item{value_var}{measurement variable}
 
