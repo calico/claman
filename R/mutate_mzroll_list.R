@@ -450,6 +450,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
 
 #' Predict Dilutions from Median Polish Scaling Factor
 #' 
+#' @description
 #' Using `median_polish_scaling_factor` output from `normalize_peaks_median_polish`,
 #' predict sample-wise dilutions
 #' 
