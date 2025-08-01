@@ -30,8 +30,8 @@ Impute missing peaks with provided feature-level imputation values
 library(dplyr)
 
 lod_values <- nplug_mzroll_augmented[["measurements"]] \%>\%
-dplyr::select(groupId, log2_abundance) \%>\%
-dplyr::distinct(groupId, .keep_all = TRUE)
+  dplyr::select(groupId, log2_abundance) \%>\%
+  dplyr::distinct(groupId, .keep_all = TRUE)
 
 mzroll_list <- nplug_mzroll_augmented
 mzroll_list$measurements <- mzroll_list$measurements \%>\% filter(groupId != 2 & sampleId != 1)
