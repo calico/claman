@@ -11,7 +11,7 @@ expand_peaks(
 )
 }
 \arguments{
-\item{mzroll_list}{a \code{claman::test_mzroll_list} tomic object}
+\item{mzroll_list}{an \code{mzroll_list} tomic object}
 
 \item{quant_var}{peak measurement variable on which to determine missing
 values}
