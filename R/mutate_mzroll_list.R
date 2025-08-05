@@ -73,7 +73,7 @@ expand_peaks <- function(mzroll_list,
           )) %>%
         dplyr::ungroup()
     } else {
-      warning("log2_floor_value must be a single number, 'min', or 'halfmin'\nReturning expanded mzroll_list with NA values\n")
+      warning("log2_floor_value must be a single number, 'min', or 'halfmin'. Returning expanded mzroll_list with NA values.")
     }
   }
 
