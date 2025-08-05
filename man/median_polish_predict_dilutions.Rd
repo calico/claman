@@ -23,7 +23,7 @@ and must be a `samples` column in `mzroll_list`}
 must be a `samples` column in `mzroll_list`}
 }
 \value{
-a \code{mzroll_list} with \code{norm_scale_varname} variable added to 
+a \code{mzroll_list} with \code{norm_scale_varname} variable added to
 samples
 }
 \description{

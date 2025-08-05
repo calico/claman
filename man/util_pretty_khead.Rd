@@ -11,7 +11,8 @@ util_pretty_khead(tbl, nrows = 10, caption = NULL)
 
 \item{nrows}{the max number of rows to show}
 
-\item{caption}{The table caption.}
+\item{caption}{The table caption. By default, it is retrieved from the chunk
+option \code{tab.cap}.}
 }
 \value{
 an html knitr table
