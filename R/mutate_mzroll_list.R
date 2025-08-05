@@ -417,8 +417,8 @@ normalize_peaks <- function(mzroll_list,
 #' @param filter_ids sample type ids on which to filter data for calculation of
 #' median polish quotient from column provided by \code{filter_var};
 #' defaults to NULL
-#' @param filter_var column name on which to filter \code{filter_ids}; must be
-#' one of "sampleId" or "groupId"; defaults to NULL
+#' @param filter_var column name on which to filter \code{filter_ids}; should be
+#' a column name present in the \code{samples} or \code{features} tables; defaults to NULL
 #'
 #' @rdname normalize_peaks
 normalize_peaks_median_polish <- function(mzroll_list,
