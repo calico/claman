@@ -3,6 +3,7 @@
 export(collapse_injections)
 export(collapse_metabolites)
 export(diffex_mzroll)
+export(expand_peaks)
 export(fill_in_missing_peaks)
 export(filter_groupIds)
 export(find_pathway_enrichments)

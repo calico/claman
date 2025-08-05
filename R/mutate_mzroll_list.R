@@ -1,3 +1,89 @@
+#' Expand all samples and features
+#'
+#' This function takes an mzroll_list (mzroll_tomic) object and expands
+#' the features and samples in the measurements dataframe. All original peak
+#' area values are retained. If \code{log2_floor_value} is not provided, all
+#' missing values are enumerated with NA values. If a \code{log2_floor_value} is
+#' provided as a numeric value, all NA values will be replaced with that value.
+#' The \code{log2_floor_value} argument can also accept strings "min" or
+#' "halfmin" which will replace NA values with groupId-specific log2 minimum or
+#' half-minimum values, respectively.
+#'
+#' This function differs from \code{claman::floor_peaks} as values below the
+#' \code{log2_floor_value} are _not_ replaced with the floor values.
+#'
+#' @param mzroll_list a \code{claman::test_mzroll_list} tomic object
+#' @param quant_var peak measurement variable on which to determine missing
+#' values
+#' @param log2_floor_value minimum value to set for missing peaks only. Will
+#' also accept "min" or "halfmin" to impute NA values with groupId-specific
+#' minimum or half-minimum values, respectively
+#'
+#' @returns an mzroll_list object with groupId and sampleId values expanded
+#'
+#' @export
+expand_peaks <- function(mzroll_list,
+                         quant_var = "log2_abundance",
+                         log2_floor_value = NULL) {
+  claman:::test_mzroll_list(mzroll_list)
+  missing_peaks <- tidyr::expand_grid(
+    groupId = mzroll_list$features$groupId,
+    sampleId = mzroll_list$samples$sampleId
+  ) %>%
+    dplyr::anti_join(mzroll_list$measurements,
+      by = c("groupId", "sampleId")
+    ) %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(`:=`(!!rlang::sym(quant_var), NA))
+
+  completed_peaks <- dplyr::bind_rows(
+    mzroll_list$measurements,
+    missing_peaks
+  )
+
+  if (!is.null(log2_floor_value)) {
+    # replace NAs with floor value
+    if (is.numeric(log2_floor_value) && length(log2_floor_value) == 1) {
+      completed_peaks <- completed_peaks %>%
+        dplyr::mutate(!!rlang::sym(quant_var) :=
+          ifelse(is.na(!!rlang::sym(quant_var)),
+            log2_floor_value,
+            !!rlang::sym(quant_var)
+          ))
+
+      # replace NAs with groupId minimum
+    } else if (log2_floor_value == "min") {
+      completed_peaks <- completed_peaks %>%
+        dplyr::group_by(groupId) %>%
+        dplyr::mutate(!!rlang::sym(quant_var) :=
+          ifelse(is.na(!!rlang::sym(quant_var)),
+            min(!!rlang::sym(quant_var), na.rm = TRUE),
+            !!rlang::sym(quant_var)
+          )) %>%
+        dplyr::ungroup()
+
+      # replace NAs with groupId half minimum
+    } else if (log2_floor_value == "halfmin") {
+      completed_peaks <- completed_peaks %>%
+        dplyr::group_by(groupId) %>%
+        dplyr::mutate(!!rlang::sym(quant_var) :=
+          ifelse(is.na(!!rlang::sym(quant_var)),
+            min(!!rlang::sym(quant_var), na.rm = TRUE) - 1,
+            !!rlang::sym(quant_var)
+          )) %>%
+        dplyr::ungroup()
+    } else {
+      warning("log2_floor_value must be a single number, 'min', or 'halfmin'\nReturning expanded mzroll_list with NA values\n")
+    }
+  }
+
+  mzroll_list$measurements <- completed_peaks
+  return(mzroll_list)
+}
+
+
+
+
 #' Floor Peaks
 #'
 #' Set a minimum peak abundance of floor_value for low abundance and
@@ -360,12 +446,12 @@ normalize_peaks_median_polish <- function(mzroll_list,
       " try calling floor_peaks() first"
     )
   }
-  
+
   ## Check for any filter matching
   filter_var_use <- NULL
   if (!is.null(filter_ids) && !is.null(filter_var)) {
     if (filter_var %in% colnames(mzroll_list$samples)) {
-      if (any(filter_ids %in% unique(mzroll_list$samples[[filter_var]]))){
+      if (any(filter_ids %in% unique(mzroll_list$samples[[filter_var]]))) {
         filter_var_use <- "sampleId"
         filter_ids_use <- mzroll_list$samples %>%
           dplyr::filter(!!rlang::sym(filter_var) %in% filter_ids) %>%
@@ -374,7 +460,7 @@ normalize_peaks_median_polish <- function(mzroll_list,
       }
     }
     if (filter_var %in% colnames(mzroll_list$features)) {
-      if (any(filter_ids %in% unique(mzroll_list$features[[filter_var]]))){
+      if (any(filter_ids %in% unique(mzroll_list$features[[filter_var]]))) {
         filter_var_use <- "groupId"
         filter_ids_use <- mzroll_list$features %>%
           dplyr::filter(!!rlang::sym(filter_var) %in% filter_ids) %>%
@@ -383,53 +469,62 @@ normalize_peaks_median_polish <- function(mzroll_list,
       }
     }
   }
-    
+
   ## No filter option (most common)
   if (is.null(filter_var_use)) {
-    
     sample_scaling_factors <- normalization_peaks %>%
       dplyr::group_by(groupId) %>%
       dplyr::mutate(
         median_abund = stats::median(!!rlang::sym(quant_peak_varname))
       ) %>%
       dplyr::ungroup()
-    
+
     ## Filter on groupIds
-    ## This is a version of PQN that will only calculate median differences on a 
+    ## This is a version of PQN that will only calculate median differences on a
     ## subset of groupIds (peaks) -- useful if someone wants to subset on "good"
     ## or robust peaks only (or even just a few known, low variability peaks)
   } else if (filter_var_use == "groupId") {
-    
-    cat(paste0("PQN median calculations filtered to peaks with ",
-               filter_var, " values matching to ",
-               paste(intersect(filter_ids, 
-                               unique(mzroll_list$features[[filter_var]])), 
-                     collapse = ", "), "\n"))
-    
+    cat(paste0(
+      "PQN median calculations filtered to peaks with ",
+      filter_var, " values matching to ",
+      paste(
+        intersect(
+          filter_ids,
+          unique(mzroll_list$features[[filter_var]])
+        ),
+        collapse = ", "
+      ), "\n"
+    ))
+
     sample_scaling_factors <- normalization_peaks %>%
-      dplyr::filter(groupId %in% filter_ids_use) %>% 
+      dplyr::filter(groupId %in% filter_ids_use) %>%
       dplyr::group_by(groupId) %>%
       dplyr::mutate(
         median_abund = stats::median(!!rlang::sym(quant_peak_varname))
       ) %>%
       dplyr::ungroup()
-    
+
     ## Filter on sampleIds
-    ## This is a version of PQN that will only calculate median values of each 
+    ## This is a version of PQN that will only calculate median values of each
     ## compound based on a subset of sampleIds. This is useful if it is desired
     ## for the median reference value of each compound to only be calculated on
     ## QC or biological samples. Note that due to selecting a median value on
-    ## default, filtering in this manner does not tend to change results 
+    ## default, filtering in this manner does not tend to change results
     ## significantly, and may only be useful for very small datasets with a
     ## large proportion of blank or standard samples
   } else if (filter_var_use == "sampleId") {
-    
-    cat(paste0("PQN median calculations filtered to samples with ",
-               filter_var, " values matching to ",
-               paste(intersect(filter_ids, 
-                               unique(mzroll_list$samples[[filter_var]])), 
-                     collapse = ", "), "\n"))
-    
+    cat(paste0(
+      "PQN median calculations filtered to samples with ",
+      filter_var, " values matching to ",
+      paste(
+        intersect(
+          filter_ids,
+          unique(mzroll_list$samples[[filter_var]])
+        ),
+        collapse = ", "
+      ), "\n"
+    ))
+
     sample_scaling_factors_temp <- normalization_peaks %>%
       dplyr::filter(sampleId %in% filter_ids_use) %>%
       dplyr::group_by(groupId) %>%
@@ -438,10 +533,9 @@ normalize_peaks_median_polish <- function(mzroll_list,
       ) %>%
       dplyr::ungroup() %>%
       dplyr::distinct(groupId, median_abund)
-    
+
     sample_scaling_factors <- normalization_peaks %>%
       dplyr::left_join(., sample_scaling_factors_temp, by = "groupId")
-    
   } else {
     stop("Issue filtering measurements dataframe for median polish")
   }
@@ -452,9 +546,11 @@ normalize_peaks_median_polish <- function(mzroll_list,
       diff_to_median = !!rlang::sym(quant_peak_varname) - median_abund
     ) %>%
     dplyr::group_by(sampleId) %>%
-    dplyr::summarize(median_polish_scaling_factor = stats::median(diff_to_median),
-                     .groups = "drop")
-  
+    dplyr::summarize(
+      median_polish_scaling_factor = stats::median(diff_to_median),
+      .groups = "drop"
+    )
+
   missing_sample_scaling_factors <- mzroll_list$samples %>%
     dplyr::anti_join(sample_scaling_factors, by = "sampleId")
 
@@ -1201,8 +1297,8 @@ normalize_peaks_center <- function(mzroll_list,
     dplyr::mutate(!!rlang::sym(norm_peak_varname) :=
       scale(!!rlang::sym(quant_peak_varname), scale = F, center = T)) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(!!rlang::sym(norm_peak_varname) := 
-                    as.numeric(!!rlang::sym(norm_peak_varname)))
+    dplyr::mutate(!!rlang::sym(norm_peak_varname) :=
+      as.numeric(!!rlang::sym(norm_peak_varname)))
 
   mzroll_list <- romic::update_tomic(mzroll_list, updated_measurements)
 
