@@ -1180,7 +1180,7 @@ normalization_refloor <- function(normalized_peaks,
 #' @param remove_outliers logical that defines whether or not to remove outliers
 #' from dataset before quantifying linear drift; defaults to TRUE
 #' @param outlier_sd the standard deviation value above or below which samples
-#' would be removes as outliers if \code{remove_outliers} is set to TRUE
+#' would be removed as outliers if \code{remove_outliers} is set to TRUE
 #'
 #' @rdname normalize_peaks
 normalize_peaks_lm <- function(mzroll_list,
