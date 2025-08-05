@@ -12,7 +12,7 @@
 #' This function differs from \code{claman::floor_peaks} as values below the
 #' \code{log2_floor_value} are _not_ replaced with the floor values.
 #'
-#' @param mzroll_list a \code{claman::test_mzroll_list} tomic object
+#' @param mzroll_list an \code{mzroll_list} tomic object
 #' @param quant_var peak measurement variable on which to determine missing
 #' values
 #' @param log2_floor_value minimum value to set for missing peaks only. Will
