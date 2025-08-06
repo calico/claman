@@ -129,6 +129,8 @@ provided by \code{filter_var}; defaults to NULL}
 \item{log2_floor_value}{minimum value to set for low abundance or
 missing peaks}
 
+\item{verbose}{logical; if TRUE, prints diagnostic messages during normalization}
+
 \item{loading_varname}{sample variable used for adjustment}
 
 \item{batch_varnames}{variables to use for grouping when removing batch

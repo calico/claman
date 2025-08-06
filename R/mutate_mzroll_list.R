@@ -419,6 +419,7 @@ normalize_peaks <- function(mzroll_list,
 #' defaults to NULL
 #' @param filter_var column name on which to filter \code{filter_ids}; should be
 #' a column name present in the \code{samples} or \code{features} tables; defaults to NULL
+#' @param verbose logical; if TRUE, prints diagnostic messages during normalization
 #'
 #' @rdname normalize_peaks
 normalize_peaks_median_polish <- function(mzroll_list,
