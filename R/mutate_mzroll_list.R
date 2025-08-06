@@ -419,6 +419,7 @@ normalize_peaks <- function(mzroll_list,
 #' defaults to NULL
 #' @param filter_var column name on which to filter \code{filter_ids}; should be
 #' a column name present in the \code{samples} or \code{features} tables; defaults to NULL
+#' @param verbose logical; if TRUE, prints diagnostic messages during normalization
 #'
 #' @rdname normalize_peaks
 normalize_peaks_median_polish <- function(mzroll_list,
@@ -426,7 +427,8 @@ normalize_peaks_median_polish <- function(mzroll_list,
                                           norm_peak_varname,
                                           filter_ids = NULL,
                                           filter_var = NULL,
-                                          log2_floor_value = NA) {
+                                          log2_floor_value = NA,
+                                          verbose = FALSE) {
   stopifnot(length(log2_floor_value) == 1)
   if (!is.na(log2_floor_value)) {
     stopifnot(class(log2_floor_value) == "numeric")
@@ -484,17 +486,19 @@ normalize_peaks_median_polish <- function(mzroll_list,
     ## subset of groupIds (peaks) -- useful if someone wants to subset on "good"
     ## or robust peaks only (or even just a few known, low variability peaks)
   } else if (filter_var_use == "groupId") {
-    cat(paste0(
-      "PQN median calculations filtered to peaks with ",
-      filter_var, " values matching to ",
-      paste(
-        intersect(
-          filter_ids,
-          unique(mzroll_list$features[[filter_var]])
-        ),
-        collapse = ", "
-      ), "\n"
-    ))
+    if (verbose) {
+      cat(paste0(
+        "PQN median calculations filtered to peaks with ",
+        filter_var, " values matching to ",
+        paste(
+          intersect(
+            filter_ids,
+            unique(mzroll_list$features[[filter_var]])
+          ),
+          collapse = ", "
+        ), "\n"
+      ))
+    }
 
     sample_scaling_factors <- normalization_peaks %>%
       dplyr::filter(groupId %in% filter_ids_use) %>%
@@ -513,17 +517,19 @@ normalize_peaks_median_polish <- function(mzroll_list,
     ## significantly, and may only be useful for very small datasets with a
     ## large proportion of blank or standard samples
   } else if (filter_var_use == "sampleId") {
-    cat(paste0(
-      "PQN median calculations filtered to samples with ",
-      filter_var, " values matching to ",
-      paste(
-        intersect(
-          filter_ids,
-          unique(mzroll_list$samples[[filter_var]])
-        ),
-        collapse = ", "
-      ), "\n"
-    ))
+    if (verbose) {
+      cat(paste0(
+        "PQN median calculations filtered to samples with ",
+        filter_var, " values matching to ",
+        paste(
+          intersect(
+            filter_ids,
+            unique(mzroll_list$samples[[filter_var]])
+          ),
+          collapse = ", "
+        ), "\n"
+      ))
+    }
 
     sample_scaling_factors_temp <- normalization_peaks %>%
       dplyr::filter(sampleId %in% filter_ids_use) %>%

@@ -26,7 +26,8 @@ normalize_peaks_median_polish(
   norm_peak_varname,
   filter_ids = NULL,
   filter_var = NULL,
-  log2_floor_value = NA
+  log2_floor_value = NA,
+  verbose = FALSE
 )
 
 normalize_peaks_loading_value(
@@ -127,6 +128,8 @@ provided by \code{filter_var}; defaults to NULL}
 
 \item{log2_floor_value}{minimum value to set for low abundance or
 missing peaks}
+
+\item{verbose}{logical; if TRUE, prints diagnostic messages during normalization}
 
 \item{loading_varname}{sample variable used for adjustment}
 
