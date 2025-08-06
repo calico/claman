@@ -33,12 +33,10 @@ merge_samples_tbl <- function(mzroll_list,
   checkmate::assertLogical(exact)
 
   # match samples_tbl to mzroll samples
-
   samples_tbl <- samples_tbl %>%
     dplyr::mutate(samples_tbl_row = 1:dplyr::n())
 
   # read all id_strings - substrings used to match sample names in mzroll
-
   ms_id_strings <- samples_tbl %>%
     dplyr::select(!!!rlang::syms(c("samples_tbl_row", id_strings))) %>%
     dplyr::mutate_at(dplyr::vars(-samples_tbl_row), as.character) %>%
@@ -56,8 +54,39 @@ merge_samples_tbl <- function(mzroll_list,
       dplyr::filter(stringr::str_detect(name, id_string_value))
   }
 
-  # check whether 1 sample matches 2+ IDs
+  ## claman Issue-26: fix mis-match issues
+  # first, check if any string ids are present in another string id
+  id_internal_match <- expand.grid(
+    ms_id_strings$id_string_value,
+    ms_id_strings$id_string_value
+  ) %>%
+    dplyr::mutate(across(everything(), as.character)) %>%
+    dplyr::filter(
+      stringr::str_detect(Var1, Var2),
+      Var1 != Var2
+    )
 
+  # if there are rows in id_internal_match, we need to filter out rows where
+  # id_string_value == Var2 matches the same name that is being matched by
+  # id_string_value == Var1
+  if (nrow(id_internal_match) > 0) {
+    # find problematic rows
+    problematic_matches <- sample_ms_id_string_matches %>%
+      dplyr::inner_join(id_internal_match,
+        by = c("id_string_value" = "Var2")
+      ) %>%
+      dplyr::filter(stringr::str_detect(name, Var1))
+
+    # remove problematic rows from main matching dataframe
+    sample_ms_id_string_matches <- sample_ms_id_string_matches %>%
+      dplyr::anti_join(problematic_matches,
+        by = c("samples_tbl_row", "name", "id_string_value")
+      )
+  }
+
+  # now, proceed with multi-match checking as before
+
+  # check whether 1 sample matches 2+ IDs
   sample_multimatch <- sample_ms_id_string_matches %>%
     dplyr::count(name) %>%
     dplyr::filter(n > 1)
@@ -83,7 +112,6 @@ merge_samples_tbl <- function(mzroll_list,
   }
 
   # check whether 1 ID matches 2+ samples
-
   condition_multimatch <- sample_ms_id_string_matches %>%
     dplyr::count(samples_tbl_row) %>%
     dplyr::filter(n > 1)
@@ -390,41 +418,41 @@ lipid_components <- function(compound_name) {
     dplyr::mutate(total_OH = ifelse(is.na(total_OH), 0, total_OH)) %>%
     dplyr::mutate(sumComposition = dplyr::case_when(
       num_sn_chains > 0 & total_OH == 0 ~
-      glue::glue("{class}({plas}{single}:{double})",
-        class = lipidClass,
-        plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
-        single = total_single,
-        double = ifelse(
-          (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
-          (total_double - 1),
-          total_double
-        )
-      ),
-      num_sn_chains > 0 & total_OH == 1 ~
-      glue::glue(
-        "{class}({plas}{single}:{double};O)",
-        class = lipidClass,
-        plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
-        single = total_single,
-        double = ifelse(
-          (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
-          (total_double - 1),
-          total_double
-        )
-      ),
-      num_sn_chains > 0 & total_OH > 1 ~
-      glue::glue(
-        "{class}({plas}{single}:{double};O{num_OH})",
-        class = lipidClass,
-        plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
-        single = total_single,
-        double = ifelse(
-          (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
-          (total_double - 1),
-          total_double
+        glue::glue("{class}({plas}{single}:{double})",
+          class = lipidClass,
+          plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
+          single = total_single,
+          double = ifelse(
+            (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
+            (total_double - 1),
+            total_double
+          )
         ),
-        num_OH = total_OH
-      ),
+      num_sn_chains > 0 & total_OH == 1 ~
+        glue::glue(
+          "{class}({plas}{single}:{double};O)",
+          class = lipidClass,
+          plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
+          single = total_single,
+          double = ifelse(
+            (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
+            (total_double - 1),
+            total_double
+          )
+        ),
+      num_sn_chains > 0 & total_OH > 1 ~
+        glue::glue(
+          "{class}({plas}{single}:{double};O{num_OH})",
+          class = lipidClass,
+          plas = ifelse(is.na(plasmalogen_type), "", plasmalogen_type),
+          single = total_single,
+          double = ifelse(
+            (!is.na(plasmalogen_type) & plasmalogen_type == "p-"),
+            (total_double - 1),
+            total_double
+          ),
+          num_OH = total_OH
+        ),
       num_sn_chains == 0 ~ compoundName
     )) %>%
     dplyr::mutate(etherPlasmalogenCompoundName = ifelse(
