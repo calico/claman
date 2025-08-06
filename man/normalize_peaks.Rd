@@ -26,7 +26,8 @@ normalize_peaks_median_polish(
   norm_peak_varname,
   filter_ids = NULL,
   filter_var = NULL,
-  log2_floor_value = NA
+  log2_floor_value = NA,
+  verbose = FALSE
 )
 
 normalize_peaks_loading_value(
