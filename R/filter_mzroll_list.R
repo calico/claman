@@ -146,7 +146,7 @@ check_peaks_infinite <- function(mzroll_list, quant_var, threshold) {
 }
 
 
-#' Extract peaks containing non-NA, non-finite values
+#' Extract peaks containing NA values
 #'
 #' @inheritParams check_infinite_values
 #'
