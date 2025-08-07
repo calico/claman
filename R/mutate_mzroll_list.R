@@ -452,24 +452,13 @@ normalize_peaks_median_polish <- function(mzroll_list,
   ## Check for any filter matching
   filter_var_use <- NULL
   if (!is.null(filter_ids) && !is.null(filter_var)) {
-    if (filter_var %in% colnames(mzroll_list$samples)) {
-      if (any(filter_ids %in% unique(mzroll_list$samples[[filter_var]]))) {
-        filter_var_use <- "sampleId"
-        filter_ids_use <- mzroll_list$samples %>%
-          dplyr::filter(!!rlang::sym(filter_var) %in% filter_ids) %>%
-          dplyr::distinct(sampleId) %>%
-          dplyr::pull()
-      }
-    }
-    if (filter_var %in% colnames(mzroll_list$features)) {
-      if (any(filter_ids %in% unique(mzroll_list$features[[filter_var]]))) {
-        filter_var_use <- "groupId"
-        filter_ids_use <- mzroll_list$features %>%
-          dplyr::filter(!!rlang::sym(filter_var) %in% filter_ids) %>%
-          dplyr::distinct(groupId) %>%
-          dplyr::pull()
-      }
-    }
+    is_filter <- claman::extract_ids_from_metadata(
+      mzroll_list = mzroll_list,
+      filter_var = filter_var,
+      filter_ids = filter_ids
+    )
+    filter_var_use <- is_filter$filter_var
+    filter_ids_use <- is_filter$filter_ids
   }
 
   ## No filter option (most common)
