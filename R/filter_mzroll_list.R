@@ -209,7 +209,7 @@ extract_ids_from_metadata <- function(mzroll_list,
   # run checks
   romic:::check_triple_omic(mzroll_list)
   checkmate::assertString(filter_var)
-  checkmate::assertString(filter_ids)
+  checkmate::assertCharacter(filter_ids)
   checkmate::assertChoice(
     filter_var,
     union(
