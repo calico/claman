@@ -109,10 +109,10 @@ check_infinite_values <- function(mzroll_list,
     if (length(check_method_output) > 0) {
       problem_compounds <- mzroll_list$features %>%
         dplyr::filter(groupId %in% check_method_output)
-      cat("Non-finite measurements associated with compoundNames: ")
+      cat("\nNon-finite measurements associated with compoundNames: ")
       cat(paste(unique(problem_compounds$compoundName), collapse = ", "))
     } else {
-      cat("All peaks below non-finite value threshold")
+      cat("\nAll peaks below non-finite value threshold")
     }
   }
   return(check_method_output)
@@ -226,8 +226,7 @@ extract_ids_from_metadata <- function(mzroll_list,
         dplyr::distinct(sampleId) %>%
         dplyr::pull()
     } else {
-      stop("filter_var identified as a column in samples table,
-             but no filter_ids matched values in the column")
+      stop("\nfilter_var identified as a column in samples table, but no filter_ids matched values in the column")
     }
   }
 
@@ -239,8 +238,7 @@ extract_ids_from_metadata <- function(mzroll_list,
         dplyr::distinct(groupId) %>%
         dplyr::pull()
     } else {
-      stop("filter_var identified as a column in features table,
-             but no filter_ids matched values in the column")
+      stop("\nfilter_var identified as a column in features table, but no filter_ids matched values in the column")
     }
   }
 
