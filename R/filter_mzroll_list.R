@@ -47,7 +47,7 @@ filter_groupIds <- function(mzroll_list, groupIds, invert = FALSE) {
 #' @param threshold threshold above which groupIds will be returned. A value of
 #' 0 is recommended for \code{infinite_type = "infinite"} to return _any_
 #' groupId containing any infinite value. A higher value or a value of 1 is
-#' commended for \code{infinite_type = "NA"} to return groupIds with a high
+#' recommended for \code{infinite_type = "NA"} to return groupIds with a high
 #' fraction or complete fraction of NA values.
 #' @inheritParams extract_ids_from_metadata
 #' @param verbose when \code{TRUE} prints the compoundNames of groupIds that
