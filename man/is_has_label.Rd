@@ -10,12 +10,12 @@ is_has_label(peakgroup_labels, labels_to_keep = "*", labels_to_exclude = "")
 \item{peakgroup_labels}{String encoding of labels.
 Each character in the string corresponds to a different label.}
 
-\item{labels_to_keep}{Retain the peakgroup if any 
+\item{labels_to_keep}{Retain the peakgroup if any
 character in the string matches to any character in this string.
 \code{default = "*"} (retain all labels)}
 
-\item{labels_to_exclude}{Discard the peakgroup if any 
-character in the string matches to any character in this string. 
+\item{labels_to_exclude}{Discard the peakgroup if any
+character in the string matches to any character in this string.
 If a label is both flagged for inclusion and exclusion, it is excluded.
 \code{default = ""} (do not exclude any labels)}
 }
