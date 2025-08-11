@@ -226,8 +226,9 @@ process_metabolon <- function(peak_areas,
   checkmate::assertNumeric(peak_floor_intensity)
   
   # data tables
-  if (class(peak_areas) == "data.frame" && class(chem_anno) == "data.frame" && class(metadata_info) == "data.frame") {
-    
+  if (inherits(peak_areas, "data.frame") && 
+       inherits(chem_anno, "character") && 
+       inherits(metadata_info, "character")) {
     peaks <- peak_areas 
     anno <- chem_anno
     metadata <- metadata_info 
@@ -263,7 +264,9 @@ process_metabolon <- function(peak_areas,
     }
     
     
-  } else if (class(peak_areas) == "character" && class(chem_anno) == "character" && class(metadata_info) == "character") {
+  } else if (inherits(peak_areas, "character") && 
+             inherits(chem_anno, "character") && 
+             inherits(metadata_info, "character")) {
     
     checkmate::assertFileExists(peak_areas)
     checkmate::assertFileExists(chem_anno)
@@ -289,8 +292,8 @@ process_metabolon <- function(peak_areas,
     tidyr::pivot_longer(cols = dplyr::all_of(columns_to_pivot)) %>% 
     dplyr::mutate(groupId = as.integer(gsub("[^0-9.-]", "",name)), # some versions of Metabolon include non-numeric characters for groupId
            sampleName = PARENT_SAMPLE_NAME,
-           peakAreaTop = value) %>% # claman is hard-coded to use peakAreaTop as quant method from mzrolldb files
-    dplyr::select(-name, -PARENT_SAMPLE_NAME, -value) %>%
+           peakAreaTop = .data$value) %>% # claman is hard-coded to use peakAreaTop as quant method from mzrolldb files
+    dplyr::select(-name, -PARENT_SAMPLE_NAME, -.data$value) %>%
     dplyr::left_join(samples, by="sampleName") %>%
     dplyr::mutate(peakAreaTop = ifelse(is.na(peakAreaTop), peak_floor_intensity, peakAreaTop)) %>%
     dplyr::group_by(groupId) %>%
@@ -397,15 +400,27 @@ process_mzroll_load_peakgroups <- function(mzroll_db_con, quant_col = "peakAreaT
       rt = sum(rt * quant_value) / sum(quant_value)
     )
 
+  # Issue-19
+  # Fixes for R CMD check
   peakgroups <- dplyr::tbl(mzroll_db_con, "peakgroups") %>%
     dplyr::collect() %>%
-    dplyr::select(-compoundId) %>%
-    # peel off smiles if they are present
-    tidyr::separate(
-      compoundName,
-      into = c("compoundName", "smiles"),
-      sep = ": ", extra = "drop", fill = "right"
-    ) %>%
+    dplyr::select(-compoundId)
+  
+  # Only separate SMILES if the pattern exists in compoundName 
+  if (any(stringr::str_detect(peakgroups$compoundName, ": "))) {
+    peakgroups <- peakgroups %>%
+      tidyr::separate(
+        compoundName,
+        into = c("compoundName", "smiles"),
+        sep = ": ", extra = "drop", fill = "right"
+      )
+  } else {
+    # Add empty smiles column if no separation needed
+    peakgroups <- peakgroups %>%
+      dplyr::mutate(smiles = NA_character_)
+  }
+  
+  peakgroups <- peakgroups %>%
     dplyr::left_join(peakgroup_positions, by = "groupId")
 
   # if provided, prefer display name over compoundName

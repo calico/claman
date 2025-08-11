@@ -60,7 +60,7 @@ merge_samples_tbl <- function(mzroll_list,
     ms_id_strings$id_string_value,
     ms_id_strings$id_string_value
   ) %>%
-    dplyr::mutate(across(everything(), as.character)) %>%
+    dplyr::mutate(dplyr::across(tidyselect::everything(), as.character)) %>%
     dplyr::filter(
       stringr::str_detect(Var1, Var2),
       Var1 != Var2

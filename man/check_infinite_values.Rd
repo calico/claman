@@ -32,7 +32,7 @@ for NA values or non-NA infinite (Inf, -Inf, and NaN) values}
 \item{threshold}{threshold above which groupIds will be returned. A value of
 0 is recommended for \code{infinite_type = "infinite"} to return _any_
 groupId containing any infinite value. A higher value or a value of 1 is
-commended for \code{infinite_type = "NA"} to return groupIds with a high
+recommended for \code{infinite_type = "NA"} to return groupIds with a high
 fraction or complete fraction of NA values.}
 
 \item{filter_var}{column name on which to filter \code{filter_ids}; must be

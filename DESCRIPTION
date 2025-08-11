@@ -46,7 +46,6 @@ Imports: broom,
     glue,
     purrr,
     readr,
-    reshape2,
     rlang,
     romic (>= 1.0.6),
     RSQLite,
@@ -60,10 +59,13 @@ Suggests: dbplyr,
     kableExtra,
     knitr,
     lubridate,
+    metstats,
     plotly,
     qvalue,
     rmarkdown,
-    testthat
+    reshape2,
+    testthat,
+    tidyselect
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
