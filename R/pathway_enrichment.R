@@ -332,13 +332,14 @@ fisher_test_enrichment <- function(members, diffex_features, n_features) {
   n_nonmember_nondiffex <-
     n_features - n_diffex_members - n_diffex_nonmembers - n_member_nondiffex
 
-  contingency_table <- matrix(c(
-    n_diffex_members,
-    n_diffex_nonmembers,
-    n_member_nondiffex,
-    n_nonmember_nondiffex
-  ),
-  byrow = TRUE, ncol = 2
+  contingency_table <- matrix(
+    c(
+      n_diffex_members,
+      n_diffex_nonmembers,
+      n_member_nondiffex,
+      n_nonmember_nondiffex
+    ),
+    byrow = TRUE, ncol = 2
   )
 
   stopifnot(all(contingency_table) >= 0, sum(contingency_table) == n_features)

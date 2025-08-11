@@ -281,35 +281,36 @@ diffex_fdr <- function(term_data) {
 #' @examples
 #' library(dplyr)
 #' regression_significance <- diffex_mzroll(
-#' nplug_mzroll_normalized,
-#' "normalized_log2_abundance",
-#' "limitation + limitation:DR + 0") %>%
-#' dplyr::left_join(
-#' nplug_mzroll_normalized$features %>% select(groupId, compoundName),
-#' by = "groupId")
-#' 
+#'   nplug_mzroll_normalized,
+#'   "normalized_log2_abundance",
+#'   "limitation + limitation:DR + 0"
+#' ) %>%
+#'   dplyr::left_join(
+#'     nplug_mzroll_normalized$features %>% select(groupId, compoundName),
+#'     by = "groupId"
+#'   )
+#'
 #' plot_volcano(regression_significance, 10, 0.1, c("Ribose-P", "acetyl-CoA", "ATP"))
-#' 
+#'
 #' @export
 plot_volcano <- function(
     regression_significance,
     max_p_trans = 10,
     FDR_cutoff = 0.1,
     feature_labels = NULL) {
-  
   checkmate::assertDataFrame(regression_significance)
   stopifnot("term" %in% colnames(regression_significance))
-  
+
   effect_var <- dplyr::case_when(
     "estimate" %in% colnames(regression_significance) ~ "estimate",
     "sumsq" %in% colnames(regression_significance) ~ "sumsq",
     TRUE ~ NA_character_
   )
-  
+
   if (is.na(effect_var)) {
     stop("volcano plot cannot be generated due to unknown test")
   }
-  
+
   grob <- ggplot(
     regression_significance %>%
       dplyr::filter(!is.na(p.value)) %>%
@@ -324,13 +325,13 @@ plot_volcano <- function(
     scale_y_continuous(expression(-log[10] ~ "pvalue")) +
     scale_color_manual(values = c("FALSE" = "gray50", "TRUE" = "RED")) +
     theme_bw()
-  
+
   if ("compoundName" %in% colnames(regression_significance)) {
     grob <- grob +
       geom_point(aes(y = p.value.trans, color = is_discovery, name = compoundName)) +
       geom_text(aes(label = ifelse(compoundName %in% feature_labels, compoundName, ""), y = p.value.trans, vjust = -0.75))
   } else {
-    grob <- grob + 
+    grob <- grob +
       geom_point(aes(y = p.value.trans, color = is_discovery))
   }
   return(grob)

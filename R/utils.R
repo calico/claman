@@ -2,7 +2,7 @@
 #'
 #' @param mzroll_list output of \link{process_mzroll} or
 #'   \link{process_mzroll_multi}
-#' @param fast_check if `TRUE` then skip some checks which are slow and that are 
+#' @param fast_check if `TRUE` then skip some checks which are slow and that are
 #' generally only needed when a `tomic` object is first created
 #'
 #' \itemize{
@@ -62,33 +62,32 @@ test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
 
   # the only required field is sampleId, other field will likely
   #   be discarded as samples are merged during normalization
-  
+
   # check for invalid variables
-  
+
   checkmate::assertClass(mzroll_list[["features"]]$groupId, "factor")
   checkmate::assertClass(mzroll_list[["samples"]]$sampleId, "factor")
-  
+
   # Issue 7: merged mzroll_list no longer contains a 'name' column,
   # avoid name-based tests for these cases
   if ("name" %in% colnames(mzroll_list$samples)) {
     check_required_variables(mzroll_list, "samples", c("sampleId", "name"))
-    
+
     unnamed_samples <- mzroll_list$samples %>% dplyr::filter(is.na(name))
     if (nrow(unnamed_samples) > 0) {
       stop(glue::glue(
         "{nrow(unnamed_samples)} samples were unnamed. All samples must be named"
       ))
     }
-    
+
     duplicated_names <- mzroll_list$samples %>%
       dplyr::group_by(name) %>%
       dplyr::filter(dplyr::n() > 1) %>%
       dplyr::distinct(name)
-    
+
     if (nrow(duplicated_names) > 0) {
       stop(glue::glue("{nrow(duplicated_names)} sample names were duplicated"))
     }
-    
   } else {
     check_required_variables(mzroll_list, "samples", c("sampleId"))
   }
@@ -146,44 +145,43 @@ util_pretty_khead <- function(tbl, nrows = 10, caption = NULL) {
 
 #' Util - Check if Peak Group matches label filters
 #'
-#' @description 
+#' @description
 #'   Filter peak groups based on matching labels.
 #'   Labels are encoded as string, but each character corresponds to a different label.
 #'   This filter operates as an "or" filter on both the set of labels to keep or exclude.
 #'   To specify a peakgroup that has no labels, use a single white space in the string (\code{' '}).
-#'   
+#'
 #' @param peakgroup_labels String encoding of labels.
 #'    Each character in the string corresponds to a different label.
-#' @param labels_to_keep Retain the peakgroup if any 
+#' @param labels_to_keep Retain the peakgroup if any
 #'    character in the string matches to any character in this string.
 #'    \code{default = "*"} (retain all labels)
-#' @param labels_to_exclude Discard the peakgroup if any 
-#'    character in the string matches to any character in this string. 
+#' @param labels_to_exclude Discard the peakgroup if any
+#'    character in the string matches to any character in this string.
 #'    If a label is both flagged for inclusion and exclusion, it is excluded.
 #'    \code{default = ""} (do not exclude any labels)
 #'
 #' @return TRUE or FALSE, if the peakgroup label matches the criteria.
 #'
 #' @export
-is_has_label <- function(peakgroup_labels, labels_to_keep="*", labels_to_exclude="") {
-  
+is_has_label <- function(peakgroup_labels, labels_to_keep = "*", labels_to_exclude = "") {
   labels_to_keep_chars <- unlist(strsplit(labels_to_keep, ""))
   labels_to_exclude_chars <- unlist(strsplit(labels_to_exclude, ""))
-  
+
   # explicitly excluded takes precedence over explicitly included
   for (label in labels_to_exclude_chars) {
     if (grepl(label, peakgroup_labels) || (label == " " && peakgroup_labels == "")) {
       return(FALSE)
     }
   }
-  
+
   # explicitly included
   for (label in labels_to_keep_chars) {
-    if (grepl(label, peakgroup_labels) || (label == " " && peakgroup_labels == "")){
+    if (grepl(label, peakgroup_labels) || (label == " " && peakgroup_labels == "")) {
       return(TRUE)
     }
   }
-  
+
   # if not explicitly included, discard
   return(FALSE)
 }
