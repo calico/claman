@@ -199,7 +199,7 @@ find_injections <- function(mzroll_list, grouping_vars) {
     dplyr::select(c(
       !!!rlang::syms(grouping_vars),
       consistent_reduced_fields$field
-      )) %>%
+    )) %>%
     dplyr::group_by(!!!syms(grouping_vars)) %>%
     dplyr::slice(1) %>%
     dplyr::ungroup() %>%
@@ -212,7 +212,7 @@ find_injections <- function(mzroll_list, grouping_vars) {
   dropped_fields <- setdiff(
     colnames(mzroll_list$samples),
     colnames(new_samples)
-    )
+  )
   if (length(dropped_fields) > 0) {
     message(glue::glue(
       "{length(dropped_fields)} sample variables will be dropped since they
@@ -223,9 +223,10 @@ find_injections <- function(mzroll_list, grouping_vars) {
 
   collapse_dict <- mzroll_list$samples %>%
     dplyr::select(old_sampleId = sampleId, !!!syms(grouping_vars)) %>%
-    dplyr::left_join(new_samples %>%
-      dplyr::select(sampleId, grouping_vars),
-    by = grouping_vars
+    dplyr::left_join(
+      new_samples %>%
+        dplyr::select(sampleId, grouping_vars),
+      by = grouping_vars
     ) %>%
     dplyr::select(old_sampleId, sampleId)
 

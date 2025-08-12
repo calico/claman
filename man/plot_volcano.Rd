@@ -30,12 +30,14 @@ Volcano plot
 \examples{
 library(dplyr)
 regression_significance <- diffex_mzroll(
-nplug_mzroll_normalized,
-"normalized_log2_abundance",
-"limitation + limitation:DR + 0") \%>\%
-dplyr::left_join(
-nplug_mzroll_normalized$features \%>\% select(groupId, compoundName),
-by = "groupId")
+  nplug_mzroll_normalized,
+  "normalized_log2_abundance",
+  "limitation + limitation:DR + 0"
+) \%>\%
+  dplyr::left_join(
+    nplug_mzroll_normalized$features \%>\% select(groupId, compoundName),
+    by = "groupId"
+  )
 
 plot_volcano(regression_significance, 10, 0.1, c("Ribose-P", "acetyl-CoA", "ATP"))
 

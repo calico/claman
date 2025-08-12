@@ -85,7 +85,7 @@ plot_barplot <- function(mzroll_list,
     geom_errorbar(
       data = standard_errors %>%
         dplyr::filter(!is.na(abund_se)),
-      aes(ymin = 2^ (abund_mean - abund_se), ymax = 2^ (abund_mean + abund_se))
+      aes(ymin = 2^(abund_mean - abund_se), ymax = 2^(abund_mean + abund_se))
     ) +
     facet_wrap(~peak_label, scales = "free_y") +
     scale_x_discrete("Sample description") +
