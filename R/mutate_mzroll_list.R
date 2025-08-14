@@ -25,7 +25,7 @@
 expand_peaks <- function(mzroll_list,
                          quant_var = "log2_abundance",
                          log2_floor_value = NULL) {
-  claman:::test_mzroll_list(mzroll_list)
+  test_mzroll_list(mzroll_list)
   missing_peaks <- tidyr::expand_grid(
     groupId = mzroll_list$features$groupId,
     sampleId = mzroll_list$samples$sampleId
@@ -1250,7 +1250,7 @@ fit_lm <- function(groupData,
 
   # If provided, filter outliers out of the fit values
   if (remove_outliers) {
-    outliers <- metstats::find_outliers(
+    outliers <- check_outliers(
       lm_predict,
       outlier_col_names = "val_var",
       outlier_sd = outlier_sd,
