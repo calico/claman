@@ -193,7 +193,7 @@ check_peaks_NA <- function(mzroll_list, quant_var, threshold) {
 #' This function determines outliers and returns the sample names of outliers
 #' based on values in \code{outlier_col_names} that are \code{outlier_sd}
 #' (default = 3) standard deviations above or below the mean for all columns
-#' provided. The default columns are "PC1", "PC2", and "PC3" from principle
+#' provided. The default columns are "PC1", "PC2", and "PC3" from principal
 #' component analysis.
 #' 
 #' Ported from \code{metstats} and used for \link[claman]{normalize_peaks_lm}
