@@ -405,7 +405,7 @@ process_mzroll_load_peakgroups <- function(mzroll_db_con, quant_col = "peakAreaT
     dplyr::select(-compoundId)
 
   # Only separate SMILES if the pattern exists in compoundName
-  if (any(stringr::str_detect(peakgroups$compoundName, ": "))) {
+  if (any(grepl(": ", peakgroups$compoundName))) {
     peakgroups <- peakgroups %>%
       tidyr::separate(
         compoundName,

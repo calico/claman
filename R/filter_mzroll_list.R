@@ -186,6 +186,63 @@ check_peaks_NA <- function(mzroll_list, quant_var, threshold) {
 
 
 
+
+#' Find outliers from numerical data columns
+#'
+#' @description
+#' This function determines outliers and returns the sample names of outliers
+#' based on values in \code{outlier_col_names} that are \code{outlier_sd}
+#' (default = 3) standard deviations above or below the mean for all columns
+#' provided. The default columns are "PC1", "PC2", and "PC3" from principal
+#' component analysis.
+#' 
+#' Ported from \code{metstats} and used for \link[claman]{normalize_peaks_lm}
+#'
+#' @param df a dataframe containing, at minimum, columns corresponding to
+#' \code{outlier_col_names} and \code{sample_name_col}
+#' @param outlier_col_names column name(s) as string or character vector on
+#' which to calculate mean and standard deviation
+#' @param outlier_sd standard deviation above or below which a sample will
+#' be flagged as an outlier
+#' @param sample_name_col column name as string of outlier sample names to return
+#'
+#' @returns a character vector of \code{sample_name_col} values that were
+#' identified as outliers
+#'
+#' @export
+check_outliers <- function(df,
+                           outlier_col_names = c("PC1", "PC2", "PC3"),
+                           outlier_sd = 3,
+                           sample_name_col = "sample_name") {
+  # Calculate mean and standard deviation on numerical columns
+  for (col in outlier_col_names) {
+    outlier_col_mean <- mean(df[[col]], na.rm = TRUE)
+    outlier_col_sd <- stats::sd(df[[col]], na.rm = TRUE)
+    outlier_col_lower <- outlier_col_mean - (outlier_sd * outlier_col_sd)
+    outlier_col_upper <- outlier_col_mean + (outlier_sd * outlier_col_sd)
+    
+    df <- df %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(!!rlang::sym(paste0(col, "_outlier")) :=
+                      ifelse(!!rlang::sym(col) < outlier_col_lower ||
+                               !!rlang::sym(col) > outlier_col_upper,
+                             TRUE,
+                             FALSE
+                      )) %>%
+      dplyr::ungroup()
+  }
+  
+  outlier_cols <- grep("_outlier", names(df), value = TRUE)
+  outlier_names <- df[rowSums(df[outlier_cols] == TRUE) == length(outlier_cols), sample_name_col] %>%
+    tidyr::drop_na() %>%
+    dplyr::pull()
+  
+  return(outlier_names)
+}
+
+
+
+
 #' Extract groupIds or sampleIds per metadata
 #'
 #' @description
