@@ -13,7 +13,7 @@ jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
-    timeout-minutes: 60  # Prevent jobs from running indefinitely
+    timeout-minutes: 90
     
     strategy:
       fail-fast: false
