@@ -567,6 +567,7 @@ process_mzroll_multi <- function(
     quant_col = "peakAreaTop",
     qc_strict = TRUE) {
   checkmate::assertDataFrame(mzroll_paths, min.rows = 2)
+  checkmate::assertLogical(qc_strict, len = 1)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
     stop("mzroll_paths must contain two columns: method_tag & mnzroll_db_path")
   }
@@ -737,7 +738,7 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
 }
 
 mzroll_multi_qc <- function(mzroll_list,
-                            qc_strict = qc_strict) {
+                            qc_strict) {
   # makes table of n detected features per method per sampleId
   mzroll_coverage_table <- mzroll_list$measurements %>%
     dplyr::left_join(
@@ -779,7 +780,7 @@ mzroll_multi_qc <- function(mzroll_list,
         nrow(missed_matches), " rows only matched a subset of methods.",
         "\nName(s) of probematic samples:\n",
         missed_matches_w_data$message_out, "",
-        "\nAggregrating mzrollDB, but mzroll_list has potential downstream problems."
+        "\nAggregating mzrollDB, but mzroll_list has potential downstream problems."
       )
     }
   } # end warnings for missed_matches
