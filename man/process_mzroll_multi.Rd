@@ -13,7 +13,8 @@ process_mzroll_multi(
   exact = FALSE,
   peakgroup_labels_to_keep = "*",
   peakgroup_labels_to_exclude = "",
-  quant_col = "peakAreaTop"
+  quant_col = "peakAreaTop",
+  qc_strict = TRUE
 )
 }
 \arguments{
@@ -48,6 +49,11 @@ over inclusion. \code{default = ""} (do not exclude any peak groups).}
 \item{quant_col}{name of quant column to use for standardization from the
   peaks table.
 \code{default = "peakAreaTop"}}
+
+\item{qc_strict}{when \code{TRUE}, will throw error if samples from metadata
+\code{samples_tbl} do not have peaks detected in both methods. If
+\code{FALSE}, will merge mzrollDB data even if there are samples without
+detection in all methods.}
 }
 \value{
 an mzroll_list containing three tibbles:
