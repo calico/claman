@@ -195,7 +195,7 @@ check_peaks_NA <- function(mzroll_list, quant_var, threshold) {
 #' (default = 3) standard deviations above or below the mean for all columns
 #' provided. The default columns are "PC1", "PC2", and "PC3" from principal
 #' component analysis.
-#' 
+#'
 #' Ported from \code{metstats} and used for \link[claman]{normalize_peaks_lm}
 #'
 #' @param df a dataframe containing, at minimum, columns corresponding to
@@ -220,23 +220,23 @@ check_outliers <- function(df,
     outlier_col_sd <- stats::sd(df[[col]], na.rm = TRUE)
     outlier_col_lower <- outlier_col_mean - (outlier_sd * outlier_col_sd)
     outlier_col_upper <- outlier_col_mean + (outlier_sd * outlier_col_sd)
-    
+
     df <- df %>%
       dplyr::rowwise() %>%
       dplyr::mutate(!!rlang::sym(paste0(col, "_outlier")) :=
-                      ifelse(!!rlang::sym(col) < outlier_col_lower ||
-                               !!rlang::sym(col) > outlier_col_upper,
-                             TRUE,
-                             FALSE
-                      )) %>%
+        ifelse(!!rlang::sym(col) < outlier_col_lower ||
+          !!rlang::sym(col) > outlier_col_upper,
+        TRUE,
+        FALSE
+        )) %>%
       dplyr::ungroup()
   }
-  
+
   outlier_cols <- grep("_outlier", names(df), value = TRUE)
   outlier_names <- df[rowSums(df[outlier_cols] == TRUE) == length(outlier_cols), sample_name_col] %>%
     tidyr::drop_na() %>%
     dplyr::pull()
-  
+
   return(outlier_names)
 }
 

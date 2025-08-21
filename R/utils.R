@@ -12,6 +12,7 @@
 #'   \item{measurements: one row per peak (samples x peakgroups)}
 #'   }
 #'
+#' @export
 test_mzroll_list <- function(mzroll_list, fast_check = TRUE) {
   checkmate::assertClass(mzroll_list, "tomic")
   checkmate::assertClass(mzroll_list, "mzroll")

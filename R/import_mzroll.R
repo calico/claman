@@ -527,6 +527,10 @@ process_mzroll_identify_peakgroups <- function(peakgroups, only_identified) {
 #'   }
 #' @inheritParams process_mzroll
 #' @inheritParams merge_samples_tbl
+#' @param qc_strict when \code{TRUE}, will throw error if samples from metadata
+#' \code{samples_tbl} do not have peaks detected in both methods. If
+#' \code{FALSE}, will merge mzrollDB data even if there are samples without
+#' detection in all methods.
 #'
 #' @return an mzroll_list containing three tibbles:
 #' \itemize{
@@ -560,7 +564,8 @@ process_mzroll_multi <- function(
     exact = FALSE,
     peakgroup_labels_to_keep = "*",
     peakgroup_labels_to_exclude = "",
-    quant_col = "peakAreaTop") {
+    quant_col = "peakAreaTop",
+    qc_strict = TRUE) {
   checkmate::assertDataFrame(mzroll_paths, min.rows = 2)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
     stop("mzroll_paths must contain two columns: method_tag & mnzroll_db_path")
@@ -599,7 +604,12 @@ process_mzroll_multi <- function(
     samples_tbl
   )
 
-  mzroll_multi_qc(aggregate_mzroll_list)
+  # Issue 31: old mzroll_multi_qc() function moved to mzroll_multi_qc_old()
+  # add option for qc_strict = FALSE which allows samples to be retained that
+  # are not detected in both modes
+  mzroll_multi_qc(aggregate_mzroll_list,
+    qc_strict = qc_strict
+  )
 
   # Issue 7: remove name and samples_tbl_row columns to mimic calicomics output
   aggregate_mzroll_list$samples <- aggregate_mzroll_list$samples %>%
@@ -726,7 +736,60 @@ aggregate_mzroll_nest <- function(mzroll_list_nest, samples_tbl) {
   return(one_mzroll_list)
 }
 
-mzroll_multi_qc <- function(mzroll_list) {
+mzroll_multi_qc <- function(mzroll_list,
+                            qc_strict = qc_strict) {
+  # makes table of n detected features per method per sampleId
+  mzroll_coverage_table <- mzroll_list$measurements %>%
+    dplyr::left_join(
+      mzroll_list$features %>%
+        dplyr::select(groupId, method_tag),
+      by = "groupId"
+    ) %>%
+    dplyr::left_join(
+      mzroll_list$samples %>%
+        dplyr::select(sampleId, samples_tbl_row),
+      by = "sampleId"
+    ) %>%
+    dplyr::count(samples_tbl_row, method_tag) %>%
+    tidyr::spread(method_tag, n)
+
+  # determines if any sampleIds were not detected in a specific method
+  missed_matches <- mzroll_coverage_table %>%
+    dplyr::filter_all(dplyr::any_vars(is.na(.)))
+
+  if (nrow(missed_matches) != 0) {
+    missed_matches_data <- mzroll_list$samples %>%
+      dplyr::filter(samples_tbl_row %in% missed_matches$samples_tbl_row)
+
+    missed_matches_w_data <- dplyr::inner_join(missed_matches,
+      missed_matches_data,
+      by = c("samples_tbl_row")
+    ) %>%
+      dplyr::mutate(message_out = paste0(name, "\n"))
+
+    if (qc_strict) {
+      stop(
+        nrow(missed_matches), " rows only matched a subset of methods.",
+        "\nName(s) of probematic samples:\n",
+        missed_matches_w_data$message_out, "",
+        "\nUpdate your sample sheet or analyze each method separately to avoid downstream problems."
+      )
+    } else {
+      warning(
+        nrow(missed_matches), " rows only matched a subset of methods.",
+        "\nName(s) of probematic samples:\n",
+        missed_matches_w_data$message_out, "",
+        "\nAggregrating mzrollDB, but mzroll_list has potential downstream problems."
+      )
+    }
+  } # end warnings for missed_matches
+
+  return(invisible(0))
+}
+
+# Issue 31
+# Old QC function in process_mzroll_multi()
+mzroll_multi_qc_old <- function(mzroll_list) {
   mzroll_coverage_table <- mzroll_list$measurements %>%
     dplyr::left_join(
       mzroll_list$features %>%
