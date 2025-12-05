@@ -47,7 +47,7 @@ jobs:
             any::rcmdcheck
             bioc::qvalue
             bioc::fgsea
-            any::romic
+            github::calico/romic
           needs: check
           pak-version: stable
 
