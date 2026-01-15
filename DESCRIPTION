@@ -65,6 +65,8 @@ Suggests: dbplyr,
     reshape2,
     testthat,
     tidyselect
+Remotes:
+    calico/romic
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
