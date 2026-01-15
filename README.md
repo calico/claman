@@ -18,7 +18,15 @@ mzroll_lists can then be filtered, floored to the limit of detection, and normal
 
 # Initial Setup
 
-The package can be installed from GitHub using:
+The package can be installed from GitHub. First, install Bioconductor packages:
+
+```r
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(c("fgsea", "qvalue"))
+```
+
+Then, install `claman` using `remotes`:
 
 ```r
 # install.packages("remotes")
