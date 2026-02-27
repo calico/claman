@@ -48,7 +48,7 @@ collapse_injections <- function(mzroll_list,
     dplyr::left_join(collapse_dict, by = "old_sampleId") %>%
     dplyr::select(-old_sampleId) %>%
     dplyr::group_by(groupId, sampleId) %>%
-    dplyr::summarize_each(funs = collapse_fxn, peak_quant_vars) %>%
+    dplyr::summarize(dplyr::across(dplyr::all_of(peak_quant_vars), match.fun(collapse_fxn))) %>%
     dplyr::ungroup()
 
   # update sample and measurements and the schema
