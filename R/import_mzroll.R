@@ -556,16 +556,17 @@ process_mzroll_identify_peakgroups <- function(peakgroups, only_identified) {
 #' @export
 
 process_mzroll_multi <- function(
-    mzroll_paths,
-    samples_tbl,
-    id_strings,
-    only_identified = TRUE,
-    validate = FALSE,
-    exact = FALSE,
-    peakgroup_labels_to_keep = "*",
-    peakgroup_labels_to_exclude = "",
-    quant_col = "peakAreaTop",
-    qc_strict = TRUE) {
+  mzroll_paths,
+  samples_tbl,
+  id_strings,
+  only_identified = TRUE,
+  validate = FALSE,
+  exact = FALSE,
+  peakgroup_labels_to_keep = "*",
+  peakgroup_labels_to_exclude = "",
+  quant_col = "peakAreaTop",
+  qc_strict = TRUE
+) {
   checkmate::assertDataFrame(mzroll_paths, min.rows = 2)
   checkmate::assertLogical(qc_strict, len = 1)
   if (!all(colnames(mzroll_paths) == c("method_tag", "mzroll_db_path"))) {
