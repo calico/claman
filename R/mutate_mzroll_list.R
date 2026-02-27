@@ -82,8 +82,6 @@ expand_peaks <- function(mzroll_list,
 }
 
 
-
-
 #' Floor Peaks
 #'
 #' Set a minimum peak abundance of floor_value for low abundance and

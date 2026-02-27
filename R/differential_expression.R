@@ -294,10 +294,11 @@ diffex_fdr <- function(term_data) {
 #'
 #' @export
 plot_volcano <- function(
-    regression_significance,
-    max_p_trans = 10,
-    FDR_cutoff = 0.1,
-    feature_labels = NULL) {
+  regression_significance,
+  max_p_trans = 10,
+  FDR_cutoff = 0.1,
+  feature_labels = NULL
+) {
   checkmate::assertDataFrame(regression_significance)
   stopifnot("term" %in% colnames(regression_significance))
 

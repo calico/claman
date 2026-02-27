@@ -31,9 +31,6 @@ filter_groupIds <- function(mzroll_list, groupIds, invert = FALSE) {
 }
 
 
-
-
-
 #' Check groupIds for infinite or NA values
 #'
 #' Extract groupIds and optionally print compoundNames of peaks containing
@@ -119,7 +116,6 @@ check_infinite_values <- function(mzroll_list,
 }
 
 
-
 #' Extract peaks containing non-NA, non-finite values
 #'
 #' @inheritParams check_infinite_values
@@ -183,10 +179,6 @@ check_peaks_NA <- function(mzroll_list, quant_var, threshold) {
 }
 
 
-
-
-
-
 #' Find outliers from numerical data columns
 #'
 #' @description
@@ -241,8 +233,6 @@ check_outliers <- function(df,
 }
 
 
-
-
 #' Extract groupIds or sampleIds per metadata
 #'
 #' @description
@@ -266,7 +256,10 @@ extract_ids_from_metadata <- function(mzroll_list,
   # run checks
   romic:::check_triple_omic(mzroll_list)
   checkmate::assertString(filter_var)
-  checkmate::assertCharacter(filter_ids)
+  checkmate::assert(
+    checkmate::checkCharacter(filter_ids),
+    checkmate::checkLogical(filter_ids, min.len = 1)
+  )
   checkmate::assertChoice(
     filter_var,
     union(
@@ -276,6 +269,7 @@ extract_ids_from_metadata <- function(mzroll_list,
   )
 
   if (filter_var %in% colnames(mzroll_list$samples)) {
+    validate_filter_ids(mzroll_list$samples[[filter_var]], filter_ids)
     if (any(filter_ids %in% unique(mzroll_list$samples[[filter_var]]))) {
       filter_var_use <- "sampleId"
       filter_ids_use <- mzroll_list$samples %>%
@@ -288,6 +282,7 @@ extract_ids_from_metadata <- function(mzroll_list,
   }
 
   if (filter_var %in% colnames(mzroll_list$features)) {
+    validate_filter_ids(mzroll_list$features[[filter_var]], filter_ids)
     if (any(filter_ids %in% unique(mzroll_list$features[[filter_var]]))) {
       filter_var_use <- "groupId"
       filter_ids_use <- mzroll_list$features %>%
@@ -303,4 +298,16 @@ extract_ids_from_metadata <- function(mzroll_list,
     filter_var = filter_var_use,
     filter_ids = filter_ids_use
   ))
+}
+
+# Helper for function above
+validate_filter_ids <- function(col_values, filter_ids) {
+  col_is_logical <- is.logical(col_values)
+  ids_are_logical <- is.logical(filter_ids)
+  if (col_is_logical && !ids_are_logical) {
+    stop("\nfilter_var column is logical but filter_ids is not logical")
+  }
+  if (!col_is_logical && ids_are_logical) {
+    stop("\nfilter_ids is logical but filter_var column is not logical")
+  }
 }
