@@ -15,7 +15,11 @@ process_mzroll(
 )
 }
 \arguments{
-\item{mzroll_db_path}{path to mzroll DB file}
+\item{mzroll_db_path}{path to mzroll DB file,
+or a pre-built romic triple_omic object with type tag 'mzroll'.
+Callers of this function are responsible for passing in a valid input object
+in that use case.  However, the object will still be tested via
+\code{test_mzroll_list()}.}
 
 \item{only_identified}{TRUE/FALSE, filter to only features which were
 identified.}

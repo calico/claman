@@ -1,6 +1,10 @@
 #' Process mzRoll
 #'
-#' @param mzroll_db_path path to mzroll DB file
+#' @param mzroll_db_path path to mzroll DB file,
+#'   or a pre-built romic triple_omic object with type tag 'mzroll'.
+#'   Callers of this function are responsible for passing in a valid input object
+#'   in that use case.  However, the object will still be tested via
+#'   \code{test_mzroll_list()}.
 #' @param only_identified TRUE/FALSE, filter to only features which were
 #'   identified.
 #' @param validate TRUE/FALSE, use meta-data to only name the subset of
@@ -37,6 +41,14 @@ process_mzroll <- function(mzroll_db_path,
                            peakgroup_labels_to_keep = "*",
                            peakgroup_labels_to_exclude = "",
                            quant_col = "peakAreaTop") {
+  # Issue 12: Support import of pre-built 'mzroll' tomic (romic tiple omic) object.
+  # Callers are responsible to generate a valid 'mzroll' object.
+  # test_mzroll_list() will fail if object is invalid.
+  if ("mzroll" %in% class(mzroll_db_path)) {
+    test_mzroll_list(mzroll_db_path)
+    return(mzroll_db_path)
+  }
+
   checkmate::assertFileExists(mzroll_db_path)
   checkmate::assertLogical(only_identified, len = 1)
   checkmate::assertLogical(validate, len = 1)
