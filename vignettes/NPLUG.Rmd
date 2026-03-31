@@ -70,7 +70,7 @@ mzroll_list_augmented <- merge_samples_tbl(
   nplug_samples,
   "sample_name",
   exact = TRUE
-  )
+)
 ```
 
 ```{r read_sample_metadata_tables, echo = FALSE}
@@ -105,7 +105,7 @@ romic::plot_heatmap(
   sample_var = "name",
   value_var = "centered_log2_abundance",
   change_threshold = 5
-  ) + facet_grid(~ exp_ref + limitation, scales = "free_x", space = "free_x") +
+) + facet_grid(~ exp_ref + limitation, scales = "free_x", space = "free_x") +
   ggtitle("Metabolites separated by limiting nutrients")
 ```
 
@@ -124,7 +124,7 @@ romic::plot_heatmap(
   sample_var = "name",
   value_var = "centered_log2_abundance",
   change_threshold = 5
-  ) + facet_grid(~ limitation + extraction, scales = "free_x", space = "free_x") +
+) + facet_grid(~ limitation + extraction, scales = "free_x", space = "free_x") +
   ggtitle("Metabolites separated by extraction") +
   theme(strip.text = element_text(size = 10))
 ```
@@ -141,12 +141,12 @@ mzroll_list_augmented %>%
     filter_table = "samples",
     filter_variable = "exp_ref",
     filter_value = "ref"
-    ) %>%
+  ) %>%
   romic::plot_heatmap(
-  feature_var = "compoundName",
-  sample_var = "name",
-  value_var = "centered_log2_abundance",
-  change_threshold = 5
+    feature_var = "compoundName",
+    sample_var = "name",
+    value_var = "centered_log2_abundance",
+    change_threshold = 5
   ) + facet_grid(~ month + DR, scales = "free_x", space = "free_x") +
   ggtitle("References separated by month and distinct cultures (by DR)") +
   theme(strip.text = element_text(size = 10))
@@ -171,14 +171,14 @@ plot_compare_injection(
   mzroll_list_augmented,
   grouping_vars = "condition",
   peak_quant_var = "centered_log2_abundance"
-  ) + ggtitle("Comparison of injection technical replicates")
+) + ggtitle("Comparison of injection technical replicates")
 
 mzroll_list_distinct_conditions <- collapse_injections(
   mzroll_list_augmented,
   grouping_vars = "condition",
   peak_quant_vars = c("log2_abundance", "centered_log2_abundance"),
   collapse_fxn = "mean"
-  )
+)
 ```
 
 ```{r technical_replicates_table, echo = FALSE}
@@ -201,7 +201,7 @@ mzroll_list_normalized <- normalize_peaks(
   batch_varnames = c("month", "extraction"),
   reference_varname = "exp_ref",
   reference_values = "ref"
-  ) %>%
+) %>%
   # having normalized by the common reference, we can re-center the data
   #  since slow-phosphate limited growth is not a biological reference.
   romic::center_tomic(measurement_vars = "normalized_log2_abundance")
@@ -217,7 +217,7 @@ romic::plot_heatmap(
   value_var = "normalized_log2_abundance",
   change_threshold = 5,
   cluster_dim = "rows"
-  ) + facet_grid(~ exp_ref + limitation, scales = "free_x", space = "free_x") +
+) + facet_grid(~ exp_ref + limitation, scales = "free_x", space = "free_x") +
   ggtitle("Post-normalization metabolite abundances") +
   theme(strip.text = element_text(size = 10))
 ```
@@ -236,15 +236,15 @@ final_processed_data <- mzroll_list_normalized %>%
     filter_table = "samples",
     filter_variable = "exp_ref",
     filter_value = "exp"
-    ) %>%
+  ) %>%
   # retain only filter extraction
   romic::filter_tomic(
     filter_type = "category",
     filter_table = "samples",
     filter_variable = "extraction",
     filter_value = "filter"
-    )
-  
+  )
+
 # clean-up sample data
 renamed_samples <- final_processed_data$samples %>%
   select(sampleId, limitation, DR) %>%
@@ -254,14 +254,14 @@ renamed_samples <- final_processed_data$samples %>%
   group_by(name) %>%
   mutate(name = case_when(
     n() == 1 ~ name,
-    TRUE ~ paste0(name, "-", 1:n()))
-    ) %>%
+    TRUE ~ paste0(name, "-", 1:n())
+  )) %>%
   ungroup()
-   
+
 final_processed_data <- romic::update_tomic(
   final_processed_data,
   renamed_samples
-  )
+)
 
 romic::plot_heatmap(
   final_processed_data,
@@ -270,7 +270,7 @@ romic::plot_heatmap(
   value_var = "normalized_log2_abundance",
   change_threshold = 5,
   cluster_dim = "rows"
-  ) + facet_grid(~ limitation, scales = "free_x", space = "free_x") +
+) + facet_grid(~limitation, scales = "free_x", space = "free_x") +
   ggtitle("Final processed metabolite abundances across 25 growth conditions") +
   theme(strip.text = element_text(size = 10))
 ```
@@ -294,7 +294,7 @@ romic::plot_bivariate(
   "PC1",
   "PC2",
   color_var = "limitation"
-  ) + ggtitle("Top principal components driving metabolomic variation")
+) + ggtitle("Top principal components driving metabolomic variation")
 ```
 
 One plot doesn't quite cut it here. Luckily, romic has some powerful methods for shiny-based interactive analysis that we can leverage here to quickly make plots like these.
@@ -320,7 +320,7 @@ regression_significance <- diffex_mzroll(
   final_processed_data,
   "normalized_log2_abundance",
   "limitation + limitation:DR + 0"
-  )
+)
 
 plot_pvalues(regression_significance)
 plot_volcano(regression_significance)
@@ -335,7 +335,8 @@ n_lim_signif <- regression_significance %>%
   left_join(
     final_processed_data$features %>%
       select(groupId, peak_label),
-    by = "groupId")
+    by = "groupId"
+  )
 ```
 
 ```{r met_examples_table, echo = FALSE}
@@ -352,7 +353,7 @@ plot_barplot(
   grouping_vars = c("limitation", "DR"),
   value_var = "normalized_log2_abundance",
   fill_var = "limitation"
-  ) + scale_fill_brewer(palette = "Set2")
+) + scale_fill_brewer(palette = "Set2")
 ```
 
 ## Pathway Analysis
@@ -364,10 +365,10 @@ pathway_nest <- final_processed_data$features %>%
 
 pathway_list <- purrr::map(
   pathway_nest$pathway_members,
-    function(x) {
-      as.character(x$groupId)
-    }
-  )
+  function(x) {
+    as.character(x$groupId)
+  }
+)
 names(pathway_list) <- pathway_nest$pathway
 
 enrichments <- find_pathway_enrichments(
@@ -375,7 +376,7 @@ enrichments <- find_pathway_enrichments(
   regression_significance,
   pathway_list,
   test_absolute_effects = FALSE
-  )
+)
 ```
 
 ### Generate tables and plots of top enrichments
@@ -397,7 +398,7 @@ ranked_nitrogen_enrichments$enrichment_plot[[1]] +
   ggtitle(
     "Amino acids are depleted during nitrogen limitation",
     "Note that the x-axis is ranks, and negative values have higher ranks"
-    ) 
+  )
 ```
 
 # Export results
@@ -420,7 +421,7 @@ final_processed_data <- romic::update_tomic(
 util_pretty_khead(
   final_processed_data$features,
   caption = "Peakgroups with differential abundance statistics added"
-  )
+)
 ```
 
 ```{r export_results, eval = FALSE}
@@ -428,5 +429,5 @@ romic::export_tomic_as_tidy(
   final_processed_data,
   dir_path = "/tmp",
   name_preamble = "nplug"
-  )
+)
 ```
