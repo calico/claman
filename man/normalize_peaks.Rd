@@ -86,7 +86,13 @@ normalize_peaks_lm(
   outlier_sd = 2
 )
 
-normalize_peaks_center(mzroll_list, quant_peak_varname, norm_peak_varname)
+normalize_peaks_center(
+  mzroll_list,
+  quant_peak_varname,
+  norm_peak_varname,
+  filter_ids = NULL,
+  filter_var = NULL
+)
 }
 \arguments{
 \item{mzroll_list}{output of \link{process_mzroll} or

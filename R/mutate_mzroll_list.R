@@ -1284,14 +1284,43 @@ fit_lm <- function(groupData,
 #' @rdname normalize_peaks
 normalize_peaks_center <- function(mzroll_list,
                                    quant_peak_varname,
-                                   norm_peak_varname) {
-  updated_measurements <- mzroll_list$measurements %>%
+                                   norm_peak_varname,
+                                   filter_ids = NULL,
+                                   filter_var = NULL) {
+  ## Check for any filter matching on which to calculate group means
+  if (!is.null(filter_ids) && !is.null(filter_var)) {
+    is_filter <- claman::extract_ids_from_metadata(
+      mzroll_list = mzroll_list,
+      filter_var = filter_var,
+      filter_ids = filter_ids
+    )
+    filter_var_use <- is_filter$filter_var
+    filter_ids_use <- is_filter$filter_ids
+
+    if (filter_var_use != "sampleId") {
+      warning("filter_var does not correspond to samples dataframe; centering will be performed over all groupId data")
+      groupId_means <- mzroll_list$measurements
+    } else {
+      groupId_means <- mzroll_list$measurements %>%
+        dplyr::filter(!!rlang::sym(filter_var_use) %in% filter_ids_use)
+    }
+  } else {
+    groupId_means <- mzroll_list$measurements
+  }
+
+  groupId_means <- groupId_means %>%
     dplyr::group_by(groupId) %>%
-    dplyr::mutate(!!rlang::sym(norm_peak_varname) :=
-      scale(!!rlang::sym(quant_peak_varname), scale = F, center = T)) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(!!rlang::sym(norm_peak_varname) :=
-      as.numeric(!!rlang::sym(norm_peak_varname)))
+    dplyr::summarise(
+      mean_value = mean(!!rlang::sym(quant_peak_varname),
+        na.rm = TRUE
+      ),
+      .groups = "drop"
+    )
+
+  updated_measurements <- mzroll_list$measurements %>%
+    dplyr::left_join(groupId_means, by = "groupId") %>%
+    dplyr::mutate(!!rlang::sym(norm_peak_varname) := !!rlang::sym(quant_peak_varname) - mean_value) %>%
+    dplyr::select(-mean_value)
 
   mzroll_list <- romic::update_tomic(mzroll_list, updated_measurements)
 

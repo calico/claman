@@ -79,6 +79,7 @@ utils::globalVariables(c(
   "lm_estimate",
   "lm_fits",
   "log2_abundance",
+  "mean_value",
   "median",
   "median_abund",
   "median_polish_scaling_factor",
